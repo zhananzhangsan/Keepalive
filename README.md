@@ -3,23 +3,42 @@
 
 ## 如何使用？ [视频教程](https://youtu.be/L6gPyyD3dUw)
 
-### nohup模式
-- 一键安装 **新手小白用这个！**
+### nohup模式 一键安装 *新手小白用这个！*
+- 
 ```bash
 bash <(curl -s https://raw.githubusercontent.com/cmliu/socks5-for-serv00/main/install-socks5.sh)
 ```
 ----
-### ~pm2模式~
-- ~一键安装~
 
-~`bash <(curl -s https://raw.githubusercontent.com/cmliu/socks5-for-serv00/pm2/install-socks5.sh)`~
+### vmess-argo|socks5|hysteria2|nezha-agent 四合一：
+> 在老王四合一脚本基础上修改，缝合了cm的action保活
+```
+bash <(curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh)
+```
+> 带二次运行快捷命令：`bash sb00.sh`
+```
+curl https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh -o sb00.sh && bash sb00.sh
+```
+> 仅安装哪吒agent
+```
+bash <(curl -s https://raw.githubusercontent.com/k0baya/nezha4serv00/main/install-agent.sh)
+```
+----
 
-
-- 一键卸载pm2
+## 一键卸载pm2
 ```bash
 pm2 unstartup && pm2 delete all && npm uninstall -g pm2
 ```
+## 清空重置服务器，逐行执行
+```
+pkill -kill -u $(whoami)
+chmod -R 755 ~/*
+chmod -R 755 ~/.*
+rm -rf ~/.*
+rm -rf ~/*
+```
 ----
+
 ## Github Actions保活
 添加 Secrets.`ACCOUNTS_JSON` 变量
 ```json
