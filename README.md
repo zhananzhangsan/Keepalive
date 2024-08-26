@@ -3,13 +3,18 @@
 
 ## 如何使用？ [视频教程](https://youtu.be/L6gPyyD3dUw)
 
-### nohup模式 一键安装 *新手小白用这个！*
+### cm大佬的一键脚本：socks5+哪吒
 ```bash
 bash <(curl -s https://raw.githubusercontent.com/cmliu/socks5-for-serv00/main/install-socks5.sh)
 ```
+### 天诚大佬的一键脚本：hy2+socks5+哪吒
+```
+bash <(curl -s https://raw.githubusercontent.com/gshtwy/socks5-for-serv00/main/install-socks5-hysteria.sh)
+```
+
 ----
 
-### vmess-argo|socks5|hysteria2|nezha-agent 四合一：
+### 修改版：vmess-argo|socks5|hysteria2|nezha-agent 四合一：
 > 在老王四合一脚本基础上修改，缝合了cm的action保活
 ```
 bash <(curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh)
@@ -18,10 +23,12 @@ bash <(curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb
 ```
 curl https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh -o sb00.sh && bash sb00.sh
 ```
-> 仅安装哪吒agent
+
+### 仅安装哪吒agent
 ```
 bash <(curl -s https://raw.githubusercontent.com/k0baya/nezha4serv00/main/install-agent.sh)
 ```
+
 ----
 
 ## 一键卸载pm2
