@@ -149,7 +149,7 @@ read_nz_variables() {
 #!/bin/bash
 pgrep -f 'npm' | xargs -r kill
 cd ${WORKDIR}
-export TMPDIR=\$(pwd)
+export TMPDIR=$(pwd)
 exec ./npm -s ${NEZHA_SERVER}:${NEZHA_PORT} -p ${NEZHA_KEY} ${NEZHA_TLS} --report-delay 4 --disable-auto-update --disable-force-update >/dev/null 2>&1
 EOF
   chmod +x ${WORKDIR}/nezha.sh
@@ -480,7 +480,7 @@ argo_sh() {
 #!/bin/bash
 pgrep -f 'bot' | xargs -r kill
 cd ${WORKDIR}
-export TMPDIR=\$(pwd)
+export TMPDIR=$(pwd)
 exec ./bot "${args}" >/dev/null 2>&1 &
 EOF
   chmod +x "${WORKDIR}/argo.sh"
