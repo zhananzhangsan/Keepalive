@@ -174,6 +174,7 @@ reading "\n确定继续安装吗？【y/n】: " choice
         get_links
         argo_sh
         creat_corn
+	menu
       ;;
     [Nn]) exit 0 ;;
     *) red "无效的选择，请输入y或n" && menu ;;
@@ -206,11 +207,27 @@ uninstall_singbox() {
 }
 
 kill_all_tasks() {
-reading "\n清理所有进程将退出ssh连接，确定继续清理吗？【y/n】: " choice
+reading "\n清理所有进程，但保留ssh连接，确定继续清理吗？【y/n】: " choice
   case "$choice" in
-    [Yy]) killall -9 -u $(whoami) ;;
-       *) menu ;;
-    esac
+    [Yy]) pkill -kill -u $(whoami) -v -f '^(?!sshd$).*$' ;;
+    *) menu ;;
+  esac
+}
+
+clean_all_files() {
+reading "\n清理所有文件，重置服务器，确定继续吗？【y/n】: " choice
+  case "$choice" in
+    [Yy])
+       pkill -kill -u $(whoami) -v -f '^(?!sshd$).*$' ;;
+       chmod -R 755 ~/* ;;
+       chmod -R 755 ~/.* ;;
+       rm -rf ~/.* ;;
+       rm -rf ~/* ;;
+       green "清理已完成" && menu ;;
+    [Nn])
+       menu ;;
+    *) red "无效的选择，请输入y或n" && menu ;;
+  esac
 }
 
 # Download Dependency Files
@@ -549,25 +566,28 @@ menu() {
    echo  "==============="
    green "3. 查看节点信息"
    echo  "==============="
-   yellow "4. 清理所有进程"
+   red "4. 清理所有进程"
    echo  "==============="
-   red "5. 重启所有服务"
+   red "5. 重置服务器"
    echo  "==============="
-   yellow "6. 添加守护CORN"
+   green "6. 重启所有服务"
+   echo  "==============="
+   green "7. 添加守护CORN"
    echo  "==============="
    red "0. 退出脚本"
-   echo "==========="
-   reading "请输入选择(0-6): " choice
+   echo "================"
+   reading "请输入选择(0-7): " choice
    echo ""
     case "${choice}" in
         1) install_singbox ;;
         2) uninstall_singbox ;; 
         3) cat $WORKDIR/list.txt ;; 
 	4) kill_all_tasks ;;
- 	5) cd $WORKDIR && run_sb && sleep 3 ;;
-        6) creat_corn ;;
+        5) clean_all_files ;;
+ 	6) cd $WORKDIR && run_sb && sleep 3 && menu ;;
+        7) creat_corn && menu ;;
         0) exit 0 ;;
-        *) red "无效的选项，请输入 0 到 6" ;;
+        *) red "无效的选项，请输入 0 到 7" && menu ;;
     esac
 }
 menu
