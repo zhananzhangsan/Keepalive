@@ -21,7 +21,7 @@ bash <(curl -s https://raw.githubusercontent.com/gshtwy/socks5-for-serv00/main/i
 ```
 curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh -o sb00.sh && bash sb00.sh
 ```
-![image](https://github.com/user-attachments/assets/1660fa1b-5109-43b0-be9e-d4e2c0b03cea)
+![主菜单截图](https://fastly.jsdelivr.net/gh/yutian81/yutian81.github.io@master/assets/images/17253310189731725331018955.png)
 
 
 ### 仅安装哪吒agent
