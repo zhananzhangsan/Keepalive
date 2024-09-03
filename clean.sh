@@ -31,6 +31,7 @@ case "$choice" in
   *) red "无效的选择，请输入y或n" exit 1 ;;
 esac
 
+cd ..
 reading "\n需要重新安装脚本吗？【y/n】: " choice
 case "$choice" in
   [Yy])
