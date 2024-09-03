@@ -215,19 +215,12 @@ reading "\n清理所有进程，但保留ssh连接，确定继续清理吗？【
 }
 
 clean_all_files() {
-reading "\n清理所有文件，重置服务器，确定继续吗？【y/n】: " choice
-  case "$choice" in
-    [Yy])
-       pkill -kill -u $(whoami) -v -f '^(?!sshd$).*$' ;;
-       chmod -R 755 ~/* ;;
-       chmod -R 755 ~/.* ;;
-       rm -rf ~/.* ;;
-       rm -rf ~/* ;;
-       green "清理已完成" && menu ;;
-    [Nn])
-       menu ;;
-    *) red "无效的选择，请输入y或n" && menu ;;
-  esac
+   if curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/clean.sh -o clean.sh; then
+     bash clean.sh
+   else
+     red "脚本下载失败，请检查网络连接。"
+     menu
+   fi
 }
 
 # Download Dependency Files
