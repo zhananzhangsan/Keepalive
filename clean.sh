@@ -35,13 +35,7 @@ cd ..
 reading "\n需要重新安装脚本吗？【y/n】: " choice
 case "$choice" in
   [Yy])
-    if curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh -o sb00.sh ; then
-      bash sb00.sh
-    else
-      red "脚本下载失败，请检查网络连接。"
-      exit 1
-    fi
-    ;;
+    curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh -o sb00.sh && bash sb00.sh ;;
   [Nn]) exit 0 ;;
   *) red "无效的选择，请输入y或n" ; exec "$0" ;;
 esac
