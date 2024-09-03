@@ -209,7 +209,7 @@ uninstall_singbox() {
 kill_all_tasks() {
 reading "\n清理所有进程，但保留ssh连接，确定继续清理吗？【y/n】: " choice
   case "$choice" in
-    [Yy]) pkill -kill -u $(whoami) -v -f '^(?!sshd$).*$' ;;
+    [Yy]) pgrep -u $(whoami) -v -f sshd | xargs kill -9 ;;
     *) menu ;;
   esac
 }
