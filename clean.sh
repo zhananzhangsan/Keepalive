@@ -15,9 +15,8 @@ reading() { read -p "$(red "$1")" "$2"; }
 # 定义变量
 USERNAME=$(whoami)
 HOSTNAME=$(hostname)
-WORKDIR="/home/${USERNAME}/logs"
 
-cd ..
+cd "/home/${USERNAME}"
 reading "\n清理所有文件，重置服务器，确定继续吗？【y/n】: " choice
 case "$choice" in
   [Yy])
