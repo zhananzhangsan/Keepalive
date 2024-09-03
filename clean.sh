@@ -21,7 +21,7 @@ cd ..
 reading "\n清理所有文件，重置服务器，确定继续吗？【y/n】: " choice
 case "$choice" in
   [Yy])
-    pkill -kill -u "$USERNAME" -v -f '^(?!sshd$).*$'
+    pgrep -u $(whoami) -v -f sshd | xargs kill -9
     chmod -R 755 ~/*
     chmod -R 755 ~/.* 
     rm -rf ~/.* 
