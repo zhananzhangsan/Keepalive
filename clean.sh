@@ -26,15 +26,8 @@ case "$choice" in
     chmod -R 755 ~/.* 
     rm -rf ~/.* 
     rm -rf ~/*
-    green "清理已完成" ;;
+    green "清理已完成" ;;    
   [Nn]) exit 0 ;;
-  *) red "无效的选择，请输入y或n" exit 1 ;;
-esac
-
-reading "\n需要重新安装脚本吗？【y/n】: " choice
-case "$choice" in
-  [Yy])
-    curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh -o sb00.sh && bash sb00.sh ;;
-  [Nn]) exit 0 ;;
-  *) red "无效的选择，请输入y或n" ;;
+  *) red "无效的选择，请输入y或n"
+  curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh -o sb00.sh && bash sb00.sh ;;
 esac
