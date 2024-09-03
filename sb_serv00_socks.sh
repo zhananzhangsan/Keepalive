@@ -575,7 +575,7 @@ menu() {
         1) install_singbox ;;
         2) uninstall_singbox ;; 
         3) cat $WORKDIR/list.txt ;; 
-	4) kill_all_tasks ;;
+	4) kill_all_tasks && menu ;;
         5) clean_all_files ;;
  	6) cd $WORKDIR && run_sb && sleep 3 && menu ;;
         7) creat_corn && menu ;;
