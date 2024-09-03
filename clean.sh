@@ -42,5 +42,5 @@ case "$choice" in
     fi
     ;;
   [Nn]) exit 0 ;;
-  *) red "无效的选择，请输入y或n" exit 1 ;;
+  *) red "无效的选择，请输入y或n" ; exec "$0" ;;
 esac
