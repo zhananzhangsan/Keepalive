@@ -36,5 +36,5 @@ case "$choice" in
   [Yy])
     curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh -o sb00.sh && bash sb00.sh ;;
   [Nn]) exit 0 ;;
-  *) red "无效的选择，请输入y或n" ; exec "$0" ;;
+  *) red "无效的选择，请输入y或n" ;;
 esac
