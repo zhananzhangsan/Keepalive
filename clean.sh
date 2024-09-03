@@ -21,7 +21,7 @@ cd ..
 reading "\n清理所有文件，重置服务器，确定继续吗？【y/n】: " choice
 case "$choice" in
   [Yy])
-    pgrep -u $(whoami) -v -f sshd | xargs kill -9
+    ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 2>/dev/null
     chmod -R 755 ~/*
     chmod -R 755 ~/.* 
     rm -rf ~/.* 
