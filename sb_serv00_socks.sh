@@ -209,8 +209,12 @@ uninstall_singbox() {
 kill_all_tasks() {
 reading "\n清理所有进程，但保留ssh连接，确定继续清理吗？【y/n】: " choice
   case "$choice" in
-    [Yy]) ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 2>/dev/null ;;
-    *) menu ;;
+    [Yy])
+        ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 2>/dev/null ;;
+	cd "$WORKDIR" && run_sb && sleep 3 && menu ;;
+    [Nn]) menu ;;
+    *) red "无效的选择，请输入y或n"
+    menu ;;
   esac
 }
 
@@ -573,7 +577,7 @@ menu() {
         1) install_singbox ;;
         2) uninstall_singbox ;; 
         3) cat $WORKDIR/list.txt ;; 
-	4) kill_all_tasks && cd $WORKDIR && run_sb && sleep 3 && menu  ;;
+	4) kill_all_tasks && cd $WORKDIR && run_sb && sleep 3 && menu ;;
         5) clean_all_files ;;
         6) creat_corn && menu ;;
         0) exit 0 ;;
