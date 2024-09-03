@@ -15,7 +15,7 @@ bash <(curl -s https://raw.githubusercontent.com/gshtwy/socks5-for-serv00/main/i
 ----
 
 ### 修改版：vmess-argo|socks5|hysteria2|nezha-agent 四合一：
-- 在主菜单集成了**`一键重置服务器`**的功能  
+- 在主菜单集成了**一键重置服务器**的功能  
 - 执行`bash sb00.sh`即可再次进入主菜单
 - 支持cm大佬的action保活，需要设置`ACCOUNTS_JSON`变量
 ```
