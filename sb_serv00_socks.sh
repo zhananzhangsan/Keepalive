@@ -559,28 +559,25 @@ menu() {
    echo  "==============="
    green "3. 查看节点信息"
    echo  "==============="
-   red "4. 清理所有进程"
+   green "4. 清理进程并重启服务"
    echo  "==============="
    red "5. 重置服务器"
    echo  "==============="
-   green "6. 重启所有服务"
-   echo  "==============="
-   green "7. 添加守护CORN"
+   green "6. 添加守护CORN"
    echo  "==============="
    red "0. 退出脚本"
    echo "================"
-   reading "请输入选择(0-7): " choice
+   reading "请输入选择(0-6): " choice
    echo ""
     case "${choice}" in
         1) install_singbox ;;
         2) uninstall_singbox ;; 
         3) cat $WORKDIR/list.txt ;; 
-	4) kill_all_tasks ;;
+	4) kill_all_tasks && cd $WORKDIR && run_sb && sleep 3 && menu  ;;
         5) clean_all_files ;;
- 	6) cd $WORKDIR && run_sb && sleep 3 && menu ;;
-        7) creat_corn && menu ;;
+        6) creat_corn && menu ;;
         0) exit 0 ;;
-        *) red "无效的选项，请输入 0 到 7" && menu ;;
+        *) red "无效的选项，请输入 0 到 6" && menu ;;
     esac
 }
 menu
