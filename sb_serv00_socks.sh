@@ -211,7 +211,7 @@ reading "\n清理所有进程，但保留ssh连接，确定继续清理吗？【
   case "$choice" in
     [Yy])
         ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 2>/dev/null ;;
-	cd "$WORKDIR" && run_sb && sleep 3 && menu ;;
+	cd "${WORKDIR}" && run_sb && sleep 3 && menu ;;
     [Nn]) menu ;;
     *) red "无效的选择，请输入y或n"
     menu ;;
