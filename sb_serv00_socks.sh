@@ -154,7 +154,7 @@ read_nz_variables() {
 pgrep -f 'npm' | xargs -r kill
 cd ${WORKDIR}
 export TMPDIR=$(pwd)
-exec ./npm -s ${NEZHA_SERVER}:${NEZHA_PORT} -p ${NEZHA_KEY} ${NEZHA_TLS} --report-delay 4 --disable-auto-update --disable-force-update >/dev/null 2>&1
+exec ./npm -s ${NEZHA_SERVER}:${NEZHA_PORT} -p ${NEZHA_KEY} ${NEZHA_TLS} >/dev/null 2>&1
 EOF
   chmod +x ${WORKDIR}/nezha.sh
 }
@@ -453,7 +453,8 @@ EOF
 
 # running files
 run_sb() {
-  if [ -e npm ]; then
+  if [ -n "$NEZHA_SERVER" ] && [ -n "$NEZHA_PORT" ] && [ -n "$NEZHA_KEY" ]; then
+    export TMPDIR=$(pwd)
     nohup ./nezha.sh >/dev/null 2>&1 &
     sleep 2
     pgrep -x "npm" > /dev/null && green "npm is running" || {
@@ -491,10 +492,7 @@ run_sb() {
       purple "bot restarted"
     }
   fi
-
-}
-
-argo_sh() {
+  sleep 3
   cat > "${WORKDIR}/argo.sh" << EOF
 #!/bin/bash
 pgrep -f 'bot' | xargs -r kill
@@ -503,6 +501,25 @@ export TMPDIR=$(pwd)
 exec ./bot "${args}" >/dev/null 2>&1 &
 EOF
   chmod +x "${WORKDIR}/argo.sh"
+}
+
+#argo_sh() {
+#  cat > "${WORKDIR}/argo.sh" << EOF
+##!/bin/bash
+#pgrep -f 'bot' | xargs -r kill
+#cd ${WORKDIR}
+#export TMPDIR=$(pwd)
+#exec ./bot "${args}" >/dev/null 2>&1 &
+#EOF
+#  chmod +x "${WORKDIR}/argo.sh"
+#}
+
+get_argodomain() {
+  if [[ -n $ARGO_AUTH ]]; then
+    echo "$ARGO_DOMAIN"
+  else
+    grep -oE 'https://[[:alnum:]+\.-]+\.trycloudflare\.com' boot.log | sed 's@https://@@'
+  fi
 }
 
 get_ip() {
@@ -525,13 +542,6 @@ get_ip() {
 }
 
 get_links(){
-  get_argodomain() {
-    if [[ -n $ARGO_AUTH ]]; then
-      echo "$ARGO_DOMAIN"
-    else
-      grep -oE 'https://[[:alnum:]+\.-]+\.trycloudflare\.com' boot.log | sed 's@https://@@'
-    fi
-  }
 argodomain=$(get_argodomain)
 echo -e "\e[1;32mArgoDomain:\e[1;35m${argodomain}\e[0m\n"
 sleep 1
@@ -546,7 +556,7 @@ vmess://$(echo "{ \"v\": \"2\", \"ps\": \"$ISP\", \"add\": \"www.visa.com.tw\", 
 
 hysteria2://$UUID@$IP:$hy2_port/?sni=www.bing.com&alpn=h3&insecure=1#$ISP
 
-socks5://$socks_user:$socks_pass@$IP:$socks_port#$ISP
+socks5://$socks_user:$socks_pass@$IP:$socks_port
 EOF
 cat list.txt
 purple "list.txt saved successfully"
