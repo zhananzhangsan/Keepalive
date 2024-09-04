@@ -193,6 +193,7 @@ creat_corn() {
     else
       echo "不添加 crontab 计划任务"
     fi
+    sleep 2
 }
 
 uninstall_singbox() {
