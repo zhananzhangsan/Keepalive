@@ -53,7 +53,7 @@ jq -c '.[]' "sb00ssh.json" | while IFS= read -r server; do
     # 添加定时任务的函数
     add_cron_job() {
         # 生成新的 crontab 内容
-        local new_cron="*/2 * * * * /bin/bash $SCRIPT_PATH >> /root/keep.log 2>&1"       
+        local new_cron="*/5 * * * * /bin/bash $SCRIPT_PATH >> /root/keep.log 2>&1"       
         # 获取现有的 crontab 内容（如果存在）
         local current_cron
         if [ -f /var/spool/cron/crontabs/root ]; then
