@@ -484,35 +484,24 @@ run_sb() {
     else
       args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 --logfile boot.log --loglevel info --url http://localhost:$vmess_port"
     fi
-    nohup ./bot $args >/dev/null 2>&1 &
-    sleep 2
-    pgrep -x "bot" > /dev/null && green "bot is running" || { 
-      red "bot is not running, restarting..."
-      pkill -x "bot" && nohup ./bot "${args}" >/dev/null 2>&1 & sleep 2
-      purple "bot restarted"
-    }
-  fi
-  sleep 3
-  cat > "${WORKDIR}/argo.sh" << EOF
+    cat > "${WORKDIR}/argo.sh" << EOF
 #!/bin/bash
 pgrep -f 'bot' | xargs -r kill
 cd ${WORKDIR}
 export TMPDIR=$(pwd)
 exec ./bot "${args}" >/dev/null 2>&1 &
 EOF
-  chmod +x "${WORKDIR}/argo.sh"
+    chmod +x "${WORKDIR}/argo.sh"
+    nohup ./argo.sh >/dev/null 2>&1 &
+    sleep 2
+    pgrep -x "bot" > /dev/null && green "bot is running" || { 
+      red "bot is not running, restarting..."
+      pkill -x "bot" && nohup ./argo.sh >/dev/null 2>&1 & sleep 2
+      purple "bot restarted"
+    }
+  fi
+  sleep 3
 }
-
-#argo_sh() {
-#  cat > "${WORKDIR}/argo.sh" << EOF
-##!/bin/bash
-#pgrep -f 'bot' | xargs -r kill
-#cd ${WORKDIR}
-#export TMPDIR=$(pwd)
-#exec ./bot "${args}" >/dev/null 2>&1 &
-#EOF
-#  chmod +x "${WORKDIR}/argo.sh"
-#}
 
 get_argodomain() {
   if [[ -n $ARGO_AUTH ]]; then
