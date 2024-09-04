@@ -20,7 +20,7 @@ if [ "$(command -v pm2)" == "/home/${USERNAME}/.npm-global/bin/pm2" ]; then
 else
   if [ -e "${WORKDIR}/nezha.sh" ] && [ -e "${WORKDIR}/config.json" ] && [ -e "${WORKDIR}/argo.sh" ]; then
     echo "添加 nezha & singbox & argo 的 crontab 重启任务"
-    (crontab -l | grep -F "@reboot pkill -kill -u $(whoami) && cd ${WORKDIR} && ${CRON_NEZHA} && ${CRON_SB} && ${CRON_ARGO}") || (crontab -l; echo "@reboot pkill -kill -u $(whoami) && cd ${WORKDIR} && ${CRON_NEZHA} && ${CRON_SB} && ${CRON_ARGO}") | crontab -
+    (crontab -l | grep -F "@reboot pkill -kill -u $(whoami) && cd ${WORKDIR} && ${CRON_NEZHA} ${CRON_SB} ${CRON_ARGO}") || (crontab -l; echo "@reboot pkill -kill -u $(whoami) && cd ${WORKDIR} && ${CRON_NEZHA} ${CRON_SB} ${CRON_ARGO}") | crontab -
     (crontab -l | grep -F "* * pgrep -x \"npm\" > /dev/null || cd ${WORKDIR} && ${CRON_NEZHA}") || (crontab -l; echo "*/10 * * * * pgrep -x \"npm\" > /dev/null || cd ${WORKDIR} && ${CRON_NEZHA}") | crontab -
     (crontab -l | grep -F "* * pgrep -x \"web\" > /dev/null || cd ${WORKDIR} && ${CRON_SB}") || (crontab -l; echo "*/10 * * * * pgrep -x \"web\" > /dev/null || cd ${WORKDIR} && ${CRON_SB}") | crontab -
     (crontab -l | grep -F "* * pgrep -x \"bot\" > /dev/null || cd ${WORKDIR} && ${CRON_ARGO}") || (crontab -l; echo "*/10 * * * * pgrep -x \"bot\" > /dev/null || cd ${WORKDIR} && ${CRON_ARGO}") | crontab -
