@@ -52,11 +52,13 @@ jq -c '.[]' "sb00ssh.json" | while IFS= read -r server; do
 
     # 添加定时任务的函数
     add_cron_job() {
-        if ! crontab -l | grep -q "$SCRIPT_PATH"; then
-            (crontab -l; echo "*/2 * * * * /bin/bash $SCRIPT_PATH >> /root/keep.log 2>&1") | crontab -
-            echo -e "\e[1;32m已添加定时任务，每两分钟执行一次\e[0m"
-        else
+        # 检查 crontab 是否有内容，如果没有则创建新的
+        if crontab -l 2>/dev/null | grep -q "$SCRIPT_PATH"; then
             echo -e "\e[1;35m定时任务已存在，跳过添加计划任务\e[0m"
+        else
+            # 添加定时任务
+            (crontab -l 2>/dev/null; echo "*/2 * * * * /bin/bash $SCRIPT_PATH >> /root/keep.log 2>&1") | crontab -
+            echo -e "\e[1;32m已添加定时任务，每两分钟执行一次\e[0m"
         fi
     }
     add_cron_job
