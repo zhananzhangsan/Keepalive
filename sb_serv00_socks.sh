@@ -176,7 +176,6 @@ reading "\n确定继续安装吗？【y/n】: " choice
         download_singbox && wait
         run_sb && sleep 3
         get_links
-        argo_sh
         creat_corn
 	menu
       ;;
