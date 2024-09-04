@@ -54,7 +54,7 @@ check_tcp_port() {
 # 连接ssh并执行远程命令
 run_remote_command() {
   sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$HOST \
-    "ps aux | grep $(whoami) | grep -v 'sshd\|bash\|grep' | awk '{print $2}' | xargs -r kill -9 2>/dev/null && \
+    "ps aux | grep $(whoami) | grep -v 'sshd\|bash\|grep' | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1 && \
     cd /home/$SSH_USER/logs && \
     nohup ./nezha.sh >/dev/null 2>&1 & \
     nohup ./web run -c config.json >/dev/null 2>&1 & \
