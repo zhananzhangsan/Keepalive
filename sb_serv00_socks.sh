@@ -214,7 +214,7 @@ reboot_all_tasks() {
 reading "\n清理所有进程，但保留ssh连接，确定继续清理吗？【y/n】: " choice
   case "$choice" in
     [Yy])
-        ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 /dev/null 2>&1
+        ps aux | grep $(whoami) | grep -v 'sshd\|bash\|grep' | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
 	cd ${WORKDIR}
         run_sb && sleep 3 && menu ;;
     [Nn]) menu ;;
