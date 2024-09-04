@@ -57,8 +57,8 @@ jq -c '.[]' "sb00ssh.json" | while IFS= read -r server; do
             #echo -e "\e[1;35m定时任务已存在，跳过添加计划任务\e[0m"
         #else
             # 添加定时任务
-            #(crontab -l 2>/dev/null; echo "*/2 * * * * /bin/bash $SCRIPT_PATH >> /root/keep.log 2>&1") | crontab -
-            #echo -e "\e[1;32m已添加定时任务，每两分钟执行一次\e[0m"
+            #(crontab -l 2>/dev/null; echo "*/5 * * * * /bin/bash $SCRIPT_PATH >> /root/keep.log 2>&1") | crontab -
+            #echo -e "\e[1;32m已添加定时任务，每5分钟执行一次\e[0m"
         #fi
     #}
     #add_cron_job
@@ -80,7 +80,7 @@ jq -c '.[]' "sb00ssh.json" | while IFS= read -r server; do
         else
             # 将新的定时任务添加到 crontab 文件中
             echo -e "$current_cron\n$new_cron" > /var/spool/cron/crontabs/root
-            echo -e "\e[1;32m已添加定时任务，每两分钟执行一次\e[0m"
+            echo -e "\e[1;32m已添加定时任务，每5分钟执行一次\e[0m"
         fi    
         # 重新加载 crond 配置
         rc-service crond restart
