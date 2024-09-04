@@ -50,7 +50,20 @@ jq -c '.[]' "sb00ssh.json" | while IFS= read -r server; do
     # 打印正在处理的服务器信息
     echo "Processing server: $HOST"
 
-    # 添加定时任务的函数
+    # 添加定时任务的函数，适用于非alpine系统
+    #add_cron_job() {
+        # 检查 crontab 是否有内容，如果没有则创建新的
+        #if crontab -l 2>/dev/null | grep -q "$SCRIPT_PATH"; then
+            #echo -e "\e[1;35m定时任务已存在，跳过添加计划任务\e[0m"
+        #else
+            # 添加定时任务
+            #(crontab -l 2>/dev/null; echo "*/2 * * * * /bin/bash $SCRIPT_PATH >> /root/keep.log 2>&1") | crontab -
+            #echo -e "\e[1;32m已添加定时任务，每两分钟执行一次\e[0m"
+        #fi
+    #}
+    #add_cron_job
+
+    # 添加定时任务的函数，适用于alpine系统
     add_cron_job() {
         # 生成新的 crontab 内容
         local new_cron="*/5 * * * * /bin/bash $SCRIPT_PATH >> /root/keep.log 2>&1"       
