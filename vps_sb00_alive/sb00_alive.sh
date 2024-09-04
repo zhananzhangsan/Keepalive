@@ -21,7 +21,7 @@ install_packages() {
     elif [ -f /etc/fedora-release ]; then
         package_manager="dnf install -y"
     elif [ -f /etc/alpine-release ]; then
-        package_manager="apk add"
+        package_manager="apk add jq dcron"
     else
         echo -e "\e[1;31m不支持的系统架构！\e[0m"
         exit 1
