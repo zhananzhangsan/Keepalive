@@ -21,6 +21,10 @@ export NEZHA_PORT=${NEZHA_PORT:-'5555'}
 export NEZHA_KEY=${NEZHA_KEY:-''} 
 export ARGO_DOMAIN=${ARGO_DOMAIN:-''}   
 export ARGO_AUTH=${ARGO_AUTH:-''} 
+export VMESS_PORT=${VMESS_PORT:-'40000'}
+export SOCKS_PORT=${SOCKS_PORT:-'50000'}
+export HY2_PORT=${HY2_PORT:-'60000'}
+export CFIP=${CFIP:-'fan.yutian.us.kg'} 
 
 mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR"
 #[[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR="domains/${USERNAME}.ct8.pl/logs" || WORKDIR="domains/${USERNAME}.serv00.net/logs"
