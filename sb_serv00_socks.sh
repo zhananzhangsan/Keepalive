@@ -127,17 +127,17 @@ read_socks_variables() {
 # 设置 argo 隧道域名、json 或 token
 argo_configure() {
   if [[ -z $ARGO_AUTH || -z $ARGO_DOMAIN ]]; then
-      reading "是否需要使用固定argo隧道？【y/n】: " argo_choice
+      reading "是否需要使用固定 argo 隧道？【y/n】: " argo_choice
       [[ -z $argo_choice ]] && return
       [[ "$argo_choice" != "y" && "$argo_choice" != "Y" && "$argo_choice" != "n" && "$argo_choice" != "N" ]] && { red "无效的选择，请输入y或n"; return; }
       if [[ "$argo_choice" == "y" || "$argo_choice" == "Y" ]]; then
-          reading "请输入argo固定隧道域名: " ARGO_DOMAIN
-          green "你的argo固定隧道域名为: $ARGO_DOMAIN"
-          reading "请输入argo固定隧道密钥（Json或Token）: " ARGO_AUTH
-          green "你的argo固定隧道密钥为: $ARGO_AUTH"
-          echo -e "${red}注意：${purple}使用token，需要在cloudflare后台设置隧道端口和面板开放的tcp端口一致${re}"
+          reading "请输入 argo 固定隧道域名: " ARGO_DOMAIN
+          green "你的 argo 固定隧道域名为: $ARGO_DOMAIN"
+          reading "请输入 argo 固定隧道密钥（Json 或 Token）: " ARGO_AUTH
+          green "你的 argo 固定隧道密钥为: $ARGO_AUTH"
+          echo -e "${red}注意：${purple}使用 token，需要在 cloudflare 后台设置隧道端口和面板开放的 tcp 端口一致${re}"
       else
-          green "ARGO隧道变量未设置，将使用临时隧道"
+          green "ARGO 隧道变量未设置，将使用临时隧道"
           return
       fi
   fi
@@ -240,25 +240,27 @@ get_argodomain() {
 run_sb() {
 argodomain=$(get_argodomain)
   if [ -e npm ]; then
-    nohup ./nezha.sh >/dev/null 2>&1 &
-    sleep 2
-    pgrep -x "npm" > /dev/null && green "npm is running" || {
+    nohup ./nezha.sh >/dev/null 2>&1 & sleep 2
+    if pgrep -x "npm" >/dev/null; then
+      green "NEZHA 正在运行"
+    else
       red "NEZHA 未运行，重启中……"
       pkill -x "npm" && nohup ./nezha.sh >/dev/null 2>&1 & sleep 2
-      purple "NEZHA 已重启"
-    }
+      green "NEZHA 已重启"
+    fi
   else
     purple "NEZHA 变量为空，跳过运行"
   fi
 
   if [ -e web ]; then
-    nohup ./web run -c config.json >/dev/null 2>&1 &
-    sleep 2
-    pgrep -x "web" > /dev/null && green "web is running" || {
+    nohup ./web run -c config.json >/dev/null 2>&1 & sleep 2
+    if pgrep -x "web" > /dev/null; then
+      green "singbox 正在运行"
+    else
       red "singbox 未运行，重启中……"
       pkill -x "web" && nohup ./web run -c config.json >/dev/null 2>&1 & sleep 2
-      purple "singbox 已重启"
-    }
+      green "singbox 已重启"
+    fi
   fi
 
   if [ -e bot ]; then
@@ -269,15 +271,17 @@ argodomain=$(get_argodomain)
     else
       args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 --logfile boot.log --loglevel info --url http://localhost:$vmess_port"
     fi
-    nohup ./bot "${args}" >/dev/null 2>&1 &
-    sleep 2
-    pgrep -x "bot" > /dev/null && green "bot is running" || { 
+    nohup ./bot "${args}" >/dev/null 2>&1 & sleep 2
+    if pgrep -x "bot" > /dev/null; then
+      green "ARGO 隧道正在运行"
+    else
       red "ARGO 隧道未运行，重启中……"
       pkill -x "bot" && nohup ./bot "${args}" >/dev/null 2>&1 & sleep 2
-      purple "ARGO 已重启"
-    }
+      green "ARGO 隧道已重启"
+    fi
   fi
-  sleep 3
+
+  # 生成 argo.sh 脚本
   cat > "${WORKDIR}/argo.sh" << EOF
 #!/bin/bash
 pgrep -f 'bot' | xargs -r kill
