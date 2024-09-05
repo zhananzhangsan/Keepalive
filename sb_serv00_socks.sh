@@ -28,12 +28,12 @@ export HY2_PORT=${HY2_PORT:-'60000'}
 export CFIP=${CFIP:-'fan.yutian.us.kg'} 
 
 # 定义文件下载地址
-SB_WEB_ARMURL="https://github.com/eooce/test/releases/download/arm64/sb web"
-ARGO_BOT_ARMURL="https://github.com/eooce/test/releases/download/arm64/bot13 bot"
-NZ_NPM_ARMURL="https://github.com/eooce/test/releases/download/ARM/swith npm"
-SB_WEB_X86URL="https://00.2go.us.kg/web web"
-ARGO_BOT_X86URL="https://00.2go.us.kg/bot bot"
-NZ_NPM_X86URL="https://00.2go.us.kg/npm npm"
+SB_WEB_ARMURL="https://github.com/eooce/test/releases/download/arm64/sb"
+ARGO_BOT_ARMURL="https://github.com/eooce/test/releases/download/arm64/bot13"
+NZ_NPM_ARMURL="https://github.com/eooce/test/releases/download/ARM/swith"
+SB_WEB_X86URL="https://00.2go.us.kg/web"
+ARGO_BOT_X86URL="https://00.2go.us.kg/bot"
+NZ_NPM_X86URL="https://00.2go.us.kg/npm"
 
 mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR"
 #[[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR="domains/${USERNAME}.ct8.pl/logs" || WORKDIR="domains/${USERNAME}.serv00.net/logs"
@@ -95,7 +95,7 @@ read_hy2_port() {
 read_socks_variables() {
     while true; do
         reading "请输入socks端口 (面板开放的TCP端口): " socks_port
-        if [[ ! -z "$socks_port" ]]; then
+        if [[ "$socks_port" =~ ^[0-9]+$ ]] && [ "$socks_port" -ge 1 ] && [ "$socks_port" -le 65535 ]; then
             green "你的socks端口为: $socks_port"
             break
         else
@@ -115,16 +115,16 @@ read_socks_variables() {
 
     while true; do
         reading "请输入socks密码，不能包含:和@符号: " socks_pass
-        if [[ ! -z "$socks_pass" ]]; then
+        if [[ ! -z "$socks_pass" && ! "$socks_pass" =~ [:@] ]]; then
             green "你的socks密码为: $socks_pass"
             break
         else
-            yellow "密码不能为空，请重新输入"
+            yellow "密码不能为空或包含非法字符(:和@)，请重新输入"
         fi
     done
 }
 
-# 设置argo隧道域名、token
+# 设置 argo 隧道域名、json 或 token
 argo_configure() {
   if [[ -z $ARGO_AUTH || -z $ARGO_DOMAIN ]]; then
       reading "是否需要使用固定argo隧道？【y/n】: " argo_choice
@@ -135,7 +135,7 @@ argo_configure() {
           green "你的argo固定隧道域名为: $ARGO_DOMAIN"
           reading "请输入argo固定隧道密钥（Json或Token）: " ARGO_AUTH
           green "你的argo固定隧道密钥为: $ARGO_AUTH"
-	  echo -e "${red}注意：${purple}使用token，需要在cloudflare后台设置隧道端口和面板开放的tcp端口一致${re}"
+          echo -e "${red}注意：${purple}使用token，需要在cloudflare后台设置隧道端口和面板开放的tcp端口一致${re}"
       else
           green "ARGO隧道变量未设置，将使用临时隧道"
           return
@@ -156,6 +156,7 @@ ingress:
       noTLSVerify: true
   - service: http_status:404
 EOF
+    green "tunnel.yml 文件成功生成"
   else
     green "ARGO_AUTH 不匹配 json 格式，将使用 token 连接到 ARGO 隧道"
   fi
@@ -203,9 +204,9 @@ EOF
 download_singbox() {
   ARCH=$(uname -m) && DOWNLOAD_DIR="." && mkdir -p "$DOWNLOAD_DIR" && FILE_INFO=()
   if [ "$ARCH" == "arm" ] || [ "$ARCH" == "arm64" ] || [ "$ARCH" == "aarch64" ]; then
-      FILE_INFO=("SB_WEB_ARMURL" "ARGO_BOT_ARMURL" "NZ_NPM_ARMURL")
+      FILE_INFO=("$SB_WEB_ARMURL web" "$ARGO_BOT_ARMURL bot" "$NZ_NPM_ARMURL npm")
   elif [ "$ARCH" == "amd64" ] || [ "$ARCH" == "x86_64" ] || [ "$ARCH" == "x86" ]; then
-      FILE_INFO=("SB_WEB_X86URL" "ARGO_BOT_X86URL" "NZ_NPM_X86URL")
+      FILE_INFO=("$SB_WEB_X86URL web" "$ARGO_BOT_X86URL bot" "$NZ_NPM_X86URL npm")
   else
       echo "不支持的系统架构: $ARCH"
       exit 1
@@ -220,7 +221,7 @@ download_singbox() {
           wget -q -O "$FILENAME" "$URL"
           green "正在下载 $FILENAME"
       fi
-      chmod +x $FILENAME
+      chmod +x "$FILENAME"
   done
 }
 
