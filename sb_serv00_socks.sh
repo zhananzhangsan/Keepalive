@@ -311,7 +311,7 @@ get_ip() {
   echo "$ip"
 }
 
-# 生成节点链接并写入到list.txt
+# 生成节点链接并写入到list.txt，同时检查 socks5 连接是否有效
 get_links(){
 argodomain=$(get_argodomain)
 echo -e "\e[1;32mArgoDomain:\e[1;35m${argodomain}\e[0m\n"
@@ -593,8 +593,8 @@ EOF
 menu() {
    clear
    echo ""
-   purple "=== Serv00|ct8老王sing-box一键安装脚本（yutian81修改） ===\n"
-   echo -e "${green}脚本地址：${re}${yellow}https://github.com/eooce/Sing-box${re}\n"
+   purple "=== Serv00|ct8 yutian81魔改sing-box一键脚本 ===\n"
+   echo -e "${green}原作者为老王：${re}${yellow}https://github.com/eooce/Sing-box${re}\n"
    purple "转载请著名出处，请勿滥用\n"
    green "1. 安装sing-box"
    echo  "==============="
