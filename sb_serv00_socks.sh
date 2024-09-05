@@ -55,11 +55,12 @@ reading "\n确定继续安装吗？【y/n】: " choice
         read_nz_variables
         generate_config
         download_singbox && wait
-        run_sb && sleep 3
+	run_nezha
+        run_sb
+	run_argo
         get_links
         creat_corn
-	menu
-      ;;
+	menu ;;
     [Nn]) exit 0 ;;
     *) red "无效的选择，请输入y或n" && menu ;;
   esac
@@ -235,8 +236,8 @@ get_argodomain() {
   fi
 }
 
-# 运行 singbox 服务
-run_sb() {
+# 运行 NEZHA 服务
+run_nezha() {
   if [ -e npm ]; then
     nohup ./nezha.sh >/dev/null 2>&1 & sleep 2
     if pgrep -x "npm" >/dev/null; then
@@ -249,7 +250,10 @@ run_sb() {
   else
     purple "NEZHA 变量为空，跳过运行"
   fi
+}
 
+# 运行 singbox 服务
+run_sb() {
   if [ -e web ]; then
     nohup ./web run -c config.json >/dev/null 2>&1 & sleep 2
     if pgrep -x "web" > /dev/null; then
@@ -260,12 +264,14 @@ run_sb() {
       green "singbox 已重启"
     fi
   fi
+}
 
 # 运行 argo 服务
+run_argo() {
 argodomain=$(get_argodomain)
   if [ -e bot ]; then
     if [[ $ARGO_AUTH =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
-      args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token $ARGO_AUTH --hostname $argodomain"
+      args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token $ARGO_AUTH"
     elif [[ $ARGO_AUTH =~ TunnelSecret ]]; then
       args="tunnel --edge-ip-version auto --config tunnel.yml run"
     else
@@ -280,8 +286,7 @@ argodomain=$(get_argodomain)
       green "ARGO 隧道已重启"
     fi
   fi
-
-  # 生成 argo.sh 脚本
+# 生成 argo.sh 脚本
   cat > "${WORKDIR}/argo.sh" << EOF
 #!/bin/bash
 pgrep -f 'bot' | xargs -r kill
@@ -380,8 +385,11 @@ reading "\n清理所有进程，但保留ssh连接，确定继续清理吗？【
   case "$choice" in
     [Yy])
         ps aux | grep $(whoami) | grep -v 'sshd\|bash\|grep' | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
-	cd ${WORKDIR}
-        run_sb && sleep 3 && menu ;;
+	cd $WORKDIR
+        run_nezha
+        run_sb
+        nohup ./argo.sh >/dev/null 2>&1 & sleep 2
+	green "ARGO 正在运行" ;;
     [Nn]) menu ;;
     *) red "无效的选择，请输入y或n"
     menu ;;
