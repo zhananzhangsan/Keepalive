@@ -173,8 +173,7 @@ read_nz_variables() {
       green "你的哪吒域名为: $NEZHA_SERVER"      
       reading "请输入哪吒探针端口（回车跳过默认使用5555）：" NEZHA_PORT
       [[ -z $NEZHA_PORT ]] && NEZHA_PORT="5555"
-      green "你的哪吒端口为: $NEZHA_PORT"
-      
+      green "你的哪吒端口为: $NEZHA_PORT"   
       reading "请输入哪吒探针密钥：" NEZHA_KEY
       green "你的哪吒密钥为: $NEZHA_KEY"
   fi
