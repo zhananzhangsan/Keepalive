@@ -34,6 +34,7 @@ NZ_NPM_ARMURL="https://github.com/eooce/test/releases/download/ARM/swith"
 SB_WEB_X86URL="https://00.2go.us.kg/web"
 ARGO_BOT_X86URL="https://00.2go.us.kg/bot"
 NZ_NPM_X86URL="https://00.2go.us.kg/npm"
+UPDATA_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh"
 
 mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR"
 #[[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR="domains/${USERNAME}.ct8.pl/logs" || WORKDIR="domains/${USERNAME}.serv00.net/logs"
@@ -147,9 +148,9 @@ argo_configure() {
     fi
   fi
 
-# 根据 ARGO_AUTH 的类型生成配置文件
   if [[ $ARGO_AUTH =~ TunnelSecret ]]; then
     echo "$ARGO_AUTH" > tunnel.json
+# 当 ARGO_AUTH 为 json 时，生成 tunnel.yml 配置文件
     cat > tunnel.yml << EOF
 tunnel: $(cut -d\" -f12 <<< "$ARGO_AUTH")
 credentials-file: tunnel.json
@@ -636,10 +637,10 @@ menu() {
         1) install_singbox ;;
         2) uninstall_singbox ;; 
         3) cat $WORKDIR/list.txt ;; 
-	4) reboot_all_tasks ;;
+	      4) reboot_all_tasks ;;
         5) clean_all_files ;;
         6) creat_corn && menu ;;
-	7) curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
+	      7) curl -s $UPDATA_URL -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
         0) exit 0 ;;
         *) red "无效的选项，请输入 0 到 7" && menu ;;
     esac
