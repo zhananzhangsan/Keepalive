@@ -483,7 +483,7 @@ run_sb() {
     else
       args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 --logfile boot.log --loglevel info --url http://localhost:$vmess_port"
     fi
-    nohup ./bot $args >/dev/null 2>&1 &
+    nohup ./bot "${args}" >/dev/null 2>&1 &
     sleep 2
     pgrep -x "bot" > /dev/null && green "bot is running" || { 
       red "bot is not running, restarting..."
