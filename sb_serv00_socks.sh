@@ -228,8 +228,8 @@ download_singbox() {
 get_argodomain() {
   if [[ -n $ARGO_DOMAIN ]]; then
     echo "$ARGO_DOMAIN"
-  elif [[ -n $ARGO_AUTH ]]; then
-    echo "$ARGO_DOMAIN"  # 确保使用 $ARGO_AUTH 时也有正确的 $ARGO_DOMAIN
+  elif [[ -n $ARGO_AUTH =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
+    echo "$ARGO_DOMAIN"  # 确保 $ARGO_AUTH 为 token 时也能正确的获取 $ARGO_DOMAIN
   else
     grep -oE 'https://[[:alnum:]+\.-]+\.trycloudflare\.com' boot.log | sed 's@https://@@'
   fi
@@ -237,7 +237,6 @@ get_argodomain() {
 
 # 运行singbox服务
 run_sb() {
-argodomain=$(get_argodomain)
   if [ -e npm ]; then
     nohup ./nezha.sh >/dev/null 2>&1 & sleep 2
     if pgrep -x "npm" >/dev/null; then
@@ -262,6 +261,7 @@ argodomain=$(get_argodomain)
     fi
   fi
 
+argodomain=$(get_argodomain)
   if [ -e bot ]; then
     if [[ $ARGO_AUTH =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
       args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token $ARGO_AUTH --hostname $argodomain"
@@ -608,9 +608,11 @@ menu() {
    echo  "==============="
    green "6. 添加面板CORN任务"
    echo  "==============="
+   green "7. 更新最新脚本"
+   echo  "==============="
    red "0. 退出脚本"
    echo "==============="
-   reading "请输入选择(0-6): " choice
+   reading "请输入选择(0-7): " choice
    echo ""
     case "${choice}" in
         1) install_singbox ;;
@@ -619,8 +621,9 @@ menu() {
 	4) reboot_all_tasks ;;
         5) clean_all_files ;;
         6) creat_corn && menu ;;
+	7) curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
         0) exit 0 ;;
-        *) red "无效的选项，请输入 0 到 6" && menu ;;
+        *) red "无效的选项，请输入 0 到 7" && menu ;;
     esac
 }
 menu
