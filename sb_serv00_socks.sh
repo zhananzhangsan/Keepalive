@@ -225,12 +225,10 @@ download_singbox() {
   done
 }
 
-# 获取argo隧道的域名
+# 获取 argo 隧道的域名
 get_argodomain() {
-  if [[ -n $ARGO_DOMAIN ]]; then
+  if [[ -n $ARGO_AUTH ]]; then
     echo "$ARGO_DOMAIN"
-  elif [[ -n $ARGO_AUTH ]]; then
-    echo "$ARGO_DOMAIN"  # $ARGO_AUTH 不为空时获取 $ARGO_DOMAIN
   else
     grep -oE 'https://[[:alnum:]+\.-]+\.trycloudflare\.com' boot.log | sed 's@https://@@'
   fi
@@ -271,7 +269,7 @@ run_argo() {
 argodomain=$(get_argodomain)
   if [ -e bot ]; then
     if [[ $ARGO_AUTH =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
-      args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token $ARGO_AUTH"
+      args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token ${ARGO_AUTH}"
     elif [[ $ARGO_AUTH =~ TunnelSecret ]]; then
       args="tunnel --edge-ip-version auto --config tunnel.yml run"
     else
