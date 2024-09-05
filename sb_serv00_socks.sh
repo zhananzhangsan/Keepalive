@@ -235,7 +235,7 @@ get_argodomain() {
   fi
 }
 
-# 运行singbox服务
+# 运行 singbox 服务
 run_sb() {
   if [ -e npm ]; then
     nohup ./nezha.sh >/dev/null 2>&1 & sleep 2
@@ -261,10 +261,11 @@ run_sb() {
     fi
   fi
 
+# 运行 argo 服务
 argodomain=$(get_argodomain)
   if [ -e bot ]; then
     if [[ $ARGO_AUTH =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
-      args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token $ARGO_AUTH --hostname $argodomain"
+      args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token $ARGO_AUTH --hostname $argodomain --url http://localhost:$vmess_port"
     elif [[ $ARGO_AUTH =~ TunnelSecret ]]; then
       args="tunnel --edge-ip-version auto --config tunnel.yml run"
     else
