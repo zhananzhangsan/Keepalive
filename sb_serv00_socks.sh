@@ -453,8 +453,7 @@ EOF
 
 # running files
 run_sb() {
-  if [ -n "$NEZHA_SERVER" ] && [ -n "$NEZHA_PORT" ] && [ -n "$NEZHA_KEY" ]; then
-    export TMPDIR=$(pwd)
+  if [ -e npm ]; then
     nohup ./nezha.sh >/dev/null 2>&1 &
     sleep 2
     pgrep -x "npm" > /dev/null && green "npm is running" || {
