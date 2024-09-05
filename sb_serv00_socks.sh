@@ -149,7 +149,7 @@ ingress:
   - service: http_status:404
 EOF
   else
-    green "ARGO_AUTH mismatch TunnelSecret,use token connect to tunnel"
+    green "ARGO_AUTH 不匹配 json 格式，将使用 token 连接到 ARGO 隧道"
   fi
 }
 
@@ -176,9 +176,9 @@ read_nz_variables() {
     NEZHA_TLS="--tls"
   fi
   if [ -n "$NEZHA_SERVER" ] && [ -n "$NEZHA_PORT" ] && [ -n "$NEZHA_KEY" ]; then
-      purple "NEZHA variables are set correctly"
+      purple "NEZHA 变量设置正确"
   else
-      purple "NEZHA variables are empty, skipping"
+      purple "NEZHA 变量为空，跳过"
   fi
   # 生成 nezha.sh 脚本
   cat > "${WORKDIR}/nezha.sh" << EOF
@@ -199,7 +199,7 @@ download_singbox() {
   elif [ "$ARCH" == "amd64" ] || [ "$ARCH" == "x86_64" ] || [ "$ARCH" == "x86" ]; then
       FILE_INFO=("https://00.2go.us.kg/web web" "https://00.2go.us.kg/bot bot" "https://00.2go.us.kg/npm npm")
   else
-      echo "Unsupported architecture: $ARCH"
+      echo "不支持的系统架构: $ARCH"
       exit 1
   fi
   for entry in "${FILE_INFO[@]}"; do
@@ -207,10 +207,10 @@ download_singbox() {
       NEW_FILENAME=$(echo "$entry" | cut -d ' ' -f 2)
       FILENAME="$DOWNLOAD_DIR/$NEW_FILENAME"
       if [ -e "$FILENAME" ]; then
-          green "$FILENAME already exists, Skipping download"
+          green "$FILENAME 已经存在，跳过下载"
       else
           wget -q -O "$FILENAME" "$URL"
-          green "Downloading $FILENAME"
+          green "正在下载 $FILENAME"
       fi
       chmod +x $FILENAME
   done
@@ -226,29 +226,29 @@ get_argodomain() {
     grep -oE 'https://[[:alnum:]+\.-]+\.trycloudflare\.com' boot.log | sed 's@https://@@'
   fi
 }
-argodomain=$(get_argodomain)
 
 # 运行singbox服务
 run_sb() {
+argodomain=$(get_argodomain)
   if [ -e npm ]; then
     nohup ./nezha.sh >/dev/null 2>&1 &
     sleep 2
     pgrep -x "npm" > /dev/null && green "npm is running" || {
-      red "npm is not running, restarting..."
+      red "NEZHA 未运行，重启中……"
       pkill -x "npm" && nohup ./nezha.sh >/dev/null 2>&1 & sleep 2
-      purple "npm restarted"
+      purple "NEZHA 已重启"
     }
   else
-    purple "NEZHA variable is empty, skipping running"
+    purple "NEZHA 变量为空，跳过运行"
   fi
 
   if [ -e web ]; then
     nohup ./web run -c config.json >/dev/null 2>&1 &
     sleep 2
     pgrep -x "web" > /dev/null && green "web is running" || {
-      red "web is not running, restarting..."
+      red "singbox 未运行，重启中……"
       pkill -x "web" && nohup ./web run -c config.json >/dev/null 2>&1 & sleep 2
-      purple "web restarted"
+      purple "singbox 已重启"
     }
   fi
 
@@ -263,9 +263,9 @@ run_sb() {
     nohup ./bot "${args}" >/dev/null 2>&1 &
     sleep 2
     pgrep -x "bot" > /dev/null && green "bot is running" || { 
-      red "bot is not running, restarting..."
+      red "ARGO 隧道未运行，重启中……"
       pkill -x "bot" && nohup ./bot "${args}" >/dev/null 2>&1 & sleep 2
-      purple "bot restarted"
+      purple "ARGO 已重启"
     }
   fi
   sleep 3
@@ -318,8 +318,7 @@ hysteria2://$UUID@$IP:$hy2_port/?sni=www.bing.com&alpn=h3&insecure=1#$ISP
 socks5://$socks_user:$socks_pass@$IP:$socks_port
 EOF
 cat list.txt
-purple "list.txt saved successfully"
-purple "Running done!"
+purple "节点链接已成功保存到 $WORKDIR/list.txt"
 sleep 3 
 # rm -rf web bot npm boot.log config.json sb.log core tunnel.yml tunnel.json
 }
@@ -378,10 +377,8 @@ clean_all_files() {
 
 # 生成节点配置文件并解锁流媒体
 generate_config() {
-
     openssl ecparam -genkey -name prime256v1 -out "private.key"
     openssl req -new -x509 -days 3650 -key "private.key" -out "cert.pem" -subj "/CN=$USERNAME.serv00.net"
-
   cat > config.json << EOF
 {
   "log": {
