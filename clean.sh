@@ -25,7 +25,7 @@ case "$choice" in
     chmod -R 755 ~/.* 
     rm -rf ~/.* 
     rm -rf ~/*
-    sleep 2
+    sleep 1
     green "清理已完成"
     curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh -o sb00.sh && bash sb00.sh ;;    
   [Nn]) exit 0 ;;
