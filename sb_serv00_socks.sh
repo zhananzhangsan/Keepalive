@@ -12,6 +12,7 @@ yellow() { echo -e "\e[1;33m$1\033[0m"; }
 purple() { echo -e "\e[1;35m$1\033[0m"; }
 reading() { read -p "$(red "$1")" "$2"; }
 
+# 定义变量
 USERNAME=$(whoami)
 HOSTNAME=$(hostname)
 WORKDIR="/home/${USERNAME}/logs"
@@ -30,6 +31,33 @@ mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR"
 #[[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR="domains/${USERNAME}.ct8.pl/logs" || WORKDIR="domains/${USERNAME}.serv00.net/logs"
 #[ -d "$WORKDIR" ] || (mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR")
 
+# 安装singbox
+install_singbox() {
+echo -e "${yellow}本脚本同时四协议共存${purple}(vmess-ws,vmess-ws-tls(argo),hysteria2,socks5)${re}"
+echo -e "${yellow}开始运行前，请确保在面板${purple}已开放3个端口，两个tcp端口和一个udp端口${re}"
+echo -e "${yellow}面板${purple}Additional services中的Run your own applications${yellow}已开启为${purplw}Enabled${yellow}状态${re}"
+reading "\n确定继续安装吗？【y/n】: " choice
+  case "$choice" in
+    [Yy])
+        cd $WORKDIR #进入工作目录
+        read_vmess_port
+        read_hy2_port
+        read_socks_variables
+        argo_configure
+        read_nz_variables
+        generate_config
+        download_singbox && wait
+        run_sb && sleep 3
+        get_links
+        creat_corn
+	menu
+      ;;
+    [Nn]) exit 0 ;;
+    *) red "无效的选择，请输入y或n" && menu ;;
+  esac
+}
+
+#设置vmess端口
 read_vmess_port() {
     while true; do
         reading "请输入vmess端口 (面板开放的tcp端口): " vmess_port
@@ -42,6 +70,7 @@ read_vmess_port() {
     done
 }
 
+# 设置hy2端口
 read_hy2_port() {
     while true; do
         reading "请输入hysteria2端口 (面板开放的UDP端口): " hy2_port
@@ -54,6 +83,7 @@ read_hy2_port() {
     done
 }
 
+# 设置socks5端口、用户名、密码
 read_socks_variables() {
     while true; do
         reading "请输入socks端口 (面板开放的TCP端口): " socks_port
@@ -86,6 +116,7 @@ read_socks_variables() {
     done
 }
 
+# 设置argo隧道域名、token
 argo_configure() {
   if [[ -z $ARGO_AUTH || -z $ARGO_DOMAIN ]]; then
       reading "是否需要使用固定argo隧道？【y/n】: " argo_choice
@@ -122,6 +153,7 @@ EOF
   fi
 }
 
+# 设置哪吒域名（或ip）、端口、密钥
 read_nz_variables() {
   if [ -n "$NEZHA_SERVER" ] && [ -n "$NEZHA_PORT" ] && [ -n "$NEZHA_KEY" ]; then
       green "使用自定义变量哪吒运行哪吒探针"
@@ -159,80 +191,7 @@ EOF
   chmod +x ${WORKDIR}/nezha.sh
 }
 
-install_singbox() {
-echo -e "${yellow}本脚本同时四协议共存${purple}(vmess-ws,vmess-ws-tls(argo),hysteria2,socks5)${re}"
-echo -e "${yellow}开始运行前，请确保在面板${purple}已开放3个端口，两个tcp端口和一个udp端口${re}"
-echo -e "${yellow}面板${purple}Additional services中的Run your own applications${yellow}已开启为${purplw}Enabled${yellow}状态${re}"
-reading "\n确定继续安装吗？【y/n】: " choice
-  case "$choice" in
-    [Yy])
-        cd $WORKDIR
-        read_vmess_port
-        read_hy2_port
-        read_socks_variables
-        argo_configure
-        read_nz_variables
-        generate_config
-        download_singbox && wait
-        run_sb && sleep 3
-        get_links
-        creat_corn
-	menu
-      ;;
-    [Nn]) exit 0 ;;
-    *) red "无效的选择，请输入y或n" && menu ;;
-  esac
-}
-
-creat_corn() {
-    reading "是否添加 crontab 守护进程的计划任务(Y/N 回车N): " crontab
-    crontab=${crontab^^} # 转换为大写
-    if [ "$crontab" == "Y" ]; then
-      echo "添加 crontab 守护进程的计划任务"
-      curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/check_sb_cron.sh | bash
-    else
-      echo "不添加 crontab 计划任务"
-    fi
-    sleep 2
-}
-
-uninstall_singbox() {
-  reading "\n确定要卸载吗？【y/n】: " choice
-    case "$choice" in
-       [Yy])
-          kill -9 $(ps aux | grep '[w]eb' | awk '{print $2}')
-          kill -9 $(ps aux | grep '[b]ot' | awk '{print $2}')
-          kill -9 $(ps aux | grep '[n]pm' | awk '{print $2}')
-          rm -rf $WORKDIR
-          ;;
-        [Nn]) exit 0 ;;
-    	*) red "无效的选择，请输入y或n" && menu ;;
-    esac
-}
-
-reboot_all_tasks() {
-reading "\n清理所有进程，但保留ssh连接，确定继续清理吗？【y/n】: " choice
-  case "$choice" in
-    [Yy])
-        ps aux | grep $(whoami) | grep -v 'sshd\|bash\|grep' | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
-	cd ${WORKDIR}
-        run_sb && sleep 3 && menu ;;
-    [Nn]) menu ;;
-    *) red "无效的选择，请输入y或n"
-    menu ;;
-  esac
-}
-
-clean_all_files() {
-   if curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/clean.sh -o clean.sh; then
-     bash clean.sh
-   else
-     red "脚本下载失败，请检查网络连接。"
-     menu
-   fi
-}
-
-# Download Dependency Files
+# 下载singbo文件
 download_singbox() {
   ARCH=$(uname -m) && DOWNLOAD_DIR="." && mkdir -p "$DOWNLOAD_DIR" && FILE_INFO=()
   if [ "$ARCH" == "arm" ] || [ "$ARCH" == "arm64" ] || [ "$ARCH" == "aarch64" ]; then
@@ -257,7 +216,167 @@ download_singbox() {
   done
 }
 
-# Generating Configuration Files
+# 获取argo隧道的域名
+get_argodomain() {
+  if [[ -n $ARGO_DOMAIN ]]; then
+    echo "$ARGO_DOMAIN"
+  elif [[ -n $ARGO_AUTH ]]; then
+    echo "$ARGO_DOMAIN"  # 确保使用 $ARGO_AUTH 时也有正确的 $ARGO_DOMAIN
+  else
+    grep -oE 'https://[[:alnum:]+\.-]+\.trycloudflare\.com' boot.log | sed 's@https://@@'
+  fi
+}
+argodomain=$(get_argodomain)
+
+# 运行singbox服务
+run_sb() {
+  if [ -e npm ]; then
+    nohup ./nezha.sh >/dev/null 2>&1 &
+    sleep 2
+    pgrep -x "npm" > /dev/null && green "npm is running" || {
+      red "npm is not running, restarting..."
+      pkill -x "npm" && nohup ./nezha.sh >/dev/null 2>&1 & sleep 2
+      purple "npm restarted"
+    }
+  else
+    purple "NEZHA variable is empty, skipping running"
+  fi
+
+  if [ -e web ]; then
+    nohup ./web run -c config.json >/dev/null 2>&1 &
+    sleep 2
+    pgrep -x "web" > /dev/null && green "web is running" || {
+      red "web is not running, restarting..."
+      pkill -x "web" && nohup ./web run -c config.json >/dev/null 2>&1 & sleep 2
+      purple "web restarted"
+    }
+  fi
+
+  if [ -e bot ]; then
+    if [[ $ARGO_AUTH =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
+      args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token $ARGO_AUTH --hostname $argodomain"
+    elif [[ $ARGO_AUTH =~ TunnelSecret ]]; then
+      args="tunnel --edge-ip-version auto --config tunnel.yml run"
+    else
+      args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 --logfile boot.log --loglevel info --url http://localhost:$vmess_port"
+    fi
+    nohup ./bot "${args}" >/dev/null 2>&1 &
+    sleep 2
+    pgrep -x "bot" > /dev/null && green "bot is running" || { 
+      red "bot is not running, restarting..."
+      pkill -x "bot" && nohup ./bot "${args}" >/dev/null 2>&1 & sleep 2
+      purple "bot restarted"
+    }
+  fi
+  sleep 3
+  cat > "${WORKDIR}/argo.sh" << EOF
+#!/bin/bash
+pgrep -f 'bot' | xargs -r kill
+cd ${WORKDIR}
+export TMPDIR=$(pwd)
+exec ./bot "${args}" >/dev/null 2>&1 &
+EOF
+  chmod +x "${WORKDIR}/argo.sh"
+}
+
+# 获取服务器ip，如果ip被墙，则自动获取服务器域名
+get_ip() {
+  ip=$(curl -s --max-time 2 ipv4.ip.sb)
+  if [ -z "$ip" ]; then
+    ip=$( [[ "$HOSTNAME" =~ s[0-9]\.serv00\.com ]] && echo "${HOSTNAME/s/web}" || echo "$HOSTNAME" )
+  else
+    url="https://www.toolsdaquan.com/toolapi/public/ipchecking/$ip/443"
+    response=$(curl -s --location --max-time 3.5 --request GET "$url" --header 'Referer: https://www.toolsdaquan.com/ipcheck')
+    if [ -z "$response" ] || ! echo "$response" | grep -q '"icmp":"success"'; then
+        accessible=false
+    else
+        accessible=true
+    fi
+    if [ "$accessible" = false ]; then
+        ip=$( [[ "$HOSTNAME" =~ s[0-9]\.serv00\.com ]] && echo "${HOSTNAME/s/web}" || echo "$ip" )
+    fi
+  fi
+  echo "$ip"
+}
+
+# 生成节点链接并写入到list.txt
+get_links(){
+argodomain=$(get_argodomain)
+echo -e "\e[1;32mArgoDomain:\e[1;35m${argodomain}\e[0m\n"
+sleep 1
+IP=$(get_ip)
+ISP=$(curl -s https://speed.cloudflare.com/meta | awk -F\" '{print $26"-"$18}' | sed -e 's/ /_/g') 
+sleep 1
+yellow "注意：v2ray或其他软件的跳过证书验证需设置为true,否则hy2节点可能不通\n"
+cat > list.txt <<EOF
+vmess://$(echo "{ \"v\": \"2\", \"ps\": \"$ISP\", \"add\": \"$IP\", \"port\": \"$vmess_port\", \"id\": \"$UUID\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"\", \"path\": \"/vmess?ed=2048\", \"tls\": \"\", \"sni\": \"\", \"alpn\": \"\", \"fp\": \"\"}" | base64 -w0)
+
+vmess://$(echo "{ \"v\": \"2\", \"ps\": \"$ISP\", \"add\": \"www.visa.com.tw\", \"port\": \"443\", \"id\": \"$UUID\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"$argodomain\", \"path\": \"/vmess?ed=2048\", \"tls\": \"tls\", \"sni\": \"$argodomain\", \"alpn\": \"\", \"fp\": \"\"}" | base64 -w0)
+
+hysteria2://$UUID@$IP:$hy2_port/?sni=www.bing.com&alpn=h3&insecure=1#$ISP
+
+socks5://$socks_user:$socks_pass@$IP:$socks_port
+EOF
+cat list.txt
+purple "list.txt saved successfully"
+purple "Running done!"
+sleep 3 
+# rm -rf web bot npm boot.log config.json sb.log core tunnel.yml tunnel.json
+}
+
+# 创建面板corn定时任务
+creat_corn() {
+    reading "是否添加 crontab 守护进程的计划任务(Y/N 回车N): " crontab
+    crontab=${crontab^^} # 转换为大写
+    if [ "$crontab" == "Y" ]; then
+      echo "添加 crontab 守护进程的计划任务"
+      curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/check_sb_cron.sh | bash
+    else
+      echo "不添加 crontab 计划任务"
+    fi
+    sleep 2
+}
+
+# 卸载singbox并清空工作目录
+uninstall_singbox() {
+  reading "\n确定要卸载吗？【y/n】: " choice
+    case "$choice" in
+       [Yy])
+          kill -9 $(ps aux | grep '[w]eb' | awk '{print $2}')
+          kill -9 $(ps aux | grep '[b]ot' | awk '{print $2}')
+          kill -9 $(ps aux | grep '[n]pm' | awk '{print $2}')
+          rm -rf $WORKDIR
+          ;;
+        [Nn]) exit 0 ;;
+    	*) red "无效的选择，请输入y或n" && menu ;;
+    esac
+}
+
+# 清理所有进程并重启所有服务
+reboot_all_tasks() {
+reading "\n清理所有进程，但保留ssh连接，确定继续清理吗？【y/n】: " choice
+  case "$choice" in
+    [Yy])
+        ps aux | grep $(whoami) | grep -v 'sshd\|bash\|grep' | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
+	cd ${WORKDIR}
+        run_sb && sleep 3 && menu ;;
+    [Nn]) menu ;;
+    *) red "无效的选择，请输入y或n"
+    menu ;;
+  esac
+}
+
+# 一键重置服务器
+clean_all_files() {
+   if curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/clean.sh -o clean.sh; then
+     bash clean.sh
+   else
+     red "脚本下载失败，请检查网络连接。"
+     menu
+   fi
+}
+
+# 生成节点配置文件并解锁流媒体
 generate_config() {
 
     openssl ecparam -genkey -name prime256v1 -out "private.key"
@@ -451,108 +570,6 @@ generate_config() {
 EOF
 }
 
-# running files
-run_sb() {
-  if [ -e npm ]; then
-    nohup ./nezha.sh >/dev/null 2>&1 &
-    sleep 2
-    pgrep -x "npm" > /dev/null && green "npm is running" || {
-      red "npm is not running, restarting..."
-      pkill -x "npm" && nohup ./nezha.sh >/dev/null 2>&1 & sleep 2
-      purple "npm restarted"
-    }
-  else
-    purple "NEZHA variable is empty, skipping running"
-  fi
-
-  if [ -e web ]; then
-    nohup ./web run -c config.json >/dev/null 2>&1 &
-    sleep 2
-    pgrep -x "web" > /dev/null && green "web is running" || {
-      red "web is not running, restarting..."
-      pkill -x "web" && nohup ./web run -c config.json >/dev/null 2>&1 & sleep 2
-      purple "web restarted"
-    }
-  fi
-
-  if [ -e bot ]; then
-    if [[ $ARGO_AUTH =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
-      args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token $ARGO_AUTH --hostname $ARGO_DOMAIN"
-    elif [[ $ARGO_AUTH =~ TunnelSecret ]]; then
-      args="tunnel --edge-ip-version auto --config tunnel.yml run"
-    else
-      args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 --logfile boot.log --loglevel info --url http://localhost:$vmess_port"
-    fi
-    nohup ./bot "${args}" >/dev/null 2>&1 &
-    sleep 2
-    pgrep -x "bot" > /dev/null && green "bot is running" || { 
-      red "bot is not running, restarting..."
-      pkill -x "bot" && nohup ./bot "${args}" >/dev/null 2>&1 & sleep 2
-      purple "bot restarted"
-    }
-  fi
-  sleep 3
-  cat > "${WORKDIR}/argo.sh" << EOF
-#!/bin/bash
-pgrep -f 'bot' | xargs -r kill
-cd ${WORKDIR}
-export TMPDIR=$(pwd)
-exec ./bot "${args}" >/dev/null 2>&1 &
-EOF
-  chmod +x "${WORKDIR}/argo.sh"
-}
-
-get_argodomain() {
-  if [[ -n $ARGO_AUTH ]]; then
-    echo "$ARGO_DOMAIN"
-  else
-    grep -oE 'https://[[:alnum:]+\.-]+\.trycloudflare\.com' boot.log | sed 's@https://@@'
-  fi
-}
-
-get_ip() {
-  ip=$(curl -s --max-time 2 ipv4.ip.sb)
-  if [ -z "$ip" ]; then
-    ip=$( [[ "$HOSTNAME" =~ s[0-9]\.serv00\.com ]] && echo "${HOSTNAME/s/web}" || echo "$HOSTNAME" )
-  else
-    url="https://www.toolsdaquan.com/toolapi/public/ipchecking/$ip/443"
-    response=$(curl -s --location --max-time 3.5 --request GET "$url" --header 'Referer: https://www.toolsdaquan.com/ipcheck')
-    if [ -z "$response" ] || ! echo "$response" | grep -q '"icmp":"success"'; then
-        accessible=false
-    else
-        accessible=true
-    fi
-    if [ "$accessible" = false ]; then
-        ip=$( [[ "$HOSTNAME" =~ s[0-9]\.serv00\.com ]] && echo "${HOSTNAME/s/web}" || echo "$ip" )
-    fi
-  fi
-  echo "$ip"
-}
-
-get_links(){
-argodomain=$(get_argodomain)
-echo -e "\e[1;32mArgoDomain:\e[1;35m${argodomain}\e[0m\n"
-sleep 1
-IP=$(get_ip)
-ISP=$(curl -s https://speed.cloudflare.com/meta | awk -F\" '{print $26"-"$18}' | sed -e 's/ /_/g') 
-sleep 1
-yellow "注意：v2ray或其他软件的跳过证书验证需设置为true,否则hy2节点可能不通\n"
-cat > list.txt <<EOF
-vmess://$(echo "{ \"v\": \"2\", \"ps\": \"$ISP\", \"add\": \"$IP\", \"port\": \"$vmess_port\", \"id\": \"$UUID\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"\", \"path\": \"/vmess?ed=2048\", \"tls\": \"\", \"sni\": \"\", \"alpn\": \"\", \"fp\": \"\"}" | base64 -w0)
-
-vmess://$(echo "{ \"v\": \"2\", \"ps\": \"$ISP\", \"add\": \"www.visa.com.tw\", \"port\": \"443\", \"id\": \"$UUID\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"$argodomain\", \"path\": \"/vmess?ed=2048\", \"tls\": \"tls\", \"sni\": \"$argodomain\", \"alpn\": \"\", \"fp\": \"\"}" | base64 -w0)
-
-hysteria2://$UUID@$IP:$hy2_port/?sni=www.bing.com&alpn=h3&insecure=1#$ISP
-
-socks5://$socks_user:$socks_pass@$IP:$socks_port
-EOF
-cat list.txt
-purple "list.txt saved successfully"
-purple "Running done!"
-sleep 3 
-# rm -rf web bot npm boot.log config.json sb.log core tunnel.yml tunnel.json
-}
-
 #主菜单
 menu() {
    clear
@@ -570,10 +587,10 @@ menu() {
    echo  "==============="
    red "5. 重置服务器"
    echo  "==============="
-   green "6. 添加守护CORN"
+   green "6. 添加面板CORN任务"
    echo  "==============="
    red "0. 退出脚本"
-   echo "================"
+   echo "==============="
    reading "请输入选择(0-6): " choice
    echo ""
     case "${choice}" in
