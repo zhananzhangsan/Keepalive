@@ -27,6 +27,14 @@ export SOCKS_PORT=${SOCKS_PORT:-'50000'}
 export HY2_PORT=${HY2_PORT:-'60000'}
 export CFIP=${CFIP:-'fan.yutian.us.kg'} 
 
+# 定义文件下载地址
+SB_WEB_ARMURL="https://github.com/eooce/test/releases/download/arm64/sb web"
+ARGO_BOT_ARMURL="https://github.com/eooce/test/releases/download/arm64/bot13 bot"
+NZ_NPM_ARMURL="https://github.com/eooce/test/releases/download/ARM/swith npm"
+SB_WEB_X86URL="https://00.2go.us.kg/web web"
+ARGO_BOT_X86URL="https://00.2go.us.kg/bot bot"
+NZ_NPM_X86URL="https://00.2go.us.kg/npm npm"
+
 mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR"
 #[[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR="domains/${USERNAME}.ct8.pl/logs" || WORKDIR="domains/${USERNAME}.serv00.net/logs"
 #[ -d "$WORKDIR" ] || (mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR")
@@ -35,7 +43,7 @@ mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR"
 install_singbox() {
 echo -e "${yellow}本脚本同时四协议共存${purple}(vmess-ws,vmess-ws-tls(argo),hysteria2,socks5)${re}"
 echo -e "${yellow}开始运行前，请确保在面板${purple}已开放3个端口，两个tcp端口和一个udp端口${re}"
-echo -e "${yellow}面板${purple}Additional services中的Run your own applications${yellow}已开启为${purplw}Enabled${yellow}状态${re}"
+echo -e "${yellow}面板${purple}Additional services中的Run your own applications${yellow}已开启为${purple}Enabled${yellow}状态${re}"
 reading "\n确定继续安装吗？【y/n】: " choice
   case "$choice" in
     [Yy])
@@ -195,9 +203,9 @@ EOF
 download_singbox() {
   ARCH=$(uname -m) && DOWNLOAD_DIR="." && mkdir -p "$DOWNLOAD_DIR" && FILE_INFO=()
   if [ "$ARCH" == "arm" ] || [ "$ARCH" == "arm64" ] || [ "$ARCH" == "aarch64" ]; then
-      FILE_INFO=("https://github.com/eooce/test/releases/download/arm64/sb web" "https://github.com/eooce/test/releases/download/arm64/bot13 bot" "https://github.com/eooce/test/releases/download/ARM/swith npm")
+      FILE_INFO=("SB_WEB_ARMURL" "ARGO_BOT_ARMURL" "NZ_NPM_ARMURL")
   elif [ "$ARCH" == "amd64" ] || [ "$ARCH" == "x86_64" ] || [ "$ARCH" == "x86" ]; then
-      FILE_INFO=("https://00.2go.us.kg/web web" "https://00.2go.us.kg/bot bot" "https://00.2go.us.kg/npm npm")
+      FILE_INFO=("SB_WEB_X86URL" "ARGO_BOT_X86URL" "NZ_NPM_X86URL")
   else
       echo "不支持的系统架构: $ARCH"
       exit 1
