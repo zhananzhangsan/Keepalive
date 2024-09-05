@@ -228,8 +228,8 @@ download_singbox() {
 get_argodomain() {
   if [[ -n $ARGO_DOMAIN ]]; then
     echo "$ARGO_DOMAIN"
-  elif [[ $ARGO_AUTH =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
-    echo "$ARGO_DOMAIN"  # 确保 $ARGO_AUTH 为 token 时也能正确的获取 $ARGO_DOMAIN
+  elif [[ -n $ARGO_AUTH ]]; then
+    echo "$ARGO_DOMAIN"  # $ARGO_AUTH 不为空时获取 $ARGO_DOMAIN
   else
     grep -oE 'https://[[:alnum:]+\.-]+\.trycloudflare\.com' boot.log | sed 's@https://@@'
   fi
