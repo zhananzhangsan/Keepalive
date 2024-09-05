@@ -17,18 +17,22 @@ USERNAME=$(whoami)
 HOSTNAME=$(hostname)
 
 cd "/home/${USERNAME}"
-reading "\n清理所有文件，重置服务器，确定继续吗？【y/n】: " choice
-case "$choice" in
-  [Yy])
-    ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 2>/dev/null
-    chmod -R 755 ~/*
-    chmod -R 755 ~/.* 
-    rm -rf ~/.* 
-    rm -rf ~/*
-    sleep 1
-    green "清理已完成"
-    curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh -o sb00.sh && bash sb00.sh ;;    
-  [Nn]) exit 0 ;;
-  *) red "无效的选择，请输入y或n"
-  curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh -o sb00.sh && bash sb00.sh ;;
-esac
+while true; do
+  reading "\n清理所有文件，重置服务器，确定继续吗？【y/n】: " choice
+  case "$choice" in
+    [Yy])
+      ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 2>/dev/null
+      chmod -R 755 ~/*
+      chmod -R 755 ~/.* 
+      rm -rf ~/.* 
+      rm -rf ~/*
+      sleep 1
+      green "清理已完成"
+      curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh -o sb00.sh && bash sb00.sh
+      break ;;    
+    [Nn])
+      curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh -o sb00.sh && bash sb00.sh
+      break ;; 
+    *) red "无效的选择，请输入y或n" ;;
+  esac
+done
