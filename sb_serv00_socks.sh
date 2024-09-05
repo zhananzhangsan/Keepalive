@@ -334,6 +334,16 @@ cat list.txt
 purple "节点链接已成功保存到 $WORKDIR/list.txt"
 sleep 3 
 # rm -rf web bot npm boot.log config.json sb.log core tunnel.yml tunnel.json
+response=$(curl -s ip.sb --socks5 "$socks_user:$socks_pass@localhost:$socks_port")
+  if [[ $? -eq 0 ]]; then
+    if [[ "$response" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+      green "SOCKS5 连接有效，服务器 IP 地址为: $response"
+    else
+      red "SOCKS5 连接无效，返回信息: $response"
+    fi
+  else
+    red "SOCKS5 连接无效，检查端口设置是否正确"
+  fi
 }
 
 # 创建面板corn定时任务
