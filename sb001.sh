@@ -514,42 +514,6 @@ reading "\n清理所有进程，但保留ssh连接，确定继续清理吗？【
   esac
 }
 
-#主菜单
-menu() {
-   clear
-   echo ""
-   purple "=== Serv00|ct8 yutian81魔改sing-box一键脚本 ===\n"
-   echo -e "${green}原作者为老王：${re}${yellow}https://github.com/eooce/Sing-box${re}\n"
-   purple "转载请著名出处，请勿滥用\n"
-   green "1. 安装sing-box"
-   echo  "==============="
-   red "2. 卸载并重置服务器"
-   echo  "==============="
-   green "3. 查看节点信息"
-   echo  "==============="
-   red "4. 重启所有进程"
-   echo  "==============="
-   green "5. 添加面板CORN任务"
-   echo  "==============="
-   green "6. 更新最新脚本"
-   echo  "==============="
-   red "0. 退出脚本"
-   echo "==============="
-   reading "请输入选择(0-6): " choice
-   echo ""
-    case "${choice}" in
-        1) install_singbox ;;
-        2) clean_all ;; 
-        3) cat $WORKDIR/list.txt ;; 
-	4) reboot_all_tasks ;;
-        5) creat_corn ;;
-	6) curl -s $UPDATA_URL -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
-        0) exit 0 ;;
-        *) red "无效的选项，请输入 0 到 6" && menu ;;
-    esac
-}
-menu
-
 # 生成节点配置文件并解锁流媒体
 generate_config() {
     openssl ecparam -genkey -name prime256v1 -out "private.key"
@@ -741,3 +705,39 @@ generate_config() {
 }
 EOF
 }
+
+#主菜单
+menu() {
+   clear
+   echo ""
+   purple "=== Serv00|ct8 yutian81魔改sing-box一键脚本 ===\n"
+   echo -e "${green}原作者为老王：${re}${yellow}https://github.com/eooce/Sing-box${re}\n"
+   purple "转载请著名出处，请勿滥用\n"
+   green "1. 安装sing-box"
+   echo  "==============="
+   red "2. 卸载并重置服务器"
+   echo  "==============="
+   green "3. 查看节点信息"
+   echo  "==============="
+   red "4. 重启所有进程"
+   echo  "==============="
+   green "5. 添加面板CORN任务"
+   echo  "==============="
+   green "6. 更新最新脚本"
+   echo  "==============="
+   red "0. 退出脚本"
+   echo "==============="
+   reading "请输入选择(0-6): " choice
+   echo ""
+    case "${choice}" in
+        1) install_singbox ;;
+        2) clean_all ;; 
+        3) cat $WORKDIR/list.txt ;; 
+	4) reboot_all_tasks ;;
+        5) creat_corn ;;
+	6) curl -s $UPDATA_URL -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
+        0) exit 0 ;;
+        *) red "无效的选项，请输入 0 到 6" && menu ;;
+    esac
+}
+menu
