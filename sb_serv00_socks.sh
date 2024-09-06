@@ -173,7 +173,7 @@ EOF
 #!/bin/bash
 pgrep -f 'bot' | xargs -r kill
 cd "${WORKDIR}"
-chmod +x argo.sh
+chmod +x bot
 export TMPDIR=$(pwd)
 exec ./bot "${args}" >/dev/null 2>&1 & 
 sleep 2
@@ -218,7 +218,7 @@ read_nz_variables() {
 #!/bin/bash
 pgrep -f 'npm' | xargs -r kill
 cd "${WORKDIR}"
-chmod +x nezha.sh
+chmod +x npm
 export TMPDIR=$(pwd)
 exec ./npm -s "${NEZHA_SERVER}:${NEZHA_PORT}" -p "${NEZHA_KEY}" "${NEZHA_TLS}" >/dev/null 2>&1 &
 sleep 2
