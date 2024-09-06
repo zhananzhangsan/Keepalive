@@ -58,9 +58,9 @@ reading "\n确定继续安装吗？【y/n】: " choice
         read_nz_variables
         generate_config
         download_singbox
-	      run_nezha
+        run_nezha
         run_sb
-	      run_argo
+        run_argo
         get_links
         creat_corn ;;
     [Nn]) exit 0 ;;
@@ -421,8 +421,8 @@ creat_corn() {
     case "$choice" in
         [Yy])
            curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/check_sb_cron.sh | bash
-	         green "已添加成功" && menu ;;
-	      [Nn]) menu ;;
+           green "已添加成功" && menu ;;
+        [Nn]) menu ;;
         *) red "无效的选择，请重新输入 y 或 n" && menu ;;
     esac
 }
@@ -483,19 +483,19 @@ reading "\n清理所有进程，但保留ssh连接，确定继续清理吗？【
         [ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
         nohup ./nezha.sh >/dev/null 2>&1 &
         sleep 2
-	          if pgrep -x 'npm' > /dev/null; then
-                green "NEZHA 已重启"
-	          fi
+            if pgrep -x 'npm' > /dev/null; then
+               green "NEZHA 已重启"
+            fi
         nohup ./web run -c config.json >/dev/null 2>&1 &
         sleep 2
- 	          if pgrep -x 'web' > /dev/null; then
-                green "singbox 已重启"
-	          fi
+            if pgrep -x 'web' > /dev/null; then
+               green "singbox 已重启"
+            fi
         nohup ./argo.sh >/dev/null 2>&1 &
         sleep 2
-	          if pgrep -x 'bot' > /dev/null; then
-                green "ARGO 隧道已重启"
-	          fi
+            if pgrep -x 'bot' > /dev/null; then
+               green "ARGO 隧道已重启"
+            fi
         ;;
     [Nn]) menu ;;
     *) red "无效的选择，请输入y或n" && menu ;;
@@ -721,9 +721,9 @@ menu() {
         1) install_singbox ;;
         2) clean_all ;; 
         3) cat ${WORKDIR}/list.txt ;; 
-	    4) reboot_all_tasks ;;
+        4) reboot_all_tasks ;;
         5) creat_corn ;;
-	    6) curl -s ${UPDATA_URL} -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
+        6) curl -s ${UPDATA_URL} -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
         0) exit 0 ;;
         *) red "无效的选项，请输入 0 到 6" && menu ;;
     esac
