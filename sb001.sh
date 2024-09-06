@@ -415,16 +415,14 @@ response=$(curl -s ip.sb --socks5 "$socks_user:$socks_pass@localhost:$socks_port
 
 # 是否创建面板corn定时任务
 creat_corn() {
-  reading "是否添加 crontab 守护进程的计划任务(Y/N 回车N): " crontab
-    crontab=${crontab^^} # 转换为大写
-    if [ "$crontab" == "Y" ]; then
-      echo "添加 crontab 守护进程的计划任务"
-      curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/check_sb_cron.sh | bash
-      menu
-    else
-      echo "不添加 crontab 计划任务"
-      menu
-    fi
+  reading "\n是否添加 crontab 守护进程的计划任务【y/n】: " choice
+    case "$choice" in
+        [Yy])
+           curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/check_sb_cron.sh | bash
+	   green "已添加成功" && menu ;;
+	[Nn]) menu ;;
+        *) red "无效的选择，请重新输入 y 或 n" && menu ;;
+    esac
 }
 
 # 卸载并重置服务器
