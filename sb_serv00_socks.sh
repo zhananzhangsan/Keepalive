@@ -678,7 +678,7 @@ menu() {
         1) install_singbox ;;
         2) clean_all ;; 
         3) cat ${WORKDIR}/list.txt ;; 
-        4) curl -s ${REBOOT_URL} -o reboot.sh && chmod +x reboot.sh && ./reboot.sh ;;
+        4) bash <(curl -s ${REBOOT_URL}) ;;
         5) creat_corn ;;
         6) curl -s ${UPDATA_URL} -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
         0) exit 0 ;;
