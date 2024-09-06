@@ -696,7 +696,7 @@ EOF
 
 #主菜单
 menu() {
-   clear
+   # clear
    echo ""
    purple "--- Serv00|ct8 yutian81魔改sing-box一键脚本 ---\n"
    echo -e "${green}原作者为老王：${re}${yellow}https://github.com/eooce/Sing-box${re}\n"
