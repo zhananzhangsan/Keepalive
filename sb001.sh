@@ -718,7 +718,7 @@ menu() {
    echo  "==============="
    reading "请输入选择(0-6): " choice
    echo ""
-    case "${choice}" in
+     case "${choice}" in
         1) install_singbox ;;
         2) clean_all ;; 
         3) cat $WORKDIR/list.txt ;; 
@@ -727,6 +727,6 @@ menu() {
 	6) curl -s $UPDATA_URL -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
         0) exit 0 ;;
         *) red "无效的选项，请输入 0 到 6" && menu ;;
-    esac
+     esac
 }
 menu
