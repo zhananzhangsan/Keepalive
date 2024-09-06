@@ -699,7 +699,7 @@ EOF
 menu() {
    clear
    echo ""
-   purple "=== Serv00|ct8 yutian81魔改sing-box一键脚本 ===\n"
+   purple "--- Serv00|ct8 yutian81魔改sing-box一键脚本 ---\n"
    echo -e "${green}原作者为老王：${re}${yellow}https://github.com/eooce/Sing-box${re}\n"
    purple "转载请著名出处，请勿滥用\n"
    green "1. 安装sing-box"
