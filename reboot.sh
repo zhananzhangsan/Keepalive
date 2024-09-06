@@ -1,11 +1,10 @@
 #!/bin/bash
 
-red="\033[1;91m"
-reading() { read -p "$(red "$1")" "$2"; }
+reading() { read -p "$1" "$2"; }
 USERNAME=$(whoami)
 HOSTNAME=$(hostname)
 WORKDIR="/home/${USERNAME}/logs"
-chmod 755 "${WORKDIR}"
+chmod 777 "${WORKDIR}"
 cd "${WORKDIR}" || { echo "无法切换到工作目录 ${WORKDIR}"; exit 1; }
 
 # 确保脚本和程序有执行权限
@@ -36,6 +35,11 @@ case "$choice" in
             echo "ARGO 隧道已重启"
         fi
         ;;
-    [Nn]) exit 0 ;;
-    *) echo "无效的选择，请输入 y 或 n" && exit 1 ;;
+    [Nn])
+        exit 0
+        ;;
+    *)
+        echo "无效的选择，请输入 y 或 n"
+        exit 1
+        ;;
 esac
