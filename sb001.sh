@@ -428,12 +428,12 @@ creat_corn() {
 # 卸载并重置服务器
 clean_all() {
    reading "\n确定要卸载吗？【1/2/3】 " choice
-   red "输入 1 为仅卸载本脚本，输入 2 为重置服务器，输入 3 返回主菜单"
+   red "输入 1 为仅卸载本脚本，输入 2 为重置服务器，输入 0 返回主菜单"
      case "${choice}" in
         1) uninstall_singbox ;;
         2) clean_all_files ;;
-        3) menu ;;
-        *) red "无效的选项，请输入 1-3" && menu ;;
+        0) menu ;;
+        *) red "无效的选项，请输入 0-2" && menu ;;
      esac
 }
 
