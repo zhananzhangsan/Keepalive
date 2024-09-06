@@ -293,20 +293,20 @@ get_argodomain() {
 
 # 运行 NEZHA 服务
 run_nezha() {
-  if [ -e "${SB_NAME}" ] && [ -n "${NEZHA_SERVER}" ] && [ -n "${NEZHA_PORT}" ] && [ -n "${NEZHA_KEY}" ]; then
+  if [ -e "${NZ_NAME}" ] && [ -n "${NEZHA_SERVER}" ] && [ -n "${NEZHA_PORT}" ] && [ -n "${NEZHA_KEY}" ]; then
     cd "${WORKDIR}"
     export TMPDIR=$(pwd)
     [ -x "${WORKDIR}/nezha.sh" ] || chmod +x "${WORKDIR}/nezha.sh"
     nohup ./nezha.sh >/dev/null 2>&1 &
     sleep 2
-    if pgrep -x 'npm' > /dev/null; then
+    if pgrep -x "${NZ_NAME}" > /dev/null; then
         green "NEZHA 正在运行"
     else
         red "NEZHA 未运行，重启中……"
-        pkill -x 'npm' 2>/dev/null
+        pkill -x "${NZ_NAME}" 2>/dev/null
         nohup ./nezha.sh >/dev/null 2>&1 &
 	sleep 2
-        if pgrep -x 'npm' > /dev/null; then
+        if pgrep -x "${NZ_NAME}" > /dev/null; then
             purple "NEZHA 已重启"
         else
             red "NEZHA 重启失败"
@@ -319,29 +319,50 @@ run_nezha() {
 
 # 运行 singbox 服务
 run_sb() {
-  if [ -e web ]; then
-    nohup ./web run -c config.json >/dev/null 2>&1 & sleep 2
-    if pgrep -x "web" > /dev/null; then
-      green "singbox 正在运行"
+  if [ -e "${SB_NAME}" ]; then
+    cd "${WORKDIR}"
+    export TMPDIR=$(pwd)
+    [ -x "${WORKDIR}/${SB_NAME}" ] || chmod +x "${WORKDIR}/${SB_NAME}"
+    [ -e "${WORKDIR}/config.json" ] || chmod +x "${WORKDIR}/config.json"
+    nohup ./${SB_NAME} run -c config.json >/dev/null 2>&1 &
+    sleep 2
+    if pgrep -x "${SB_NAME}" > /dev/null; then
+        green "singbox 正在运行"
     else
-      red "singbox 未运行，重启中……"
-      pkill -x "web" && nohup ./web run -c config.json >/dev/null 2>&1 & sleep 2
-      green "singbox 已重启"
+        red "singbox 未运行，重启中……"
+        pkill -x "${SB_NAME}" && nohup ./${SB_NAME} run -c config.json >/dev/null 2>&1 &
+	sleep 2
+        if pgrep -x "${SB_NAME}" > /dev/null; then
+            purple "singbox 已重启"
+        else
+            red "singbox 重启失败"
+        fi
     fi
   fi
 }
 
 # 运行 argo 服务
 run_argo() {
-  if [ -e bot ]; then
-    nohup ./argo.sh >/dev/null 2>&1 & sleep 2
-    if pgrep -x "bot" > /dev/null; then
-      green "ARGO 隧道正在运行"
+  if [ -e "${AG_NAME}" ] && [ -n "$ARGO_DOMAIN" ] && [ -n "$ARGO_AUTH" ]; then
+    cd "${WORKDIR}"
+    export TMPDIR=$(pwd)
+    [ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
+    nohup ./argo.sh >/dev/null 2>&1 &
+    sleep 2
+    if pgrep -x "${AG_NAME}" > /dev/null; then
+        green "ARGO 隧道正在运行"
     else
-      red "ARGO 隧道未运行，重启中……"
-      pkill -x "bot" && nohup ./argo.sh >/dev/null 2>&1 & sleep 2
-      green "ARGO 隧道已重启"
+        red "ARGO 隧道未运行，重启中……"
+        pkill -x "${AG_NAME}" && nohup ./argo.sh >/dev/null 2>&1 &
+	sleep 2
+        if pgrep -x "${AG_NAME}" > /dev/null; then
+	    purple "ARGO 隧道已重启"
+        else
+            red "ARGO 隧道重启失败"
+	fi
     fi
+  else
+    red "ARGO 变量未设置"
   fi
 }
 
@@ -373,20 +394,19 @@ sleep 1
 IP=$(get_ip)
 ISP=$(curl -s https://speed.cloudflare.com/meta | awk -F\" '{print $26"-"$18}' | sed -e 's/ /_/g') 
 sleep 1
-yellow "注意：v2ray或其他软件的跳过证书验证需设置为true,否则hy2节点可能不通\n"
+yellow "注意：v2ray或其他软件的跳过证书验证需设置为true,否则hy2或tuic节点可能不通\n"
 cat > list.txt <<EOF
-vmess://$(echo "{ \"v\": \"2\", \"ps\": \"$ISP\", \"add\": \"$IP\", \"port\": \"$vmess_port\", \"id\": \"$UUID\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"\", \"path\": \"/vmess?ed=2048\", \"tls\": \"\", \"sni\": \"\", \"alpn\": \"\", \"fp\": \"\"}" | base64 -w0)
-
-vmess://$(echo "{ \"v\": \"2\", \"ps\": \"$ISP\", \"add\": \"www.visa.com.tw\", \"port\": \"443\", \"id\": \"$UUID\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"$argodomain\", \"path\": \"/vmess?ed=2048\", \"tls\": \"tls\", \"sni\": \"$argodomain\", \"alpn\": \"\", \"fp\": \"\"}" | base64 -w0)
+vmess://$(echo "{ \"v\": \"2\", \"ps\": \"$ISP\", \"add\": \"$CFIP\", \"port\": \"$CFPORT\", \"id\": \"$UUID\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"$argodomain\", \"path\": \"/vmess?ed=2048\", \"tls\": \"tls\", \"sni\": \"$argodomain\", \"alpn\": \"\", \"fp\": \"\"}" | base64 -w0)
 
 hysteria2://$UUID@$IP:$hy2_port/?sni=www.bing.com&alpn=h3&insecure=1#$ISP
 
 socks5://$socks_user:$socks_pass@$IP:$socks_port
 EOF
 cat list.txt
-purple "节点链接已成功保存到 $WORKDIR/list.txt"
-sleep 3 
-# rm -rf web bot npm boot.log config.json sb.log core tunnel.yml tunnel.json
+purple "\n$WORKDIR/list.txt 节点文件已保存"
+green "安装完成"
+sleep 2
+
 response=$(curl -s ip.sb --socks5 "$socks_user:$socks_pass@localhost:$socks_port")
   if [[ $? -eq 0 ]]; then
     if [[ "$response" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -412,7 +432,24 @@ creat_corn() {
     sleep 2
 }
 
-# 卸载singbox并清空工作目录
+# 卸载并重置服务器
+clean_all() {
+   echo ""
+   red "1. 仅卸载 singbox"
+   echo  "==============="
+   red "2. 一键重置服务器"
+   echo  "==============="
+   reading "请输入选择(0-2): " choice
+   echo ""
+     case "${choice}" in
+        1) uninstall_singbox ;;
+        2) clean_all_files ;; 
+        0) menu ;;
+        *) red "无效的选项，请输入 0 到 2" && menu ;;
+     esac
+}
+
+# 仅卸载 singbox
 uninstall_singbox() {
   reading "\n确定要卸载吗？【y/n】: " choice
     case "$choice" in
@@ -422,9 +459,26 @@ uninstall_singbox() {
           kill -9 $(ps aux | grep '[n]pm' | awk '{print $2}')
           rm -rf $WORKDIR
           ;;
-        [Nn]) exit 0 ;;
-    	*) red "无效的选择，请输入y或n" && menu ;;
+        [Nn]) menu ;;
+    	*) red "无效的选择，请重新输入 y 或 n" && clean_all ;;
     esac
+}
+
+# 一键重置服务器
+clean_all_files() {
+  reading "\n清理所有文件，重置服务器，确定继续吗？【y/n】: " choice
+    case "$choice" in
+      [Yy])
+        ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
+        chmod -R 755 ~/*
+        chmod -R 755 ~/.* 
+        rm -rf ~/.* 
+        rm -rf ~/*
+        sleep 2
+        green "清理已完成"
+      [Nn]) exit 0 ;; 
+      *) red "无效的选择，请重新输入 y 或 n" && clean_all ;;
+  esac
 }
 
 # 清理所有进程并重启所有服务
@@ -433,33 +487,28 @@ reading "\n清理所有进程，但保留ssh连接，确定继续清理吗？【
   case "$choice" in
     [Yy])
         ps aux | grep $(whoami) | grep -v 'sshd\|bash\|grep' | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
-	      cd $WORKDIR
-        run_nezha
-        run_sb
-        run_argo
-        menu ;;
+	cd "${WORKDIR}" || { red "无法切换到工作目录 ${WORKDIR}"; return 1; }
+        [ -x "${WORKDIR}/nezha.sh" ] || chmod +x "${WORKDIR}/nezha.sh"
+	[ -x "${WORKDIR}/web" ] || chmod +x "${WORKDIR}/web"
+        [ -e "${WORKDIR}/config.json" ] || chmod +x "${WORKDIR}/config.json"
+	[ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
+        nohup ./nezha.sh >/dev/null 2>&1 &
+	sleep 2
+	if pgrep -x 'npm' > /dev/null; then
+           green "NEZHA 已重启"
+	fi
+        nohup ./web run -c config.json >/dev/null 2>&1 &
+	sleep 2
+ 	if pgrep -x 'web' > /dev/null; then
+           green "singbox 已重启"
+	fi
+        nohup ./argo.sh >/dev/null 2>&1 &
+	sleep 2
+	if pgrep -x 'bot' > /dev/null; then
+           green "ARGO 隧道已重启"
+	fi
     [Nn]) menu ;;
-    *) red "无效的选择，请输入y或n"
-    menu ;;
-  esac
-}
-
-# 一键重置服务器
-clean_all_files() {
-  reading "\n清理所有文件，重置服务器，确定继续吗？【y/n】: " choice
-  case "$choice" in
-    [Yy])
-      ps aux | grep $(whoami) | grep -v 'sshd\|bash\|grep' | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
-      chmod -R 755 ~/*
-      chmod -R 755 ~/.* 
-      rm -rf ~/.* 
-      rm -rf ~/*
-      sleep 2
-      green "清理已完成"
-      curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh -o sb00.sh && bash sb00.sh ;;    
-    [Nn]) menu ;; 
-    *) red "无效的选择，请输入y或n"
-    menu ;;
+    *) red "无效的选择，请输入y或n" && menu ;;
   esac
 }
 
@@ -684,10 +733,10 @@ menu() {
         1) install_singbox ;;
         2) uninstall_singbox ;; 
         3) cat $WORKDIR/list.txt ;; 
-	      4) reboot_all_tasks ;;
+	4) reboot_all_tasks ;;
         5) clean_all_files ;;
         6) creat_corn && menu ;;
-	      7) curl -s $UPDATA_URL -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
+	7) curl -s $UPDATA_URL -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
         0) exit 0 ;;
         *) red "无效的选项，请输入 0 到 7" && menu ;;
     esac
