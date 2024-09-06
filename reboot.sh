@@ -1,5 +1,9 @@
 #!/bin/bash
 
+red="\033[1;91m"
+green="\e[1;32m"
+red() { echo -e "\e[1;91m$1\033[0m"; }
+green() { echo -e "\e[1;32m$1\033[0m"; }
 USERNAME=$(whoami)
 HOSTNAME=$(hostname)
 WORKDIR="/home/${USERNAME}/logs"
@@ -14,18 +18,19 @@ cd "${WORKDIR}" || { echo "无法切换到工作目录 ${WORKDIR}"; exit 1; }
 [ -x "${WORKDIR}/bot" ] || chmod +x "${WORKDIR}/bot"
 
 ps aux | grep "$(whoami)" | grep -v 'sshd\|bash\|grep' | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
+red "已清理所有进程"
 nohup ./nezha.sh >/dev/null 2>&1 &
 sleep 2
    if pgrep -x 'npm' > /dev/null; then
-      echo "NEZHA 已重启"
+      green "NEZHA 已重启"
    fi
 nohup ./web run -c config.json >/dev/null 2>&1 &
 sleep 2
    if pgrep -x 'web' > /dev/null; then
-      echo "singbox 已重启"
+      green "singbox 已重启"
    fi
 nohup ./argo.sh >/dev/null 2>&1 &
 sleep 2
    if pgrep -x 'bot' > /dev/null; then
-      echo "ARGO 隧道已重启"
+      green "ARGO 隧道已重启"
    fi
