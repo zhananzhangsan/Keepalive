@@ -16,7 +16,6 @@ reading() { read -p "$(red "$1")" "$2"; }
 USERNAME=$(whoami)
 HOSTNAME=$(hostname)
 WORKDIR="/home/${USERNAME}/logs"
-LOGFILE="${WORKDIR}/script.log"
 
 export UUID=${UUID:-'5195c04a-552f-4f9e-8bf9-216d257c0839'}
 export NEZHA_SERVER=${NEZHA_SERVER:-'nezha.yutian81.top'} 
@@ -42,7 +41,6 @@ NZ_NAME="npm"
 UPDATA_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh"
 
 [ -d "$WORKDIR" ] || (mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR")
-exec > >(tee -a "${LOGFILE}") 2>&1
 
 # 安装singbox
 install_singbox() {
