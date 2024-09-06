@@ -17,14 +17,14 @@ USERNAME=$(whoami)
 HOSTNAME=$(hostname)
 WORKDIR="/home/${USERNAME}/logs"
 export UUID=${UUID:-'5195c04a-552f-4f9e-8bf9-216d257c0839'}
-export NEZHA_SERVER=${NEZHA_SERVER:-''} 
-export NEZHA_PORT=${NEZHA_PORT:-'5555'}     
+export NEZHA_SERVER=${NEZHA_SERVER:-'nezha.yutian81.top'} 
+export NEZHA_PORT=${NEZHA_PORT:-'443'}     
 export NEZHA_KEY=${NEZHA_KEY:-''} 
 export ARGO_DOMAIN=${ARGO_DOMAIN:-''}   
 export ARGO_AUTH=${ARGO_AUTH:-''} 
-export VMESS_PORT=${VMESS_PORT:-'40000'}
-export SOCKS_PORT=${SOCKS_PORT:-'50000'}
-export HY2_PORT=${HY2_PORT:-'60000'}
+export VMESS_PORT=${VMESS_PORT:-''}
+export SOCKS_PORT=${SOCKS_PORT:-''}
+export HY2_PORT=${HY2_PORT:-''}
 export CFIP=${CFIP:-'fan.yutian.us.kg'} 
 
 # 定义文件下载地址和文件名
@@ -36,7 +36,7 @@ AG_BOT_X86URL="https://00.2go.us.kg/bot"
 NZ_NPM_X86URL="https://00.2go.us.kg/npm"
 SB_NAME="web"
 AG_NAME="bot"
-NZ_NAME="bot"
+NZ_NAME="npm"
 UPDATA_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh"
 
 [ -d "$WORKDIR" ] || (mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR")
@@ -47,10 +47,11 @@ install_singbox() {
 echo -e "${yellow}本脚本同时三协议共存${purple}(vmess-ws-tls(argo),hysteria2,socks5)${re}"
 echo -e "${yellow}开始运行前，请确保在面板${purple}已开放3个端口，两个tcp端口和一个udp端口${re}"
 echo -e "${yellow}面板${purple}Additional services中的Run your own applications${yellow}已开启为${purple}Enabled${yellow}状态${re}"
+green "安装完成后，可在用户跟目录输入 bash sb00.sh 再次进入主菜单"
 reading "\n确定继续安装吗？【y/n】: " choice
   case "$choice" in
     [Yy])
-        cd ${WORKDIR}
+        cd "${WORKDIR}"
         read_vmess_port
         read_hy2_port
         read_socks_variables
@@ -62,10 +63,9 @@ reading "\n确定继续安装吗？【y/n】: " choice
         run_sb
 	run_argo
         get_links
-        creat_corn
-	menu ;;
+        creat_corn ;;
     [Nn]) exit 0 ;;
-    *) red "无效的选择，请输入y或n" && menu ;;
+    *) red "无效的选择，请输入 y 或 n" && menu ;;
   esac
 }
 
@@ -130,7 +130,7 @@ read_socks_variables() {
 
 # 设置 argo 隧道域名、json 或 token
 argo_configure() {
-  if [[ -z $ARGO_AUTH || -z $ARGO_DOMAIN ]]; then
+  if [[ -z "${ARGO_AUTH}" || -z "${ARGO_DOMAIN}" ]]; then
     reading "是否需要使用固定 argo 隧道？【y/n】: " argo_choice
     [[ -z $argo_choice ]] && return
     [[ "$argo_choice" != "y" && "$argo_choice" != "Y" && "$argo_choice" != "n" && "$argo_choice" != "N" ]] && { red "无效的选择，请输入y或n"; return; }
@@ -145,8 +145,8 @@ argo_configure() {
       return
     fi
   fi
-  if [[ $ARGO_AUTH =~ TunnelSecret ]]; then
-    echo $ARGO_AUTH > tunnel.json
+  if [[ "${ARGO_AUTH}" =~ TunnelSecret ]]; then
+    echo "${ARGO_AUTH}" > tunnel.json
     cat > tunnel.yml << EOF
 tunnel: $(cut -d\" -f12 <<< "$ARGO_AUTH")
 credentials-file: tunnel.json
@@ -162,7 +162,7 @@ EOF
     # 定义使用 json 时 agro 隧道的启动参数变量
     args="tunnel --edge-ip-version auto --config tunnel.yml run"
     green "ARGO_AUTH 是 Json 格式，将使用 Json 连接 ARGO 隧道；tunnel.yml 配置文件已生成"
-  elif [[ $ARGO_AUTH =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
+  elif [[ "${ARGO_AUTH}" =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
     args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token ${ARGO_AUTH}"
     green "ARGO_AUTH 是 Token 格式，将使用 Token 连接 ARGO 隧道"
   else
@@ -191,7 +191,7 @@ EOF
 
 # 设置哪吒域名（或ip）、端口、密钥
 read_nz_variables() {
-  if [ -n "$NEZHA_SERVER" ] && [ -n "$NEZHA_PORT" ] && [ -n "$NEZHA_KEY" ]; then
+  if [ -n "${NEZHA_SERVER}" ] && [ -n "${NEZHA_PORT}" ] && [ -n "${NEZHA_KEY}" ]; then
       green "使用自定义变量运行哪吒探针"
       return
   else
@@ -200,8 +200,8 @@ read_nz_variables() {
       [[ "$nz_choice" != "y" && "$nz_choice" != "Y" ]] && return
       reading "请输入哪吒探针域名或ip：" NEZHA_SERVER
       green "你的哪吒域名为: $NEZHA_SERVER"
-      reading "请输入哪吒探针端口（回车跳过默认使用5555）：" NEZHA_PORT
-      [[ -z $NEZHA_PORT ]] && NEZHA_PORT="5555"
+      reading "请输入哪吒探针端口（回车跳过默认使用443）：" NEZHA_PORT
+      [[ -z "{$NEZHA_PORT}" ]] && NEZHA_PORT="443"
       green "你的哪吒端口为: $NEZHA_PORT"
       reading "请输入哪吒探针密钥：" NEZHA_KEY
       green "你的哪吒密钥为: $NEZHA_KEY"
@@ -212,11 +212,6 @@ read_nz_variables() {
     NEZHA_TLS="--tls"
   else
     NEZHA_TLS=""
-  fi
-  if [ -n "$NEZHA_SERVER" ] && [ -n "$NEZHA_PORT" ] && [ -n "$NEZHA_KEY" ]; then
-      purple "NEZHA 变量设置正确"
-  else
-      purple "NEZHA 变量为空，跳过"
   fi
   # 生成 nezha.sh 脚本
   cat > "${WORKDIR}/nezha.sh" << EOF
@@ -235,7 +230,7 @@ pgrep -x 'npm' > /dev/null && green "Nezha 探针正在运行" || {
   green "Nezha 客户端已重启"
 }
 EOF
-  chmod +x ${WORKDIR}/nezha.sh
+  chmod +x "${WORKDIR}/nezha.sh"
 }
 
 # 下载singbo文件
@@ -284,8 +279,8 @@ download_with_fallback() {
 
 # 获取argo隧道的域名
 get_argodomain() {
-  if [[ -n $ARGO_AUTH ]]; then
-    echo "$ARGO_DOMAIN"
+  if [[ -n "${ARGO_AUTH}" ]]; then
+    echo ${ARGO_DOMAIN}
   else
     grep -oE 'https://[[:alnum:]+\.-]+\.trycloudflare\.com' boot.log | sed 's@https://@@'
   fi
@@ -293,7 +288,8 @@ get_argodomain() {
 
 # 运行 NEZHA 服务
 run_nezha() {
-  if [ -e "${NZ_NAME}" ] && [ -n "${NEZHA_SERVER}" ] && [ -n "${NEZHA_PORT}" ] && [ -n "${NEZHA_KEY}" ]; then
+  if [ -e "${WORKDIR}/nezha.sh" ] && [ -n "${NEZHA_SERVER}" ] && [ -n "${NEZHA_PORT}" ] && [ -n "${NEZHA_KEY}" ]; then
+    purple "NEZHA 变量均已设置，且脚本文件已生成"
     cd "${WORKDIR}"
     export TMPDIR=$(pwd)
     [ -x "${WORKDIR}/nezha.sh" ] || chmod +x "${WORKDIR}/nezha.sh"
@@ -330,7 +326,7 @@ run_sb() {
         green "singbox 正在运行"
     else
         red "singbox 未运行，重启中……"
-        pkill -x "${SB_NAME}" && nohup ./${SB_NAME} run -c config.json >/dev/null 2>&1 &
+        pkill -x "${SB_NAME}" && nohup ./"${SB_NAME}" run -c config.json >/dev/null 2>&1 &
 	sleep 2
         if pgrep -x "${SB_NAME}" > /dev/null; then
             purple "singbox 已重启"
@@ -343,7 +339,8 @@ run_sb() {
 
 # 运行 argo 服务
 run_argo() {
-  if [ -e "${AG_NAME}" ] && [ -n "$ARGO_DOMAIN" ] && [ -n "$ARGO_AUTH" ]; then
+  if [ -e "${WORKDIR}/argo.sh" ] && [ -n "$ARGO_DOMAIN" ] && [ -n "$ARGO_AUTH" ]; then
+    purple "ARGO 变量均已设置，且脚本文件已生成"
     cd "${WORKDIR}"
     export TMPDIR=$(pwd)
     [ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
@@ -419,17 +416,18 @@ response=$(curl -s ip.sb --socks5 "$socks_user:$socks_pass@localhost:$socks_port
   fi
 }
 
-# 创建面板corn定时任务
+# 是否创建面板corn定时任务
 creat_corn() {
     reading "是否添加 crontab 守护进程的计划任务(Y/N 回车N): " crontab
     crontab=${crontab^^} # 转换为大写
     if [ "$crontab" == "Y" ]; then
       echo "添加 crontab 守护进程的计划任务"
       curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/check_sb_cron.sh | bash
+      menu
     else
       echo "不添加 crontab 计划任务"
+      menu
     fi
-    sleep 2
 }
 
 # 卸载并重置服务器
@@ -469,13 +467,13 @@ clean_all_files() {
   reading "\n清理所有文件，重置服务器，确定继续吗？【y/n】: " choice
     case "$choice" in
       [Yy])
-        ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
+        ps aux | grep "$(whoami)" | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
         chmod -R 755 ~/*
         chmod -R 755 ~/.* 
         rm -rf ~/.* 
         rm -rf ~/*
         sleep 2
-        green "清理已完成"
+        green "清理已完成" ;;
       [Nn]) exit 0 ;; 
       *) red "无效的选择，请重新输入 y 或 n" && clean_all ;;
   esac
@@ -486,7 +484,7 @@ reboot_all_tasks() {
 reading "\n清理所有进程，但保留ssh连接，确定继续清理吗？【y/n】: " choice
   case "$choice" in
     [Yy])
-        ps aux | grep $(whoami) | grep -v 'sshd\|bash\|grep' | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
+        ps aux | grep "$(whoami)" | grep -v 'sshd\|bash\|grep' | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
 	cd "${WORKDIR}" || { red "无法切换到工作目录 ${WORKDIR}"; return 1; }
         [ -x "${WORKDIR}/nezha.sh" ] || chmod +x "${WORKDIR}/nezha.sh"
 	[ -x "${WORKDIR}/web" ] || chmod +x "${WORKDIR}/web"
@@ -507,10 +505,47 @@ reading "\n清理所有进程，但保留ssh连接，确定继续清理吗？【
 	if pgrep -x 'bot' > /dev/null; then
            green "ARGO 隧道已重启"
 	fi
+        ;;
     [Nn]) menu ;;
     *) red "无效的选择，请输入y或n" && menu ;;
   esac
 }
+
+#主菜单
+menu() {
+   clear
+   echo ""
+   purple "=== Serv00|ct8 yutian81魔改sing-box一键脚本 ===\n"
+   echo -e "${green}原作者为老王：${re}${yellow}https://github.com/eooce/Sing-box${re}\n"
+   purple "转载请著名出处，请勿滥用\n"
+   green "1. 安装sing-box"
+   echo  "==============="
+   red "2. 卸载并重置服务器"
+   echo  "==============="
+   green "3. 查看节点信息"
+   echo  "==============="
+   red "4. 重启所有进程"
+   echo  "==============="
+   green "5. 添加面板CORN任务"
+   echo  "==============="
+   green "6. 更新最新脚本"
+   echo  "==============="
+   red "0. 退出脚本"
+   echo "==============="
+   reading "请输入选择(0-6): " choice
+   echo ""
+    case "${choice}" in
+        1) install_singbox ;;
+        2) clean_all ;; 
+        3) cat $WORKDIR/list.txt ;; 
+	4) reboot_all_tasks ;;
+        5) creat_corn ;;
+	6) curl -s $UPDATA_URL -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
+        0) exit 0 ;;
+        *) red "无效的选项，请输入 0 到 6" && menu ;;
+    esac
+}
+menu
 
 # 生成节点配置文件并解锁流媒体
 generate_config() {
@@ -703,42 +738,3 @@ generate_config() {
 }
 EOF
 }
-
-#主菜单
-menu() {
-   clear
-   echo ""
-   purple "=== Serv00|ct8 yutian81魔改sing-box一键脚本 ===\n"
-   echo -e "${green}原作者为老王：${re}${yellow}https://github.com/eooce/Sing-box${re}\n"
-   purple "转载请著名出处，请勿滥用\n"
-   green "1. 安装sing-box"
-   echo  "==============="
-   red "2. 卸载sing-box"
-   echo  "==============="
-   green "3. 查看节点信息"
-   echo  "==============="
-   green "4. 清理进程并重启服务"
-   echo  "==============="
-   red "5. 重置服务器"
-   echo  "==============="
-   green "6. 添加面板CORN任务"
-   echo  "==============="
-   green "7. 更新最新脚本"
-   echo  "==============="
-   red "0. 退出脚本"
-   echo "==============="
-   reading "请输入选择(0-7): " choice
-   echo ""
-    case "${choice}" in
-        1) install_singbox ;;
-        2) uninstall_singbox ;; 
-        3) cat $WORKDIR/list.txt ;; 
-	4) reboot_all_tasks ;;
-        5) clean_all_files ;;
-        6) creat_corn && menu ;;
-	7) curl -s $UPDATA_URL -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
-        0) exit 0 ;;
-        *) red "无效的选项，请输入 0 到 7" && menu ;;
-    esac
-}
-menu
