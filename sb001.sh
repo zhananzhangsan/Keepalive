@@ -415,7 +415,7 @@ response=$(curl -s ip.sb --socks5 "$socks_user:$socks_pass@localhost:$socks_port
 
 # 是否创建面板corn定时任务
 creat_corn() {
-    reading "是否添加 crontab 守护进程的计划任务(Y/N 回车N):" crontab
+  reading "是否添加 crontab 守护进程的计划任务(Y/N 回车N): " crontab
     crontab=${crontab^^} # 转换为大写
     if [ "$crontab" == "Y" ]; then
       echo "添加 crontab 守护进程的计划任务"
