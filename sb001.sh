@@ -434,8 +434,8 @@ clean_all() {
    echo  "==============="
    red "2. 一键重置服务器"
    echo  "==============="
-   echo ""
    reading "请输入选择(0-2): " choice
+   echo ""
      case "${choice}" in
         1) uninstall_singbox ;;
         2) clean_all_files ;; 
@@ -720,7 +720,7 @@ menu() {
    green "6. 更新最新脚本"
    echo  "==============="
    red "0. 退出脚本"
-   echo "==============="
+   echo  "==============="
    reading "请输入选择(0-6): " choice
    echo ""
     case "${choice}" in
