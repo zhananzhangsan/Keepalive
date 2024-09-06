@@ -58,9 +58,9 @@ reading "\n确定继续安装吗？【y/n】: " choice
         read_nz_variables
         generate_config
         download_singbox
-	run_nezha
+	      run_nezha
         run_sb
-	run_argo
+	      run_argo
         get_links
         creat_corn ;;
     [Nn]) exit 0 ;;
@@ -134,14 +134,14 @@ argo_configure() {
     [[ -z $argo_choice ]] && return
     [[ "$argo_choice" != "y" && "$argo_choice" != "Y" && "$argo_choice" != "n" && "$argo_choice" != "N" ]] && { red "无效的选择，请输入y或n"; return; }
     if [[ "$argo_choice" == "y" || "$argo_choice" == "Y" ]]; then
-      reading "请输入 argo 固定隧道域名: " ARGO_DOMAIN
-      green "你的 argo 固定隧道域名为: $ARGO_DOMAIN"
-      reading "请输入 argo 固定隧道密钥（Json 或 Token）: " ARGO_AUTH
-      green "你的 argo 固定隧道密钥为: $ARGO_AUTH"
-      echo -e "${red}注意：${purple}使用 token，需要在 cloudflare 后台设置隧道端口和面板开放的 tcp 端口一致${re}"
+        reading "请输入 argo 固定隧道域名: " ARGO_DOMAIN
+        green "你的 argo 固定隧道域名为: $ARGO_DOMAIN"
+        reading "请输入 argo 固定隧道密钥（Json 或 Token）: " ARGO_AUTH
+        green "你的 argo 固定隧道密钥为: $ARGO_AUTH"
+        echo -e "${red}注意：${purple}使用 token，需要在 cloudflare 后台设置隧道端口和面板开放的 tcp 端口一致${re}"
     else
-      green "ARGO隧道变量未设置，将使用临时隧道"
-      return
+        green "ARGO隧道变量未设置，将使用临时隧道"
+        return
     fi
   fi
   if [[ "${ARGO_AUTH}" =~ TunnelSecret ]]; then
@@ -300,7 +300,7 @@ run_nezha() {
         red "NEZHA 未运行，重启中……"
         pkill -x 'npm' 2>/dev/null
         nohup ./nezha.sh >/dev/null 2>&1 &
-	sleep 2
+	      sleep 2
         if pgrep -x 'npm' > /dev/null; then
             purple "NEZHA 已重启"
         else
@@ -314,7 +314,7 @@ run_nezha() {
 
 # 运行 singbox 服务
 run_sb() {
-  if [ -e "${WORKDIR}/web ]; then
+  if [ -e "${WORKDIR}/web" ]; then
     cd "${WORKDIR}"
     export TMPDIR=$(pwd)
     [ -x "${WORKDIR}/web" ] || chmod +x "${WORKDIR}/web"
@@ -326,7 +326,7 @@ run_sb() {
     else
         red "singbox 未运行，重启中……"
         pkill -x 'web' && nohup ./web run -c config.json >/dev/null 2>&1 &
-	sleep 2
+	      sleep 2
         if pgrep -x 'web' > /dev/null; then
             purple "singbox 已重启"
         else
@@ -350,7 +350,7 @@ run_argo() {
     else
         red "ARGO 隧道未运行，重启中……"
         pkill -x 'bot' && nohup ./argo.sh >/dev/null 2>&1 &
-	sleep 2
+	      sleep 2
         if pgrep -x 'bot' > /dev/null; then
 	    purple "ARGO 隧道已重启"
         else
@@ -421,15 +421,15 @@ creat_corn() {
     case "$choice" in
         [Yy])
            curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/check_sb_cron.sh | bash
-	   green "已添加成功" && menu ;;
-	[Nn]) menu ;;
+	         green "已添加成功" && menu ;;
+	      [Nn]) menu ;;
         *) red "无效的选择，请重新输入 y 或 n" && menu ;;
     esac
 }
 
 # 卸载并重置服务器
 clean_all() {
-   reading "\n确定要卸载吗？【1/2/3】 " choice
+   reading "\n确定要卸载吗？【0/1/2】 " choice
    red "输入 1 为仅卸载本脚本，输入 2 为重置服务器，输入 0 返回主菜单"
      case "${choice}" in
         1) uninstall_singbox ;;
@@ -477,26 +477,26 @@ reading "\n清理所有进程，但保留ssh连接，确定继续清理吗？【
   case "$choice" in
     [Yy])
         ps aux | grep "$(whoami)" | grep -v 'sshd\|bash\|grep' | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
-	cd "${WORKDIR}" || { red "无法切换到工作目录 ${WORKDIR}"; return 1; }
+	      cd "${WORKDIR}" || { red "无法切换到工作目录 ${WORKDIR}"; return 1; }
         [ -x "${WORKDIR}/nezha.sh" ] || chmod +x "${WORKDIR}/nezha.sh"
-	[ -x "${WORKDIR}/web" ] || chmod +x "${WORKDIR}/web"
+	      [ -x "${WORKDIR}/web" ] || chmod +x "${WORKDIR}/web"
         [ -e "${WORKDIR}/config.json" ] || chmod +x "${WORKDIR}/config.json"
-	[ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
+	      [ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
         nohup ./nezha.sh >/dev/null 2>&1 &
-	sleep 2
-	if pgrep -x 'npm' > /dev/null; then
-           green "NEZHA 已重启"
-	fi
+	      sleep 2
+	          if pgrep -x 'npm' > /dev/null; then
+                green "NEZHA 已重启"
+	          fi
         nohup ./web run -c config.json >/dev/null 2>&1 &
-	sleep 2
- 	if pgrep -x 'web' > /dev/null; then
-           green "singbox 已重启"
-	fi
+	      sleep 2
+ 	          if pgrep -x 'web' > /dev/null; then
+                green "singbox 已重启"
+	          fi
         nohup ./argo.sh >/dev/null 2>&1 &
-	sleep 2
-	if pgrep -x 'bot' > /dev/null; then
-           green "ARGO 隧道已重启"
-	fi
+	      sleep 2
+	          if pgrep -x 'bot' > /dev/null; then
+                green "ARGO 隧道已重启"
+	          fi
         ;;
     [Nn]) menu ;;
     *) red "无效的选择，请输入y或n" && menu ;;
@@ -699,7 +699,7 @@ EOF
 menu() {
    clear
    echo ""
-   purple "--- Serv00与ct8 yutian81魔改sing-box一键脚本 ---\n"
+   purple "--- Serv00|ct8 yutian81魔改sing-box一键脚本 ---\n"
    echo -e "${green}原作者为老王：${re}${yellow}https://github.com/eooce/Sing-box${re}\n"
    purple "转载请著名出处，请勿滥用\n"
    green "1. 安装sing-box"
@@ -722,9 +722,9 @@ menu() {
         1) install_singbox ;;
         2) clean_all ;; 
         3) cat ${WORKDIR}/list.txt ;; 
-	4) reboot_all_tasks ;;
+	      4) reboot_all_tasks ;;
         5) creat_corn ;;
-	6) curl -s ${UPDATA_URL} -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
+	      6) curl -s ${UPDATA_URL} -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
         0) exit 0 ;;
         *) red "无效的选项，请输入 0 到 6" && menu ;;
     esac
