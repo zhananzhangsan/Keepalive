@@ -434,8 +434,8 @@ clean_all() {
    echo  "==============="
    red "2. 一键重置服务器"
    echo  "==============="
-   reading "请输入选择(0-2): " choice
    echo ""
+   reading "请输入选择(0-2): " choice
      case "${choice}" in
         1) uninstall_singbox ;;
         2) clean_all_files ;; 
