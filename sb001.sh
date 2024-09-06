@@ -35,9 +35,6 @@ NZ_NPM_ARMURL="https://github.com/eooce/test/releases/download/ARM/swith"
 SB_WEB_X86URL="https://00.2go.us.kg/web"
 AG_BOT_X86URL="https://00.2go.us.kg/bot"
 NZ_NPM_X86URL="https://00.2go.us.kg/npm"
-SB_NAME="web"
-AG_NAME="bot"
-NZ_NAME="npm"
 UPDATA_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh"
 
 [ -d "$WORKDIR" ] || (mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR")
@@ -237,9 +234,9 @@ EOF
 download_singbox() {
   ARCH=$(uname -m) && DOWNLOAD_DIR="." && mkdir -p "${DOWNLOAD_DIR}" && FILE_INFO=()
   if [ "${ARCH}" == "arm" ] || [ "${ARCH}" == "arm64" ] || [ "${ARCH}" == "aarch64" ]; then
-      FILE_INFO=("${SB_WEB_ARMURL} ${SB_NAME}" "${AG_BOT_ARMURL} ${AG_NAME}" "${NZ_NPM_ARMURL} ${NZ_NAME}")
+      FILE_INFO=("${SB_WEB_ARMURL} web" "${AG_BOT_ARMURL} bot" "${NZ_NPM_ARMURL} npm")
   elif [ "$ARCH" == "amd64" ] || [ "$ARCH" == "x86_64" ] || [ "$ARCH" == "x86" ]; then
-      FILE_INFO=("$SB_WEB_X86URL ${SB_NAME}" "$AG_BOT_X86URL ${AG_NAME}" "$NZ_NPM_X86URL ${NZ_NAME}")
+      FILE_INFO=("$SB_WEB_X86URL web" "$AG_BOT_X86URL bot" "$NZ_NPM_X86URL npm")
   else
       echo "不支持的系统架构: $ARCH"
       exit 1
@@ -295,14 +292,14 @@ run_nezha() {
     [ -x "${WORKDIR}/nezha.sh" ] || chmod +x "${WORKDIR}/nezha.sh"
     nohup ./nezha.sh >/dev/null 2>&1 &
     sleep 2
-    if pgrep -x "${NZ_NAME}" > /dev/null; then
+    if pgrep -x "npm" > /dev/null; then
         green "NEZHA 正在运行"
     else
         red "NEZHA 未运行，重启中……"
-        pkill -x "${NZ_NAME}" 2>/dev/null
+        pkill -x "npm" 2>/dev/null
         nohup ./nezha.sh >/dev/null 2>&1 &
 	sleep 2
-        if pgrep -x "${NZ_NAME}" > /dev/null; then
+        if pgrep -x "npm" > /dev/null; then
             purple "NEZHA 已重启"
         else
             red "NEZHA 重启失败"
@@ -315,20 +312,20 @@ run_nezha() {
 
 # 运行 singbox 服务
 run_sb() {
-  if [ -e "${SB_NAME}" ]; then
+  if [ -e "web" ]; then
     cd "${WORKDIR}"
     export TMPDIR=$(pwd)
-    [ -x "${WORKDIR}/${SB_NAME}" ] || chmod +x "${WORKDIR}/${SB_NAME}"
+    [ -x "${WORKDIR}/web" ] || chmod +x "${WORKDIR}/web"
     [ -e "${WORKDIR}/config.json" ] || chmod +x "${WORKDIR}/config.json"
-    nohup ./${SB_NAME} run -c config.json >/dev/null 2>&1 &
+    nohup ./web run -c config.json >/dev/null 2>&1 &
     sleep 2
-    if pgrep -x "${SB_NAME}" > /dev/null; then
+    if pgrep -x "web" > /dev/null; then
         green "singbox 正在运行"
     else
         red "singbox 未运行，重启中……"
-        pkill -x "${SB_NAME}" && nohup ./"${SB_NAME}" run -c config.json >/dev/null 2>&1 &
+        pkill -x "web" && nohup ./"web" run -c config.json >/dev/null 2>&1 &
 	sleep 2
-        if pgrep -x "${SB_NAME}" > /dev/null; then
+        if pgrep -x "web" > /dev/null; then
             purple "singbox 已重启"
         else
             red "singbox 重启失败"
@@ -346,13 +343,13 @@ run_argo() {
     [ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
     nohup ./argo.sh >/dev/null 2>&1 &
     sleep 2
-    if pgrep -x "${AG_NAME}" > /dev/null; then
+    if pgrep -x "bot" > /dev/null; then
         green "ARGO 隧道正在运行"
     else
         red "ARGO 隧道未运行，重启中……"
-        pkill -x "${AG_NAME}" && nohup ./argo.sh >/dev/null 2>&1 &
+        pkill -x "bot" && nohup ./argo.sh >/dev/null 2>&1 &
 	sleep 2
-        if pgrep -x "${AG_NAME}" > /dev/null; then
+        if pgrep -x "bot" > /dev/null; then
 	    purple "ARGO 隧道已重启"
         else
             red "ARGO 隧道重启失败"
