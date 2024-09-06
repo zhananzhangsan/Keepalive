@@ -275,7 +275,7 @@ download_with_fallback() {
         kill ${CURL_PID} 2>/dev/null
         wait ${CURL_PID} 2>/dev/null
         wget -q -O "${FILENAME}" "${URL}"
-        echo -e "\e[1;32m正在使用 wget 下载 ${FILENAME}\e[0m"
+        echo -e "\e[1;32mcurl 下载失败，切换为 wget 下载 ${FILENAME}\e[0m"
     else
         wait ${CURL_PID}
         echo -e "\e[1;32m正在使用 curl 下载 ${FILENAME}\e[0m"
@@ -284,7 +284,7 @@ download_with_fallback() {
 
 # 获取argo隧道的域名
 get_argodomain() {
-  if [[ -n $ARGO_DOMAIN ]]; then
+  if [[ -n $ARGO_AUTH ]]; then
     echo "$ARGO_DOMAIN"
   else
     grep -oE 'https://[[:alnum:]+\.-]+\.trycloudflare\.com' boot.log | sed 's@https://@@'
@@ -293,14 +293,24 @@ get_argodomain() {
 
 # 运行 NEZHA 服务
 run_nezha() {
-  if [ -e npm ]; then
-    nohup ./nezha.sh >/dev/null 2>&1 & sleep 2
-    if pgrep -x "npm" >/dev/null; then
-      green "NEZHA 正在运行"
+  if [ -e "${SB_NAME}" ] && [ -n "${NEZHA_SERVER}" ] && [ -n "${NEZHA_PORT}" ] && [ -n "${NEZHA_KEY}" ]; then
+    cd "${WORKDIR}"
+    export TMPDIR=$(pwd)
+    [ -x "${WORKDIR}/nezha.sh" ] || chmod +x "${WORKDIR}/nezha.sh"
+    nohup ./nezha.sh >/dev/null 2>&1 &
+    sleep 2
+    if pgrep -x 'npm' > /dev/null; then
+        green "NEZHA 正在运行"
     else
-      red "NEZHA 未运行，重启中……"
-      pkill -x "npm" && nohup ./nezha.sh >/dev/null 2>&1 & sleep 2
-      green "NEZHA 已重启"
+        red "NEZHA 未运行，重启中……"
+        pkill -x 'npm' 2>/dev/null
+        nohup ./nezha.sh >/dev/null 2>&1 &
+	sleep 2
+        if pgrep -x 'npm' > /dev/null; then
+            purple "NEZHA 已重启"
+        else
+            red "NEZHA 重启失败"
+        fi
     fi
   else
     purple "NEZHA 变量为空，跳过运行"
