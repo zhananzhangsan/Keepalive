@@ -429,17 +429,17 @@ creat_corn() {
 clean_all() {
    echo ""
    red "1. 仅卸载 singbox"
-   echo  "==============="
+   echo "==============="
    red "2. 一键重置服务器"
-   echo  "==============="
+   echo "==============="
    reading "请输入选择(0-2): " choice
    echo ""
-     case "${choice}" in
-        1) uninstall_singbox ;;
-        2) clean_all_files ;; 
-        0) menu ;;
-        *) red "无效的选项，请输入 0 到 2" && menu ;;
-     esac
+   case "${choice}" in
+       1) uninstall_singbox ;;
+       2) clean_all_files ;;
+       0) menu ;;
+       *) red "无效的选项，请输入 0 到 2" && menu ;;
+   esac
 }
 
 # 仅卸载 singbox
