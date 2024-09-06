@@ -15,7 +15,7 @@ cd "${WORKDIR}" || { echo "无法切换到工作目录 ${WORKDIR}"; exit 1; }
 [ -x "${WORKDIR}/bot" ] || chmod +x "${WORKDIR}/bot"
 
 # 清理所有进程并重启所有服务
-read -p "\n清理并重启所有进程，继续吗？【y/n】: " choice
+reading "\n清理并重启所有进程，继续吗？【y/n】: " choice
 case "$choice" in
     [Yy])
         ps aux | grep "$(whoami)" | grep -v 'sshd\|bash\|grep' | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
