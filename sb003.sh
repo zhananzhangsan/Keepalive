@@ -300,12 +300,12 @@ run_nezha() {
         red "NEZHA 未运行，重启中……"
         pkill -x 'npm' 2>/dev/null
         nohup ./nezha.sh >/dev/null 2>&1 &
-	      sleep 2
-        if pgrep -x 'npm' > /dev/null; then
-            purple "NEZHA 已重启"
-        else
-            red "NEZHA 重启失败"
-        fi
+	    sleep 2
+          if pgrep -x 'npm' > /dev/null; then
+              purple "NEZHA 已重启"
+          else
+              red "NEZHA 重启失败"
+          fi
     fi
   else
     purple "NEZHA 变量为空，跳过运行"
@@ -326,12 +326,12 @@ run_sb() {
     else
         red "singbox 未运行，重启中……"
         pkill -x 'web' && nohup ./web run -c config.json >/dev/null 2>&1 &
-	      sleep 2
-        if pgrep -x 'web' > /dev/null; then
-            purple "singbox 已重启"
-        else
-            red "singbox 重启失败"
-        fi
+        sleep 2
+          if pgrep -x 'web' > /dev/null; then
+              purple "singbox 已重启"
+          else
+              red "singbox 重启失败"
+          fi
     fi
   fi
 }
@@ -350,12 +350,12 @@ run_argo() {
     else
         red "ARGO 隧道未运行，重启中……"
         pkill -x 'bot' && nohup ./argo.sh >/dev/null 2>&1 &
-	      sleep 2
-        if pgrep -x 'bot' > /dev/null; then
-	    purple "ARGO 隧道已重启"
-        else
-            red "ARGO 隧道重启失败"
-	fi
+        sleep 2
+          if pgrep -x 'bot' > /dev/null; then
+	          purple "ARGO 隧道已重启"
+          else
+              red "ARGO 隧道重启失败"
+          fi
     fi
   else
     red "ARGO 变量未设置"
@@ -477,23 +477,22 @@ reading "\n清理所有进程，但保留ssh连接，确定继续清理吗？【
   case "$choice" in
     [Yy])
         ps aux | grep "$(whoami)" | grep -v 'sshd\|bash\|grep' | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
-	      cd "${WORKDIR}" || { red "无法切换到工作目录 ${WORKDIR}"; return 1; }
+        cd "${WORKDIR}" || { red "无法切换到工作目录 ${WORKDIR}"; return 1; }
         [ -x "${WORKDIR}/nezha.sh" ] || chmod +x "${WORKDIR}/nezha.sh"
-	      [ -x "${WORKDIR}/web" ] || chmod +x "${WORKDIR}/web"
-        [ -e "${WORKDIR}/config.json" ] || chmod +x "${WORKDIR}/config.json"
-	      [ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
+        [ -x "${WORKDIR}/web" ] || chmod +x "${WORKDIR}/web"
+        [ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
         nohup ./nezha.sh >/dev/null 2>&1 &
-	      sleep 2
+        sleep 2
 	          if pgrep -x 'npm' > /dev/null; then
                 green "NEZHA 已重启"
 	          fi
         nohup ./web run -c config.json >/dev/null 2>&1 &
-	      sleep 2
+        sleep 2
  	          if pgrep -x 'web' > /dev/null; then
                 green "singbox 已重启"
 	          fi
         nohup ./argo.sh >/dev/null 2>&1 &
-	      sleep 2
+        sleep 2
 	          if pgrep -x 'bot' > /dev/null; then
                 green "ARGO 隧道已重启"
 	          fi
@@ -722,9 +721,9 @@ menu() {
         1) install_singbox ;;
         2) clean_all ;; 
         3) cat ${WORKDIR}/list.txt ;; 
-	      4) reboot_all_tasks ;;
+	    4) reboot_all_tasks ;;
         5) creat_corn ;;
-	      6) curl -s ${UPDATA_URL} -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
+	    6) curl -s ${UPDATA_URL} -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
         0) exit 0 ;;
         *) red "无效的选项，请输入 0 到 6" && menu ;;
     esac
