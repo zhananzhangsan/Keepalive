@@ -704,21 +704,21 @@ menu() {
    purple "转载请著名出处，请勿滥用\n"
    green "1. 安装sing-box"
    echo  "==============="
-   red "2. 卸载并重置服务器"
+   red "2. 卸载或清理服务器"
    echo  "==============="
    green "3. 查看节点信息"
    echo  "==============="
-   red "4. 重启所有进程"
+   green "4. 重启所有进程"
    echo  "==============="
    green "5. 添加面板CORN任务"
    echo  "==============="
    green "6. 更新最新脚本"
    echo  "==============="
    red "0. 退出脚本"
-   echo  "==============="
-   read -p "请输入选择(0-6): " choice
+   echo "==============="
+   reading "请输入选择(0-6): " choice
    echo ""
-     case "${choice}" in
+    case "${choice}" in
         1) install_singbox ;;
         2) clean_all ;; 
         3) cat ${WORKDIR}/list.txt ;; 
@@ -727,6 +727,6 @@ menu() {
 	6) curl -s ${UPDATA_URL} -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
         0) exit 0 ;;
         *) red "无效的选项，请输入 0 到 6" && menu ;;
-     esac
+    esac
 }
 menu
