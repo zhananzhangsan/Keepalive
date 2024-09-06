@@ -38,6 +38,7 @@ SB_WEB_X86URL="https://00.2go.us.kg/web"
 AG_BOT_X86URL="https://00.2go.us.kg/bot"
 NZ_NPM_X86URL="https://00.2go.us.kg/npm"
 UPDATA_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh"
+REBOOT_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/reboot.sh"
 
 [ -d "$WORKDIR" ] || (mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR")
 
@@ -458,37 +459,6 @@ clean_all_files() {
   esac
 }
 
-# 清理所有进程并重启所有服务
-reboot_all_tasks() {
-reading "\n清理所有进程，但保留ssh连接，确定继续清理吗？【y/n】: " choice
-  case "$choice" in
-    [Yy])
-        ps aux | grep "$(whoami)" | grep -v 'sshd\|bash\|grep' | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
-        cd "${WORKDIR}" || { red "无法切换到工作目录 ${WORKDIR}"; return 1; }
-        [ -x "${WORKDIR}/nezha.sh" ] || chmod +x "${WORKDIR}/nezha.sh"
-        [ -x "${WORKDIR}/web" ] || chmod +x "${WORKDIR}/web"
-        [ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
-        nohup ./nezha.sh >/dev/null 2>&1 &
-        sleep 2
-            if pgrep -x 'npm' > /dev/null; then
-               green "NEZHA 已重启"
-            fi
-        nohup ./web run -c config.json >/dev/null 2>&1 &
-        sleep 2
-            if pgrep -x 'web' > /dev/null; then
-               green "singbox 已重启"
-            fi
-        nohup ./argo.sh >/dev/null 2>&1 &
-        sleep 2
-            if pgrep -x 'bot' > /dev/null; then
-               green "ARGO 隧道已重启"
-            fi
-        ;;
-    [Nn]) menu ;;
-    *) red "无效的选择，请输入y或n" && menu ;;
-  esac
-}
-
 # 生成节点配置文件并解锁流媒体
 generate_config() {
   openssl ecparam -genkey -name prime256v1 -out "private.key"
@@ -708,7 +678,7 @@ menu() {
         1) install_singbox ;;
         2) clean_all ;; 
         3) cat ${WORKDIR}/list.txt ;; 
-        4) reboot_all_tasks ;;
+        4) curl -s ${REBOOT_URL} -o reboot.sh && chmod +x reboot.sh && ./reboot.sh ;;
         5) creat_corn ;;
         6) curl -s ${UPDATA_URL} -o sb00.sh && chmod +x sb00.sh && ./sb00.sh ;;
         0) exit 0 ;;
