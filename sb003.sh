@@ -235,10 +235,10 @@ EOF
 # 下载singbo文件
 download_singbox() {
   ARCH=$(uname -m) && DOWNLOAD_DIR="." && mkdir -p "${DOWNLOAD_DIR}" && FILE_INFO=()
-  if [ "${ARCH}" == "arm" ] || [ "${ARCH}" == "arm64" ] || [ "${ARCH}" == "aarch64" ]; then
+  if [ "$ARCH" == "arm" ] || [ "$ARCH" == "arm64" ] || [ "$ARCH" == "aarch64" ]; then
       FILE_INFO=("${SB_WEB_ARMURL} web" "${AG_BOT_ARMURL} bot" "${NZ_NPM_ARMURL} npm")
   elif [ "$ARCH" == "amd64" ] || [ "$ARCH" == "x86_64" ] || [ "$ARCH" == "x86" ]; then
-      FILE_INFO=("$SB_WEB_X86URL web" "$AG_BOT_X86URL bot" "$NZ_NPM_X86URL npm")
+      FILE_INFO=("${SB_WEB_X86URL} web" "${AG_BOT_X86URL} bot" "${NZ_NPM_X86URL} npm")
   else
       echo "不支持的系统架构: $ARCH"
       exit 1
@@ -248,32 +248,18 @@ download_singbox() {
       NEW_FILENAME=$(echo "$entry" | cut -d ' ' -f 2)
       FILENAME="${DOWNLOAD_DIR}/${NEW_FILENAME}"
       if [ -e "${FILENAME}" ]; then
-          green "$FILENAME 已经存在，跳过下载"
+          echo "$FILENAME 已经存在，跳过下载"
       else
-          download_with_fallback "${URL}" "${FILENAME}"
+          echo "正在下载 $FILENAME"
+          if wget -q -O "${FILENAME}" "${URL}"; then
+              echo "$FILENAME 下载完成"
+          else
+              echo "$FILENAME 下载失败"
+              exit 1
+          fi
       fi
-      chmod +x "$FILENAME"
+      chmod +x "${FILENAME}"
   done
-  wait
-}
-
-download_with_fallback() {
-    local URL=$1
-    local FILENAME=$2
-    curl -L -sS --max-time 2 -o "${FILENAME}" "${URL}" &
-    CURL_PID=$!
-    CURL_START_SIZE=$(stat -c%s "${FILENAME}" 2>/dev/null || echo 0)    
-    sleep 1
-    CURL_CURRENT_SIZE=$(stat -c%s "${FILENAME}" 2>/dev/null || echo 0)  
-    if [ "${CURL_CURRENT_SIZE}" -le "${CURL_START_SIZE}" ]; then
-        kill ${CURL_PID} 2>/dev/null
-        wait ${CURL_PID} 2>/dev/null
-        wget -q -O "${FILENAME}" "${URL}"
-        echo -e "\e[1;32mcurl 下载失败，切换为 wget 下载 ${FILENAME}\e[0m"
-    else
-        wait ${CURL_PID}
-        echo -e "\e[1;32m正在使用 curl 下载 ${FILENAME}\e[0m"
-    fi
 }
 
 # 获取argo隧道的域名
