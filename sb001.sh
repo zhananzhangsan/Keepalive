@@ -12,11 +12,13 @@ yellow() { echo -e "\e[1;33m$1\033[0m"; }
 purple() { echo -e "\e[1;35m$1\033[0m"; }
 reading() { read -p "$(red "$1")" "$2"; }
 
-# 定义变量
+# 定义路径
 USERNAME=$(whoami)
 HOSTNAME=$(hostname)
 WORKDIR="/home/${USERNAME}/logs"
 
+# 定义变量
+export LC_ALL=C
 export UUID=${UUID:-'5195c04a-552f-4f9e-8bf9-216d257c0839'}
 export NEZHA_SERVER=${NEZHA_SERVER:-'nezha.yutian81.top'} 
 export NEZHA_PORT=${NEZHA_PORT:-'443'}     
