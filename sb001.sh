@@ -505,8 +505,8 @@ reading "\n清理所有进程，但保留ssh连接，确定继续清理吗？【
 
 # 生成节点配置文件并解锁流媒体
 generate_config() {
-    openssl ecparam -genkey -name prime256v1 -out "private.key"
-    openssl req -new -x509 -days 3650 -key "private.key" -out "cert.pem" -subj "/CN=$USERNAME.serv00.net"
+  openssl ecparam -genkey -name prime256v1 -out "private.key"
+  openssl req -new -x509 -days 3650 -key "private.key" -out "cert.pem" -subj "/CN=${USERNAME}.serv00.net"
   cat > config.json << EOF
 {
   "log": {
