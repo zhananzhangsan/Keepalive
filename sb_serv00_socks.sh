@@ -281,6 +281,7 @@ run_nezha() {
     cd "${WORKDIR}"
     export TMPDIR=$(pwd)
     [ -x "${WORKDIR}/nezha.sh" ] || chmod +x "${WORKDIR}/nezha.sh"
+    [ -x "${WORKDIR}/npm" ] || chmod +x "${WORKDIR}/npm"
     nohup ./nezha.sh >/dev/null 2>&1 &
     sleep 2
     if pgrep -x 'npm' > /dev/null; then
@@ -332,6 +333,7 @@ run_argo() {
     cd "${WORKDIR}"
     export TMPDIR=$(pwd)
     [ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
+    [ -x "${WORKDIR}/bot" ] || chmod +x "${WORKDIR}/bot"
     nohup ./argo.sh >/dev/null 2>&1 &
     sleep 2
     if pgrep -x 'bot' > /dev/null; then
