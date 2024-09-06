@@ -27,35 +27,37 @@ export SOCKS_PORT=${SOCKS_PORT:-'50000'}
 export HY2_PORT=${HY2_PORT:-'60000'}
 export CFIP=${CFIP:-'fan.yutian.us.kg'} 
 
-# 定义文件下载地址
+# 定义文件下载地址和文件名
 SB_WEB_ARMURL="https://github.com/eooce/test/releases/download/arm64/sb"
-ARGO_BOT_ARMURL="https://github.com/eooce/test/releases/download/arm64/bot13"
+AG_BOT_ARMURL="https://github.com/eooce/test/releases/download/arm64/bot13"
 NZ_NPM_ARMURL="https://github.com/eooce/test/releases/download/ARM/swith"
 SB_WEB_X86URL="https://00.2go.us.kg/web"
-ARGO_BOT_X86URL="https://00.2go.us.kg/bot"
+AG_BOT_X86URL="https://00.2go.us.kg/bot"
 NZ_NPM_X86URL="https://00.2go.us.kg/npm"
+SB_NAME="web"
+AG_NAME="bot"
+NZ_NAME="bot"
 UPDATA_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh"
 
-mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR"
-#[[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR="domains/${USERNAME}.ct8.pl/logs" || WORKDIR="domains/${USERNAME}.serv00.net/logs"
-#[ -d "$WORKDIR" ] || (mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR")
+[ -d "$WORKDIR" ] || (mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR")
+ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
 
 # 安装singbox
 install_singbox() {
-echo -e "${yellow}本脚本同时四协议共存${purple}(vmess-ws,vmess-ws-tls(argo),hysteria2,socks5)${re}"
+echo -e "${yellow}本脚本同时三协议共存${purple}(vmess-ws-tls(argo),hysteria2,socks5)${re}"
 echo -e "${yellow}开始运行前，请确保在面板${purple}已开放3个端口，两个tcp端口和一个udp端口${re}"
 echo -e "${yellow}面板${purple}Additional services中的Run your own applications${yellow}已开启为${purple}Enabled${yellow}状态${re}"
 reading "\n确定继续安装吗？【y/n】: " choice
   case "$choice" in
     [Yy])
-        cd $WORKDIR #进入工作目录
+        cd ${WORKDIR}
         read_vmess_port
         read_hy2_port
         read_socks_variables
         argo_configure
         read_nz_variables
         generate_config
-        download_singbox && wait
+        download_singbox
 	run_nezha
         run_sb
 	run_argo
@@ -128,14 +130,10 @@ read_socks_variables() {
 
 # 设置 argo 隧道域名、json 或 token
 argo_configure() {
-  # 检查是否有 ARGO_AUTH 或 ARGO_DOMAIN 变量
   if [[ -z $ARGO_AUTH || -z $ARGO_DOMAIN ]]; then
     reading "是否需要使用固定 argo 隧道？【y/n】: " argo_choice
     [[ -z $argo_choice ]] && return
-    if [[ "$argo_choice" != "y" && "$argo_choice" != "Y" && "$argo_choice" != "n" && "$argo_choice" != "N" ]]; then
-      red "无效的选择，请输入y或n"
-      return
-    fi
+    [[ "$argo_choice" != "y" && "$argo_choice" != "Y" && "$argo_choice" != "n" && "$argo_choice" != "N" ]] && { red "无效的选择，请输入y或n"; return; }
     if [[ "$argo_choice" == "y" || "$argo_choice" == "Y" ]]; then
       reading "请输入 argo 固定隧道域名: " ARGO_DOMAIN
       green "你的 argo 固定隧道域名为: $ARGO_DOMAIN"
@@ -143,14 +141,12 @@ argo_configure() {
       green "你的 argo 固定隧道密钥为: $ARGO_AUTH"
       echo -e "${red}注意：${purple}使用 token，需要在 cloudflare 后台设置隧道端口和面板开放的 tcp 端口一致${re}"
     else
-      green "ARGO 隧道变量未设置，将使用临时隧道"
+      green "ARGO隧道变量未设置，将使用临时隧道"
       return
     fi
   fi
-
   if [[ $ARGO_AUTH =~ TunnelSecret ]]; then
-    echo "$ARGO_AUTH" > tunnel.json
-# 当 ARGO_AUTH 为 json 时，生成 tunnel.yml 配置文件
+    echo $ARGO_AUTH > tunnel.json
     cat > tunnel.yml << EOF
 tunnel: $(cut -d\" -f12 <<< "$ARGO_AUTH")
 credentials-file: tunnel.json
@@ -163,22 +159,32 @@ ingress:
       noTLSVerify: true
   - service: http_status:404
 EOF
-    args="tunnel --edge-ip-version auto --config tunnel.yml run"   
-    green "ARGO_AUTH 是 Json 格式，将使用 Json 连接 ARGO 隧道；tunnel.yml 配置文件已生成，"
+    # 定义使用 json 时 agro 隧道的启动参数变量
+    args="tunnel --edge-ip-version auto --config tunnel.yml run"
+    green "ARGO_AUTH 是 Json 格式，将使用 Json 连接 ARGO 隧道；tunnel.yml 配置文件已生成"
   elif [[ $ARGO_AUTH =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
-    args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token ${ARGO_AUTH} --hostname ${ARGO_DOMAIN} --url http://localhost:${vmess_port}"
+    args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token ${ARGO_AUTH}"
     green "ARGO_AUTH 是 Token 格式，将使用 Token 连接 ARGO 隧道"
   else
     args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 --logfile boot.log --loglevel info --url http://localhost:$vmess_port"
     green "ARGO_AUTH 未定义，将使用 ARGO 临时隧道"
   fi
-# 生成 argo.sh 脚本
+  # 生成 argo.sh 脚本
   cat > "${WORKDIR}/argo.sh" << EOF
 #!/bin/bash
 pgrep -f 'bot' | xargs -r kill
-cd ${WORKDIR}
+cd "${WORKDIR}"
 export TMPDIR=$(pwd)
-exec ./bot "${args}" >/dev/null 2>&1 &
+exec ./bot "${args}" >/dev/null 2>&1 & 
+sleep 2
+# 检查 bot 进程是否成功启动
+pgrep -x 'bot' > /dev/null && green "ARGO 隧道正在运行" || {
+  red "ARGO 隧道未运行，重启中……"
+  pkill -x 'bot'
+  nohup ./bot "${args}" >/dev/null 2>&1 & 
+  sleep 2
+  green "ARGO 隧道已重启"
+}
 EOF
   chmod +x "${WORKDIR}/argo.sh"
 }
@@ -186,23 +192,26 @@ EOF
 # 设置哪吒域名（或ip）、端口、密钥
 read_nz_variables() {
   if [ -n "$NEZHA_SERVER" ] && [ -n "$NEZHA_PORT" ] && [ -n "$NEZHA_KEY" ]; then
-      green "使用自定义变量哪吒运行哪吒探针"
+      green "使用自定义变量运行哪吒探针"
+      return
   else
       reading "是否需要安装哪吒探针？【y/n】: " nz_choice
-      [[ -z $nz_choice || "$nz_choice" != [yY] ]] && return      
-      reading "请输入哪吒探针域名或IP：" NEZHA_SERVER
-      green "你的哪吒域名为: $NEZHA_SERVER"      
+      [[ -z $nz_choice ]] && return
+      [[ "$nz_choice" != "y" && "$nz_choice" != "Y" ]] && return
+      reading "请输入哪吒探针域名或ip：" NEZHA_SERVER
+      green "你的哪吒域名为: $NEZHA_SERVER"
       reading "请输入哪吒探针端口（回车跳过默认使用5555）：" NEZHA_PORT
       [[ -z $NEZHA_PORT ]] && NEZHA_PORT="5555"
-      green "你的哪吒端口为: $NEZHA_PORT"   
+      green "你的哪吒端口为: $NEZHA_PORT"
       reading "请输入哪吒探针密钥：" NEZHA_KEY
       green "你的哪吒密钥为: $NEZHA_KEY"
   fi
   # 处理 NEZHA_TLS 参数
   tlsPorts=("443" "8443" "2096" "2087" "2083" "2053")
-  NEZHA_TLS=""
   if [[ "${tlsPorts[*]}" =~ "${NEZHA_PORT}" ]]; then
     NEZHA_TLS="--tls"
+  else
+    NEZHA_TLS=""
   fi
   if [ -n "$NEZHA_SERVER" ] && [ -n "$NEZHA_PORT" ] && [ -n "$NEZHA_KEY" ]; then
       purple "NEZHA 变量设置正确"
@@ -213,20 +222,29 @@ read_nz_variables() {
   cat > "${WORKDIR}/nezha.sh" << EOF
 #!/bin/bash
 pgrep -f 'npm' | xargs -r kill
-cd ${WORKDIR}
+cd "${WORKDIR}"
 export TMPDIR=$(pwd)
-exec ./npm -s ${NEZHA_SERVER}:${NEZHA_PORT} -p ${NEZHA_KEY} ${NEZHA_TLS} >/dev/null 2>&1
+exec ./npm -s "${NEZHA_SERVER}:${NEZHA_PORT}" -p "${NEZHA_KEY}" "${NEZHA_TLS}" >/dev/null 2>&1 &
+sleep 2
+# 检查 npm 进程是否成功启动
+pgrep -x 'npm' > /dev/null && green "Nezha 探针正在运行" || {
+  red "Nezha 探针未运行，重启中……"
+  pkill -x 'npm'
+  nohup ./npm -s "${NEZHA_SERVER}:${NEZHA_PORT}" -p "${NEZHA_KEY}" "${NEZHA_TLS}" >/dev/null 2>&1 &
+  sleep 2
+  green "Nezha 客户端已重启"
+}
 EOF
   chmod +x ${WORKDIR}/nezha.sh
 }
 
 # 下载singbo文件
 download_singbox() {
-  ARCH=$(uname -m) && DOWNLOAD_DIR="." && mkdir -p "$DOWNLOAD_DIR" && FILE_INFO=()
-  if [ "$ARCH" == "arm" ] || [ "$ARCH" == "arm64" ] || [ "$ARCH" == "aarch64" ]; then
-      FILE_INFO=("$SB_WEB_ARMURL web" "$ARGO_BOT_ARMURL bot" "$NZ_NPM_ARMURL npm")
+  ARCH=$(uname -m) && DOWNLOAD_DIR="." && mkdir -p "${DOWNLOAD_DIR}" && FILE_INFO=()
+  if [ "${ARCH}" == "arm" ] || [ "${ARCH}" == "arm64" ] || [ "${ARCH}" == "aarch64" ]; then
+      FILE_INFO=("${SB_WEB_ARMURL} ${SB_NAME}" "${AG_BOT_ARMURL} ${AG_NAME}" "${NZ_NPM_ARMURL} ${NZ_NAME}")
   elif [ "$ARCH" == "amd64" ] || [ "$ARCH" == "x86_64" ] || [ "$ARCH" == "x86" ]; then
-      FILE_INFO=("$SB_WEB_X86URL web" "$ARGO_BOT_X86URL bot" "$NZ_NPM_X86URL npm")
+      FILE_INFO=("$SB_WEB_X86URL ${SB_NAME}" "$AG_BOT_X86URL ${AG_NAME}" "$NZ_NPM_X86URL ${NZ_NAME}")
   else
       echo "不支持的系统架构: $ARCH"
       exit 1
@@ -234,15 +252,34 @@ download_singbox() {
   for entry in "${FILE_INFO[@]}"; do
       URL=$(echo "$entry" | cut -d ' ' -f 1)
       NEW_FILENAME=$(echo "$entry" | cut -d ' ' -f 2)
-      FILENAME="$DOWNLOAD_DIR/$NEW_FILENAME"
-      if [ -e "$FILENAME" ]; then
+      FILENAME="${DOWNLOAD_DIR}/${NEW_FILENAME}"
+      if [ -e "${FILENAME}" ]; then
           green "$FILENAME 已经存在，跳过下载"
       else
-          wget -q -O "$FILENAME" "$URL"
-          green "正在下载 $FILENAME"
+          download_with_fallback "${URL}" "${FILENAME}"
       fi
       chmod +x "$FILENAME"
   done
+  wait
+}
+
+download_with_fallback() {
+    local URL=$1
+    local FILENAME=$2
+    curl -L -sS --max-time 2 -o "${FILENAME}" "${URL}" &
+    CURL_PID=$!
+    CURL_START_SIZE=$(stat -c%s "${FILENAME}" 2>/dev/null || echo 0)    
+    sleep 1
+    CURL_CURRENT_SIZE=$(stat -c%s "${FILENAME}" 2>/dev/null || echo 0)  
+    if [ "${CURL_CURRENT_SIZE}" -le "${CURL_START_SIZE}" ]; then
+        kill ${CURL_PID} 2>/dev/null
+        wait ${CURL_PID} 2>/dev/null
+        wget -q -O "${FILENAME}" "${URL}"
+        echo -e "\e[1;32m正在使用 wget 下载 ${FILENAME}\e[0m"
+    else
+        wait ${CURL_PID}
+        echo -e "\e[1;32m正在使用 curl 下载 ${FILENAME}\e[0m"
+    fi
 }
 
 # 获取argo隧道的域名
