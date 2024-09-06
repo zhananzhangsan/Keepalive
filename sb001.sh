@@ -292,14 +292,14 @@ run_nezha() {
     [ -x "${WORKDIR}/nezha.sh" ] || chmod +x "${WORKDIR}/nezha.sh"
     nohup ./nezha.sh >/dev/null 2>&1 &
     sleep 2
-    if pgrep -x "npm" > /dev/null; then
+    if pgrep -x 'npm' > /dev/null; then
         green "NEZHA 正在运行"
     else
         red "NEZHA 未运行，重启中……"
-        pkill -x "npm" 2>/dev/null
+        pkill -x 'npm' 2>/dev/null
         nohup ./nezha.sh >/dev/null 2>&1 &
 	sleep 2
-        if pgrep -x "npm" > /dev/null; then
+        if pgrep -x 'npm' > /dev/null; then
             purple "NEZHA 已重启"
         else
             red "NEZHA 重启失败"
@@ -312,20 +312,20 @@ run_nezha() {
 
 # 运行 singbox 服务
 run_sb() {
-  if [ -e "web" ]; then
+  if [ -e "${WORKDIR}/web ]; then
     cd "${WORKDIR}"
     export TMPDIR=$(pwd)
     [ -x "${WORKDIR}/web" ] || chmod +x "${WORKDIR}/web"
     [ -e "${WORKDIR}/config.json" ] || chmod +x "${WORKDIR}/config.json"
     nohup ./web run -c config.json >/dev/null 2>&1 &
     sleep 2
-    if pgrep -x "web" > /dev/null; then
+    if pgrep -x 'web' > /dev/null; then
         green "singbox 正在运行"
     else
         red "singbox 未运行，重启中……"
-        pkill -x "web" && nohup ./"web" run -c config.json >/dev/null 2>&1 &
+        pkill -x 'web' && nohup ./web run -c config.json >/dev/null 2>&1 &
 	sleep 2
-        if pgrep -x "web" > /dev/null; then
+        if pgrep -x 'web' > /dev/null; then
             purple "singbox 已重启"
         else
             red "singbox 重启失败"
@@ -343,13 +343,13 @@ run_argo() {
     [ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
     nohup ./argo.sh >/dev/null 2>&1 &
     sleep 2
-    if pgrep -x "bot" > /dev/null; then
+    if pgrep -x 'bot' > /dev/null; then
         green "ARGO 隧道正在运行"
     else
         red "ARGO 隧道未运行，重启中……"
-        pkill -x "bot" && nohup ./argo.sh >/dev/null 2>&1 &
+        pkill -x 'bot' && nohup ./argo.sh >/dev/null 2>&1 &
 	sleep 2
-        if pgrep -x "bot" > /dev/null; then
+        if pgrep -x 'bot' > /dev/null; then
 	    purple "ARGO 隧道已重启"
         else
             red "ARGO 隧道重启失败"
