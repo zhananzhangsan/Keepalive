@@ -461,7 +461,7 @@ uninstall_singbox() {
           rm -rf $WORKDIR
           ;;
         [Nn]) menu ;;
-    	*) red "无效的选择，请重新输入 y 或 n" && clean_all ;;
+    	*) red "无效的选择，请重新输入 y 或 n" && menu ;;
     esac
 }
 
@@ -478,7 +478,7 @@ clean_all_files() {
         sleep 2
         green "清理已完成" ;;
       [Nn]) exit 0 ;; 
-      *) red "无效的选择，请重新输入 y 或 n" && clean_all ;;
+      *) red "无效的选择，请重新输入 y 或 n" && menu ;;
   esac
 }
 
