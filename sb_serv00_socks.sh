@@ -173,13 +173,14 @@ EOF
 #!/bin/bash
 pgrep -f 'bot' | xargs -r kill
 cd "${WORKDIR}"
+chmod +x argo.sh
 export TMPDIR=$(pwd)
 exec ./bot "${args}" >/dev/null 2>&1 & 
 sleep 2
 # 检查 bot 进程是否成功启动
 pgrep -x 'bot' > /dev/null && green "ARGO 隧道正在运行" || {
   red "ARGO 隧道未运行，重启中……"
-  pkill -x 'bot'
+  pkill -x 'bot' 2>/dev/null
   nohup ./bot "${args}" >/dev/null 2>&1 & 
   sleep 2
   green "ARGO 隧道已重启"
@@ -217,13 +218,14 @@ read_nz_variables() {
 #!/bin/bash
 pgrep -f 'npm' | xargs -r kill
 cd "${WORKDIR}"
+chmod +x nezha.sh
 export TMPDIR=$(pwd)
 exec ./npm -s "${NEZHA_SERVER}:${NEZHA_PORT}" -p "${NEZHA_KEY}" "${NEZHA_TLS}" >/dev/null 2>&1 &
 sleep 2
 # 检查 npm 进程是否成功启动
 pgrep -x 'npm' > /dev/null && green "Nezha 探针正在运行" || {
   red "Nezha 探针未运行，重启中……"
-  pkill -x 'npm'
+  pkill -x 'npm' 2>/dev/null
   nohup ./npm -s "${NEZHA_SERVER}:${NEZHA_PORT}" -p "${NEZHA_KEY}" "${NEZHA_TLS}" >/dev/null 2>&1 &
   sleep 2
   green "Nezha 客户端已重启"
@@ -248,13 +250,13 @@ download_singbox() {
       NEW_FILENAME=$(echo "$entry" | cut -d ' ' -f 2)
       FILENAME="${DOWNLOAD_DIR}/${NEW_FILENAME}"
       if [ -e "${FILENAME}" ]; then
-          echo "$FILENAME 已经存在，跳过下载"
+          green "$FILENAME 已经存在，跳过下载"
       else
           echo "正在下载 $FILENAME"
           if wget -q -O "${FILENAME}" "${URL}"; then
-              echo "$FILENAME 下载完成"
+              green "$FILENAME 下载完成"
           else
-              echo "$FILENAME 下载失败"
+              red "$FILENAME 下载失败"
               exit 1
           fi
       fi
