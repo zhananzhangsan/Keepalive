@@ -160,13 +160,13 @@ ingress:
   - service: http_status:404
 EOF
     # 定义使用 json 时 agro 隧道的启动参数变量
-    args="tunnel --edge-ip-version auto --config tunnel.yml run"
+    declare -g args="tunnel --edge-ip-version auto --config tunnel.yml run"
     green "ARGO_AUTH 是 Json 格式，将使用 Json 连接 ARGO 隧道；tunnel.yml 配置文件已生成"
   elif [[ "${ARGO_AUTH}" =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
-    args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token ${ARGO_AUTH}"
+    declare -g args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token ${ARGO_AUTH}"
     green "ARGO_AUTH 是 Token 格式，将使用 Token 连接 ARGO 隧道"
   else
-    args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 --logfile boot.log --loglevel info --url http://localhost:$vmess_port"
+    declare -g args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 --logfile boot.log --loglevel info --url http://localhost:$vmess_port"
     green "ARGO_AUTH 未定义，将使用 ARGO 临时隧道"
   fi
   # 生成 argo.sh 脚本
@@ -334,16 +334,16 @@ run_argo() {
     export TMPDIR=$(pwd)
     [ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
     [ -x "${WORKDIR}/bot" ] || chmod +x "${WORKDIR}/bot"
-    nohup ./argo.sh >/dev/null 2>&1 &
+    nohup ./bot ${args} >/dev/null 2>&1 &
     sleep 2
     if pgrep -x 'bot' > /dev/null; then
         green "ARGO 隧道正在运行"
     else
         red "ARGO 隧道未运行，重启中……"
-        pkill -x 'bot' && nohup ./argo.sh >/dev/null 2>&1 &
+        pkill -x 'bot' && nohup ./bot ${args} >/dev/null 2>&1 &
         sleep 2
           if pgrep -x 'bot' > /dev/null; then
-	          purple "ARGO 隧道已重启"
+	      purple "ARGO 隧道已重启"
           else
               red "ARGO 隧道重启失败"
           fi
