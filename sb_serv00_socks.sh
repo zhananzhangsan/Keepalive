@@ -29,6 +29,7 @@ export VMESS_PORT=${VMESS_PORT:-''}
 export SOCKS_PORT=${SOCKS_PORT:-''}
 export HY2_PORT=${HY2_PORT:-''}
 export CFIP=${CFIP:-'fan.yutian.us.kg'} 
+export CFPORT=${CFPORT:-'443'} 
 
 # 定义文件下载地址和文件名
 SB_WEB_ARMURL="https://github.com/eooce/test/releases/download/arm64/sb"
@@ -37,17 +38,18 @@ NZ_NPM_ARMURL="https://github.com/eooce/test/releases/download/ARM/swith"
 SB_WEB_X86URL="https://00.2go.us.kg/web"
 AG_BOT_X86URL="https://00.2go.us.kg/bot"
 NZ_NPM_X86URL="https://00.2go.us.kg/npm"
+CORN_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/check_sb_cron.sh"
 UPDATA_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh"
 REBOOT_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/reboot.sh"
 
-[ -d "$WORKDIR" ] || (mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR")
+[ -d "${WORKDIR}" ] || (mkdir -p "${WORKDIR}" && chmod 777 "${WORKDIR}")
 
 # 安装singbox
 install_singbox() {
-echo -e "${yellow}本脚本同时三协议共存${purple}(vmess-ws-tls(argo),hysteria2,socks5)${re}"
+echo -e "${yellow}本脚本同时四协议共存${purple}(vmess,vmess-ws-tls(argo),hysteria2,socks5)${re}"
 echo -e "${yellow}开始运行前，请确保在面板${purple}已开放3个端口，两个tcp端口和一个udp端口${re}"
 echo -e "${yellow}面板${purple}Additional services中的Run your own applications${yellow}已开启为${purple}Enabled${yellow}状态${re}"
-green "安装完成后，可在用户跟目录输入 bash sb00.sh 再次进入主菜单"
+green "安装完成后，可在用户根目录输入 bash sb00.sh 再次进入主菜单"
 reading "\n确定继续安装吗？【y/n】: " choice
   case "$choice" in
     [Yy])
@@ -174,8 +176,8 @@ EOF
 #!/bin/bash
 pgrep -f 'bot' | xargs -r kill
 cd "${WORKDIR}"
-chmod +x bot
 export TMPDIR=$(pwd)
+chmod +x bot
 exec ./bot "${args}" >/dev/null 2>&1 & 
 sleep 2
 # 检查 bot 进程是否成功启动
@@ -219,8 +221,8 @@ read_nz_variables() {
 #!/bin/bash
 pgrep -f 'npm' | xargs -r kill
 cd "${WORKDIR}"
-chmod +x npm
 export TMPDIR=$(pwd)
+chmod +x npm
 exec ./npm -s "${NEZHA_SERVER}:${NEZHA_PORT}" -p "${NEZHA_KEY}" "${NEZHA_TLS}" >/dev/null 2>&1 &
 sleep 2
 # 检查 npm 进程是否成功启动
@@ -357,7 +359,7 @@ run_argo() {
 get_ip() {
   ip=$(curl -s --max-time 2 ipv4.ip.sb)
   if [ -z "$ip" ]; then
-    ip=$( [[ "$HOSTNAME" =~ s[0-9]\.serv00\.com ]] && echo "${HOSTNAME/s/web}" || echo "$HOSTNAME" )
+    ip=$( [[ "$HOSTNAME" =~ s[0-9]\.serv00\.com ]] && echo "${HOSTNAME/s/mail}" || echo "$HOSTNAME" )
   else
     url="https://www.toolsdaquan.com/toolapi/public/ipchecking/$ip/443"
     response=$(curl -s --location --max-time 3.5 --request GET "$url" --header 'Referer: https://www.toolsdaquan.com/ipcheck')
@@ -367,7 +369,7 @@ get_ip() {
         accessible=true
     fi
     if [ "$accessible" = false ]; then
-        ip=$( [[ "$HOSTNAME" =~ s[0-9]\.serv00\.com ]] && echo "${HOSTNAME/s/web}" || echo "$ip" )
+        ip=$( [[ "$HOSTNAME" =~ s[0-9]\.serv00\.com ]] && echo "${HOSTNAME/s/mail}" || echo "$ip" )
     fi
   fi
   echo "$ip"
@@ -383,6 +385,8 @@ ISP=$(curl -s https://speed.cloudflare.com/meta | awk -F\" '{print $26"-"$18}' |
 sleep 1
 yellow "注意：v2ray或其他软件的跳过证书验证需设置为true,否则hy2或tuic节点可能不通\n"
 cat > list.txt <<EOF
+vmess://$(echo "{ \"v\": \"2\", \"ps\": \"$ISP\", \"add\": \"$IP\", \"port\": \"$vmess_port\", \"id\": \"$UUID\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"\", \"path\": \"/vmess?ed=2048\", \"tls\": \"\", \"sni\": \"\", \"alpn\": \"\", \"fp\": \"\"}" | base64 -w0)
+
 vmess://$(echo "{ \"v\": \"2\", \"ps\": \"$ISP\", \"add\": \"$CFIP\", \"port\": \"$CFPORT\", \"id\": \"$UUID\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"$argodomain\", \"path\": \"/vmess?ed=2048\", \"tls\": \"tls\", \"sni\": \"$argodomain\", \"alpn\": \"\", \"fp\": \"\"}" | base64 -w0)
 
 hysteria2://$UUID@$IP:$hy2_port/?sni=www.bing.com&alpn=h3&insecure=1#$ISP
@@ -411,8 +415,8 @@ creat_corn() {
   reading "\n是否添加 crontab 守护进程的计划任务【y/n】: " choice
     case "$choice" in
         [Yy])
-           curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/check_sb_cron.sh | bash
-           green "已添加成功" && menu ;;
+           curl -s ${CORN_URL} -o corn.sh && chmod +x corn.sh && ./corn.sh 
+           green "已成功添加 corn 定时任务" && menu ;;
         [Nn]) menu ;;
         *) red "无效的选择，请重新输入 y 或 n" && menu ;;
     esac
@@ -432,12 +436,12 @@ clean_all() {
 # 仅卸载 singbox
 uninstall_singbox() {
   reading "\n确定要卸载吗？【y/n】: " choice
-    case "$choice" in
+    case "${choice}" in
        [Yy])
           kill -9 $(ps aux | grep '[w]eb' | awk '{print $2}')
           kill -9 $(ps aux | grep '[b]ot' | awk '{print $2}')
           kill -9 $(ps aux | grep '[n]pm' | awk '{print $2}')
-          rm -rf $WORKDIR
+          rm -rf "${WORKDIR}"
           ;;
         [Nn]) menu ;;
     	*) red "无效的选择，请重新输入 y 或 n" && menu ;;
@@ -447,7 +451,7 @@ uninstall_singbox() {
 # 一键重置服务器
 clean_all_files() {
   reading "\n清理所有文件，重置服务器，确定继续吗？【y/n】: " choice
-    case "$choice" in
+    case "${choice}" in
       [Yy])
         ps aux | grep "$(whoami)" | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
         chmod -R 755 ~/*
