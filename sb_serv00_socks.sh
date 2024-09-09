@@ -33,7 +33,8 @@ export CFPORT=${CFPORT:-'443'}
 
 # 定义文件下载地址和文件名
 SB_WEB_ARMURL="https://github.com/eooce/test/releases/download/arm64/sb"
-AG_BOT_ARMURL="https://github.com/eooce/test/releases/download/arm64/bot13"
+# AG_BOT_ARMURL="https://github.com/eooce/test/releases/download/arm64/bot13"
+AG_BOT_ARMURL="https://github.com/yutian81/serv00-ct8-ssh/releases/download/arm64/cloudflared"
 NZ_NPM_ARMURL="https://github.com/eooce/test/releases/download/ARM/swith"
 SB_WEB_X86URL="https://00.2go.us.kg/web"
 AG_BOT_X86URL="https://00.2go.us.kg/bot"
@@ -306,7 +307,7 @@ run_nezha() {
 
 # 运行 singbox 服务
 run_sb() {
-  if [ -e "${WORKDIR}/web" ]; then
+  if [ -e "${WORKDIR}/web" ] && [ -e "${WORKDIR}/config.json" ]; then
     cd "${WORKDIR}"
     export TMPDIR=$(pwd)
     [ -x "${WORKDIR}/web" ] || chmod +x "${WORKDIR}/web"
@@ -424,7 +425,8 @@ creat_corn() {
 
 # 卸载并重置服务器
 clean_all() {
-   reading "\n确定要卸载吗？【0/1/2】1为仅卸载；2为重置服务器，0为返回主菜单: " choice
+   green "输入 1 为仅卸载singbox；输入 2 为重置服务器；输入 0 为返回主菜单"
+   reading "\n确定要卸载吗？【0/1/2】: " choice
      case "${choice}" in
         1) uninstall_singbox ;;
         2) clean_all_files ;;
