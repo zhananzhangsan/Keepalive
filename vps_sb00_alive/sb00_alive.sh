@@ -127,4 +127,3 @@ jq -c '.[]' "sb00ssh.json" | while IFS= read -r server; do
             echo -e "\e[1;33m连接失败，请检查你的账户和密码\e[0m\n"
         fi
     fi
-done
