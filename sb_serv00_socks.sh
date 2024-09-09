@@ -288,16 +288,15 @@ run_nezha() {
     nohup ./nezha.sh >/dev/null 2>&1 &
     sleep 2
     if pgrep -x 'npm' > /dev/null; then
-        green "NEZHA 正在运行"
+       green "NEZHA 正在运行"
     else
-        red "NEZHA 未运行，重启中……"
-        pkill -x 'npm' 2>/dev/null
-        nohup ./nezha.sh >/dev/null 2>&1 &
-	    sleep 2
+       red "NEZHA 未运行，重启中……"
+       pkill -x 'npm' 2>/dev/null && nohup ./nezha.sh >/dev/null 2>&1 &
+	   sleep 2
           if pgrep -x 'npm' > /dev/null; then
-              purple "NEZHA 已重启"
+             purple "NEZHA 已重启"
           else
-              red "NEZHA 重启失败"
+             red "NEZHA 重启失败"
           fi
     fi
   else
@@ -315,15 +314,15 @@ run_sb() {
     nohup ./web run -c config.json >/dev/null 2>&1 &
     sleep 2
     if pgrep -x 'web' > /dev/null; then
-        green "singbox 正在运行"
+       green "singbox 正在运行"
     else
-        red "singbox 未运行，重启中……"
-        pkill -x 'web' && nohup ./web run -c config.json >/dev/null 2>&1 &
-        sleep 2
+       red "singbox 未运行，重启中……"
+       pkill -x 'web' && nohup ./web run -c config.json >/dev/null 2>&1 &
+       sleep 2
           if pgrep -x 'web' > /dev/null; then
-              purple "singbox 已重启"
+             purple "singbox 已重启"
           else
-              red "singbox 重启失败"
+             red "singbox 重启失败"
           fi
     fi
   fi
@@ -340,15 +339,15 @@ run_argo() {
     nohup ./bot ${args} >/dev/null 2>&1 &
     sleep 2
     if pgrep -x 'bot' > /dev/null; then
-        green "ARGO 隧道正在运行"
+       green "ARGO 隧道正在运行"
     else
-        red "ARGO 隧道未运行，重启中……"
-        pkill -x 'bot' && nohup ./bot ${args} >/dev/null 2>&1 &
-        sleep 2
+       red "ARGO 隧道未运行，重启中……"
+       pkill -x 'bot' && nohup ./bot ${args} >/dev/null 2>&1 &
+       sleep 2
           if pgrep -x 'bot' > /dev/null; then
-	      purple "ARGO 隧道已重启"
+	         purple "ARGO 隧道已重启"
           else
-              red "ARGO 隧道重启失败"
+             red "ARGO 隧道重启失败"
           fi
     fi
   else
