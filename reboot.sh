@@ -66,7 +66,7 @@ sleep 2
       pkill -x 'bot' && nohup ./argo.sh >/dev/null 2>&1 &
       sleep 2
          if pgrep -x 'bot' > /dev/null; then
-	         purple "ARGO 已重启"
+	    purple "ARGO 已重启"
          else
             red "ARGO 重启失败"
          fi
