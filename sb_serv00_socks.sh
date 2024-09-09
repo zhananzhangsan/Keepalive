@@ -144,7 +144,7 @@ argo_configure() {
         green "你的 argo 固定隧道密钥为: $ARGO_AUTH"
         echo -e "${red}注意：${purple}使用 token，需要在 cloudflare 后台设置隧道端口和面板开放的 tcp 端口一致${re}"
     else
-        green "ARGO隧道变量未设置，将使用临时隧道"
+        green "ARGO 变量未设置，将使用临时隧道"
         return
     fi
   fi
@@ -164,10 +164,10 @@ ingress:
 EOF
     # 定义使用 json 时 agro 隧道的启动参数变量
     declare -g args="tunnel --edge-ip-version auto --config tunnel.yml run"
-    green "ARGO_AUTH 是 Json 格式，将使用 Json 连接 ARGO 隧道；tunnel.yml 配置文件已生成"
+    green "ARGO_AUTH 是 Json 格式，将使用 Json 连接 ARGO；tunnel.yml 配置文件已生成"
   elif [[ "${ARGO_AUTH}" =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
     declare -g args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token ${ARGO_AUTH}"
-    green "ARGO_AUTH 是 Token 格式，将使用 Token 连接 ARGO 隧道"
+    green "ARGO_AUTH 是 Token 格式，将使用 Token 连接 ARGO"
   else
     declare -g args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 --logfile boot.log --loglevel info --url http://localhost:$vmess_port"
     green "ARGO_AUTH 未定义，将使用 ARGO 临时隧道"
@@ -182,12 +182,12 @@ chmod +x bot
 exec ./bot "${args}" >/dev/null 2>&1 & 
 sleep 2
 # 检查 bot 进程是否成功启动
-pgrep -x 'bot' > /dev/null && green "ARGO 隧道正在运行" || {
-  red "ARGO 隧道未运行，重启中……"
+pgrep -x 'bot' > /dev/null && green "ARGO 正在运行" || {
+  red "ARGO 未运行，重启中……"
   pkill -x 'bot' 2>/dev/null
   nohup ./bot "${args}" >/dev/null 2>&1 & 
   sleep 2
-  green "ARGO 隧道已重启"
+  green "ARGO 已重启"
 }
 EOF
   chmod +x "${WORKDIR}/argo.sh"
@@ -339,15 +339,15 @@ run_argo() {
     nohup ./bot ${args} >/dev/null 2>&1 &
     sleep 2
     if pgrep -x 'bot' > /dev/null; then
-       green "ARGO 隧道正在运行"
+       green "ARGO 正在运行"
     else
-       red "ARGO 隧道未运行，重启中……"
+       red "ARGO 未运行，重启中……"
        pkill -x 'bot' && nohup ./bot ${args} >/dev/null 2>&1 &
        sleep 2
           if pgrep -x 'bot' > /dev/null; then
-	         purple "ARGO 隧道已重启"
+	         purple "ARGO 已重启"
           else
-             red "ARGO 隧道重启失败"
+             red "ARGO 重启失败"
           fi
     fi
   else
