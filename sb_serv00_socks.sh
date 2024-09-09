@@ -415,7 +415,7 @@ creat_corn() {
   reading "\n是否添加 crontab 守护进程的计划任务【y/n】: " choice
     case "$choice" in
         [Yy])
-           curl -s ${CORN_URL} -o corn.sh && chmod +x corn.sh && ./corn.sh 
+	   bash <(curl -s ${CORN_URL})
            green "已成功添加 corn 定时任务" && menu ;;
         [Nn]) menu ;;
         *) red "无效的选择，请重新输入 y 或 n" && menu ;;
