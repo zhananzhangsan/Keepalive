@@ -43,7 +43,7 @@ install_packages() {
     elif [ -f /etc/alpine-release ]; then
         package_manager="apk add cronie jq"
     else
-        echo -e "\e[1;31m不支持的系统架构！\e[0m"
+        red "不支持的系统架构！"
         exit 1
     fi
     $package_manager sshpass curl netcat-openbsd cron jq > /dev/null
