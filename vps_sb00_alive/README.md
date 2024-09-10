@@ -79,4 +79,10 @@ curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_
 如果不通，立即用vps远程连接serv的ssh，并执行无交互一键脚本  
 本脚本设定每5分钟检测一次端口  
 
-**_worker.js**是本脚本的worker版，尚未完工
+## 文件说明
+- sb00-sk5.sh
+在老王四合一无交互一键脚本基础上修改而来
+去掉了tuic协议，增加了socks5协议
+
+- _worker.js
+是`vps_sb00_alive.sh`的`worker版`，尚未完工
