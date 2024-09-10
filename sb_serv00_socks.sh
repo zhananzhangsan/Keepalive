@@ -310,7 +310,7 @@ run_sb() {
     cd "${WORKDIR}"
     export TMPDIR=$(pwd)
     [ -x "${WORKDIR}/web" ] || chmod +x "${WORKDIR}/web"
-    [ -e "${WORKDIR}/config.json" ] || chmod +x "${WORKDIR}/config.json"
+    [ -e "${WORKDIR}/config.json" ] || chmod 777 "${WORKDIR}/config.json"
     nohup ./web run -c config.json >/dev/null 2>&1 &
     sleep 2
     if pgrep -x 'web' > /dev/null; then
