@@ -22,7 +22,7 @@ CRON_ARGO="nohup ${WORKDIR}/argo.sh >/dev/null 2>&1 &"
 [ -x "${WORKDIR}/nezha.sh" ] || chmod +x "${WORKDIR}/nezha.sh"
 [ -x "${WORKDIR}/npm" ] || chmod +x "${WORKDIR}/npm"
 [ -x "${WORKDIR}/web" ] || chmod +x "${WORKDIR}/web"
-[ -e "${WORKDIR}/config.json" ] || chmod +x "${WORKDIR}/config.json"
+[ -e "${WORKDIR}/config.json" ] || chmod 777 "${WORKDIR}/config.json"
 [ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
 [ -x "${WORKDIR}/bot" ] || chmod +x "${WORKDIR}/bot"
 
@@ -59,3 +59,4 @@ fi
 
 # 将 crontab 任务更新一次性添加
 (crontab -l; echo -e "$NEW_CRONTAB") | crontab -
+green "Crontab 任务已添加完成"
