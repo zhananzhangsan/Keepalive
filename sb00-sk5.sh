@@ -1,4 +1,6 @@
 #!/bin/bash
+# 此为四协议无交互一键安装脚本，去掉tuic协议，增加sk5协议
+# 原作者为老王：https://github.com/eooce/Sing-box
 
 re="\033[0m"
 red="\033[1;91m"
@@ -20,8 +22,10 @@ export NEZHA_KEY=${NEZHA_KEY:-''}
 export ARGO_DOMAIN=${ARGO_DOMAIN:-''}   
 export ARGO_AUTH=${ARGO_AUTH:-''}
 export VMESS_PORT=${VMESS_PORT:-'40000'}
-export TUIC_PORT=${TUIC_PORT:-'50000'}
+export SOCKS_PORT=${SOCKS_PORT:-'50000'}
 export HY2_PORT=${HY2_PORT:-'60000'}
+export SOCKS_USER=${SOCKS_USER:-'yutian'}
+export SOCKS_PASS=${SOCKS_PASS:-'yutian=abcd'}
 export CFIP=${CFIP:-'www.visa.com.tw'} 
 export CFPORT=${CFPORT:-'443'} 
 
@@ -140,25 +144,16 @@ generate_config() {
       }
     },
     {
-      "tag": "tuic-in",
-      "type": "tuic",
+      "tag": "socks-in",
+      "type": "socks",
       "listen": "::",
-      "listen_port": $TUIC_PORT,
+      "listen_port": $SOCKS_PORT,
       "users": [
         {
-          "uuid": "$UUID",
-          "password": "admin123"
+          "username": "$SOCKS_USER",
+          "password": "$SOCKS_PASS"
         }
-      ],
-      "congestion_control": "bbr",
-      "tls": {
-        "enabled": true,
-        "alpn": [
-          "h3"
-        ],
-        "certificate_path": "cert.pem",
-        "key_path": "private.key"
-      }
+      ]
     }
 
  ],
@@ -397,7 +392,7 @@ vmess://$(echo "{ \"v\": \"2\", \"ps\": \"$ISP\", \"add\": \"$CFIP\", \"port\": 
 
 hysteria2://$UUID@$IP:$HY2_PORT/?sni=www.bing.com&alpn=h3&insecure=1#$ISP
 
-tuic://$UUID:admin123@$IP:$TUIC_PORT?sni=www.bing.com&congestion_control=bbr&udp_relay_mode=native&alpn=h3&allow_insecure=1#$ISP
+socks5://$SOCKS_USER:$SOCKS_PASS@$IP:$SOCKS_PORT
 EOF
 cat list.txt
 purple "\n$WORKDIR/list.txt saved successfully"
