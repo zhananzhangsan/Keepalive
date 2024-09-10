@@ -77,7 +77,7 @@ async function runRemoteCommand(server, SCRIPT_URL) {
   };
 
   try {
-    const response = await fetch("https://ssh.yzong.us.kg/?port=22", {
+    const response = await fetch("https://ssh.yzong.us.kg/?hostname=HOST&port=22&username=SSH_USER&password=SSH_PASS&command=", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
