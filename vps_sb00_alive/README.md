@@ -70,3 +70,13 @@ https://raw.githubusercontent.com/yutian81/serv00/main/alive/sb00ssh.json
 curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_alive/sb00_alive.sh -o sb.sh && bash sb.sh
 ```
 再次运行输入：`bash sb.sh`即可
+
+----
+
+## 基本原理
+通过vps远程检测serv的vmess端口是否通畅  
+如果通畅，什么也不做  
+如果不通，立即用vps远程连接serv的ssh，并执行无交互一键脚本  
+本脚本设定每5分钟检测一次端口  
+
+**_worker.js**是本脚本的worker版，尚未完工
