@@ -66,7 +66,7 @@ async function checkPort(host, port) {
 
 // 通过第三方API执行远程命令
 async function runRemoteCommand(server, SCRIPT_URL) {
-  const { SSH_USER, SSH_PASS, HOST, VMESS_PORT, SOCKS_PORT, HY2_PORT, ARGO_DOMAIN, ARGO_AUTH, NEZHA_SERVER, NEZHA_PORT, NEZHA_KEY } = server;
+  const { HOST, SSH_USER, SSH_PASS, VMESS_PORT, SOCKS_PORT, HY2_PORT, SOCKS_USER, SOCKS_PASS, ARGO_DOMAIN, ARGO_AUTH, NEZHA_SERVER, NEZHA_PORT, NEZHA_KEY } = server;
   const payload = {
     hostname: HOST,
     username: SSH_USER,
