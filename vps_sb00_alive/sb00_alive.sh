@@ -16,6 +16,7 @@ reading() { read -p "$(red "$1")" "$2"; }
 SCRIPT_PATH="/root/sb00_alive.sh"  # 本脚本路径，不要改变文件名
 SCRIPT_URL="https://raw.githubusercontent.com/eooce/sing-box/main/sb_00.sh"  # 一键脚本下载地址
 VPS_JSON_URL="https://github.yutian81.top/yutian81/Wanju-Nodes/main/serv00-panel3/sb00ssh.json"  # vps登录信息json文件
+export LC_ALL=C
 export HOST=${HOST:-'s11.serv00.com'}   # serv00服务器或IP
 export SSH_USER=${SSH_USER:-'abcd'}  # serv00或ct8账号
 export SSH_PASS=${SSH_PASS:-'12345678'}  # serv00或ct8密码
@@ -105,7 +106,10 @@ check_vmess_port() {
 run_remote_command() {
     sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$HOST" \
     "ps aux | grep $(whoami) | grep -v 'sshd\|bash\|grep' | awk '{print \$2}' | xargs -r kill -9 > /dev/null 2>&1 && \
-    VMESS_PORT=$VMESS_PORT HY2_PORT=$HY2_PORT SOCKS_PORT=$SOCKS_PORT ARGO_DOMAIN=$ARGO_DOMAIN ARGO_AUTH="$ARGO_AUTH" NEZHA_SERVER=$NEZHA_SERVER NEZHA_PORT=$NEZHA_PORT NEZHA_KEY=$NEZHA_KEY bash <(curl -Ls ${SCRIPT_URL})"
+    VMESS_PORT=$VMESS_PORT HY2_PORT=$HY2_PORT SOCKS_PORT=$SOCKS_PORT \
+    ARGO_DOMAIN=$ARGO_DOMAIN ARGO_AUTH=\"$ARGO_AUTH\" \
+    NEZHA_SERVER=$NEZHA_SERVER NEZHA_PORT=$NEZHA_PORT NEZHA_KEY=$NEZHA_KEY \
+    bash <(curl -Ls ${SCRIPT_URL})"
     #cd /home/$SSH_USER/logs && \
     #nohup ./nezha.sh >/dev/null 2>&1 & \
     #nohup ./web run -c config.json >/dev/null 2>&1 & \
@@ -130,7 +134,7 @@ if [ $attempt -ge $MAX_ATTEMPTS ]; then
     if sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$HOST" -q exit; then
         green "SSH远程连接成功!"
         output=$(run_remote_command)
-        green "远程命令执行结果："
+        green "正在处理服务器 $HOST 的命令执行结果："
         echo "$output"
     else
         red "SSH 连接失败，请检查你的用户名和密码"
