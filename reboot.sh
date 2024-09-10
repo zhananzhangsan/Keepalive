@@ -20,7 +20,7 @@ cd "${WORKDIR}" || { echo "无法切换到工作目录 ${WORKDIR}"; exit 1; }
 [ -x "${WORKDIR}/nezha.sh" ] || chmod +x "${WORKDIR}/nezha.sh"
 [ -x "${WORKDIR}/npm" ] || chmod +x "${WORKDIR}/npm"
 [ -x "${WORKDIR}/web" ] || chmod +x "${WORKDIR}/web"
-[ -e "${WORKDIR}/config.json" ] || chmod +x "${WORKDIR}/config.json"
+[ -e "${WORKDIR}/config.json" ] || chmod 777 "${WORKDIR}/config.json"
 [ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
 [ -x "${WORKDIR}/bot" ] || chmod +x "${WORKDIR}/bot"
 
