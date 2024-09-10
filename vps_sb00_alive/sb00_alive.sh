@@ -30,8 +30,6 @@ export ARGO_DOMAIN=${ARGO_DOMAIN:-''}  # argo隧道域名
 export ARGO_AUTH=${ARGO_AUTH:-''}  # argo隧道token
 export NEZHA_PORT=${NEZHA_PORT:-'5555'}  # 哪吒探针端口，默认5555
 export NEZHA_KEY=${NEZHA_KEY:-''}  # 哪吒探针密钥
-export SOCKS_USER=${SOCKS_USER:-'yutian'}  # SK5用户名
-export SOCKS_PASS=${SOCKS_PASS:-'yutian=abcd'}  # SK5密码
 
 # 最大尝试检测次数
 MAX_ATTEMPTS=5
@@ -114,7 +112,8 @@ run_remote_command() {
     sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$HOST" \
     "ps aux | grep $(whoami) | grep -v 'sshd\|bash\|grep' | awk '{print \$2}' | xargs -r kill -9 > /dev/null 2>&1 && \
     VMESS_PORT=$VMESS_PORT HY2_PORT=$HY2_PORT SOCKS_PORT=$SOCKS_PORT \
-    ARGO_DOMAIN=$ARGO_DOMAIN ARGO_AUTH=\"$ARGO_AUTH\" \
+    SOCKS_USER=$SOCKS_USER SOCKS_PASS="${SOCKS_PASS}"
+    ARGO_DOMAIN=$ARGO_DOMAIN ARGO_AUTH='$ARGO_AUTH' \
     NEZHA_SERVER=$NEZHA_SERVER NEZHA_PORT=$NEZHA_PORT NEZHA_KEY=$NEZHA_KEY \
     bash <(curl -Ls ${SCRIPT_URL})"
     #cd /home/$SSH_USER/logs && \
