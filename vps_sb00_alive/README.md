@@ -82,8 +82,7 @@ curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_
 ## 文件说明
 - sb00-sk5.sh
 
-在老王四合一无交互一键脚本基础上修改而来
-去掉了tuic协议，增加了socks5协议
+在老王四合一无交互一键脚本基础上修改而来，去掉了tuic协议，增加了socks5协议
 
 - _worker.js
 
