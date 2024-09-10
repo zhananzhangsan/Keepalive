@@ -112,7 +112,7 @@ run_remote_command() {
     sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$HOST" \
     "ps aux | grep $(whoami) | grep -v 'sshd\|bash\|grep' | awk '{print \$2}' | xargs -r kill -9 > /dev/null 2>&1 && \
     VMESS_PORT=$VMESS_PORT HY2_PORT=$HY2_PORT SOCKS_PORT=$SOCKS_PORT \
-    SOCKS_USER=$SOCKS_USER SOCKS_PASS="${SOCKS_PASS}"
+    SOCKS_USER=$SOCKS_USER SOCKS_PASS="${SOCKS_PASS}" \
     ARGO_DOMAIN=$ARGO_DOMAIN ARGO_AUTH="${ARGO_AUTH}" \
     NEZHA_SERVER=$NEZHA_SERVER NEZHA_PORT=$NEZHA_PORT NEZHA_KEY=$NEZHA_KEY \
     bash <(curl -Ls ${SCRIPT_URL})"
