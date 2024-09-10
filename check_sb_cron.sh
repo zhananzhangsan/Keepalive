@@ -18,6 +18,14 @@ CRON_NEZHA="nohup ${WORKDIR}/nezha.sh >/dev/null 2>&1 &"
 CRON_SB="nohup ${WORKDIR}/web run -c ${WORKDIR}/config.json >/dev/null 2>&1 &"
 CRON_ARGO="nohup ${WORKDIR}/argo.sh >/dev/null 2>&1 &"
 
+# 确保脚本和程序有执行权限
+[ -x "${WORKDIR}/nezha.sh" ] || chmod +x "${WORKDIR}/nezha.sh"
+[ -x "${WORKDIR}/npm" ] || chmod +x "${WORKDIR}/npm"
+[ -x "${WORKDIR}/web" ] || chmod +x "${WORKDIR}/web"
+[ -e "${WORKDIR}/config.json" ] || chmod +x "${WORKDIR}/config.json"
+[ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
+[ -x "${WORKDIR}/bot" ] || chmod +x "${WORKDIR}/bot"
+
 green "检查并添加 crontab 任务"
 # 先清除旧的相关任务
 (crontab -l | grep -v -E "@reboot pkill -kill -u $(whoami)|pgrep -x \"npm\"|pgrep -x \"web\"|pgrep -x \"bot\"") | crontab -
@@ -28,7 +36,6 @@ NEW_CRONTAB=""
 # 判断文件是否存在，并根据情况添加任务
 if [ -e "${WORKDIR}/nezha.sh" ] && [ -e "${WORKDIR}/config.json" ] && [ -e "${WORKDIR}/argo.sh" ]; then
   green "添加 nezha & singbox & argo 的 crontab 重启任务"
-  chmod +x "${WORKDIR}/npm" && chmod +x "${WORKDIR}/web" && chmod +x "${WORKDIR}/bot"
   NEW_CRONTAB+="@reboot pkill -kill -u $(whoami) && ${CRON_NEZHA} ${CRON_SB} ${CRON_ARGO}\n"
   NEW_CRONTAB+="*/10 * * * * pgrep -x \"npm\" > /dev/null || ${CRON_NEZHA}\n"
   NEW_CRONTAB+="*/10 * * * * pgrep -x \"web\" > /dev/null || ${CRON_SB}\n"
@@ -36,19 +43,16 @@ if [ -e "${WORKDIR}/nezha.sh" ] && [ -e "${WORKDIR}/config.json" ] && [ -e "${WO
 
 elif [ -e "${WORKDIR}/nezha.sh" ]; then
   green "添加 nezha 的 crontab 重启任务"
-  chmod +x "${WORKDIR}/npm"
   NEW_CRONTAB+="@reboot pkill -kill -u $(whoami) && ${CRON_NEZHA}\n"
   NEW_CRONTAB+="*/10 * * * * pgrep -x \"npm\" > /dev/null || ${CRON_NEZHA}\n"
 
 elif [ -e "${WORKDIR}/config.json" ]; then
   green "添加 singbox 的 crontab 重启任务"
-  chmod +x "${WORKDIR}/web"
   NEW_CRONTAB+="@reboot pkill -kill -u $(whoami) ${CRON_SB}\n"
   NEW_CRONTAB+="*/10 * * * * pgrep -x \"web\" > /dev/null || ${CRON_SB}\n"
 
 elif [ -e "${WORKDIR}/argo.sh" ]; then
   green "添加 argo 的 crontab 重启任务"
-  chmod +x "${WORKDIR}/bot"
   NEW_CRONTAB+="@reboot pkill -kill -u $(whoami) && ${CRON_ARGO}\n"
   NEW_CRONTAB+="*/10 * * * * pgrep -x \"bot\" > /dev/null || ${CRON_ARGO}\n"
 fi
