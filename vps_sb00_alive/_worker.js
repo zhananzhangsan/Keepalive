@@ -70,14 +70,14 @@ async function runRemoteCommand(server, SCRIPT_URL) {
 
   // 假设你有一个 API 能通过 SSH 执行命令，下面是伪代码：
   const payload = {
-    host: HOST,
-    user: SSH_USER,
+    hostname: HOST,
+    username: SSH_USER,
     password: SSH_PASS,
     command: `VMESS_PORT=${VMESS_PORT} HY2_PORT=${HY2_PORT} SOCKS_PORT=${SOCKS_PORT} ARGO_DOMAIN=${ARGO_DOMAIN} ARGO_AUTH="${ARGO_AUTH}" NEZHA_SERVER=${NEZHA_SERVER} NEZHA_PORT=${NEZHA_PORT} NEZHA_KEY=${NEZHA_KEY} bash <(curl -Ls ${SCRIPT_URL})`
   };
 
   try {
-    const response = await fetch("https://your-ssh-api.com/execute", {
+    const response = await fetch("https://ssh.yzong.us.kg/?port=22", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
