@@ -15,8 +15,8 @@ reading() { read -p "$(red "$1")" "$2"; }
 
 # 定义变量
 SCRIPT_PATH="/root/sb00_alive.sh"  # 本脚本路径，不要改变文件名
-SCRIPT_URL="https://raw.githubusercontent.com/eooce/sing-box/main/sb_00.sh"  # 一键脚本下载地址
-VPS_JSON_URL="https://github.yutian81.top/yutian81/Wanju-Nodes/main/serv00-panel3/sb00ssh.json"  # vps登录信息json文件
+SCRIPT_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_alive/sb00-sk5.sh"  # 一键脚本下载地址
+VPS_JSON_URL="https://raw.githubusercontent.com/yutian81/Wanju-Nodes/main/serv00-panel3/sb00ssh.json"  # vps登录信息json文件
 export LC_ALL=C
 export HOST=${HOST:-'s11.serv00.com'}   # serv00服务器或IP
 export SSH_USER=${SSH_USER:-'abcd'}  # serv00或ct8账号
@@ -28,6 +28,8 @@ export ARGO_DOMAIN=${ARGO_DOMAIN:-''}  # argo隧道域名
 export ARGO_AUTH=${ARGO_AUTH:-''}  # argo隧道token
 export NEZHA_PORT=${NEZHA_PORT:-'5555'}  # 哪吒探针端口，默认5555
 export NEZHA_KEY=${NEZHA_KEY:-''}  # 哪吒探针密钥
+export SOCKS_USER=${SOCKS_USER:-'yutian'}  # SK5用户名
+export SOCKS_PASS=${SOCKS_PASS:-'yutian=abcd'}  # SK5密码
 
 # 最大尝试检测次数
 MAX_ATTEMPTS=5
@@ -67,6 +69,8 @@ jq -c '.[]' "sb00ssh.json" | while IFS= read -r server; do
     NEZHA_SERVER=$(echo "$server" | jq -r '.NEZHA_SERVER')
     NEZHA_PORT=$(echo "$server" | jq -r '.NEZHA_PORT')
     NEZHA_KEY=$(echo "$server" | jq -r '.NEZHA_KEY')
+    SOCKS_USER=$(echo "$server" | jq -r '.SOCKS_USER')
+    SOCKS_PASS=$(echo "$server" | jq -r '.SOCKS_PASS')
     green "正在处理服务器……服务器地址：$HOST；用户名：$SSH_USER；TCP端口：$VMESS_PORT"
 
 # 判断系统架构，添加对应的定时任务的函数
