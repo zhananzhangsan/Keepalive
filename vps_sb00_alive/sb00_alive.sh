@@ -1,4 +1,5 @@
 #!/bin/bash
+#原始脚本仅支持单服务器保活：老王 https://github.com/eooce/scripts
 
 # 定义颜色
 re="\033[0m"
