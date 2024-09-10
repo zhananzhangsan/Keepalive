@@ -19,7 +19,7 @@ async function handleScheduledEvent() {
 
   // 3. 遍历每个服务器，进行端口检测并执行远程命令
   for (const server of vpsData) {
-    const { HOST, SSH_USER, SSH_PASS, VMESS_PORT, SOCKS_PORT, HY2_PORT, ARGO_DOMAIN, ARGO_AUTH, NEZHA_SERVER, NEZHA_PORT, NEZHA_KEY } = server;
+    const { HOST, SSH_USER, SSH_PASS, VMESS_PORT } = server;
 
     // 检测 TCP 端口
     const portStatus = await checkPort(HOST, VMESS_PORT);
