@@ -34,7 +34,7 @@ green "检查并添加 crontab 任务"
 NEW_CRONTAB=""
 
 # 判断文件是否存在，并根据情况添加任务
-if [ -e "${WORKDIR}/nezha.sh" ] && [ -e "${WORKDIR}/config.json" ] && [ -e "${WORKDIR}/argo.sh" ]; then
+if [ -e "${WORKDIR}/npm" ] && [ -e "${WORKDIR}/web" ] && [ -e "${WORKDIR}/bot" ]; then
   green "添加 nezha & singbox & argo 的 crontab 重启任务"
   NEW_CRONTAB+="@reboot pkill -kill -u $(whoami) && ${CRON_NEZHA} ${CRON_SB} ${CRON_ARGO}\n"
   NEW_CRONTAB+="*/10 * * * * pgrep -x \"npm\" > /dev/null || ${CRON_NEZHA}\n"
