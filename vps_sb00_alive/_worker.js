@@ -64,11 +64,9 @@ async function checkPort(host, port) {
   }
 }
 
-// 模拟执行远程命令（可通过第三方API实现）
+// 通过第三方API执行远程命令
 async function runRemoteCommand(server, SCRIPT_URL) {
   const { SSH_USER, SSH_PASS, HOST, VMESS_PORT, SOCKS_PORT, HY2_PORT, ARGO_DOMAIN, ARGO_AUTH, NEZHA_SERVER, NEZHA_PORT, NEZHA_KEY } = server;
-
-  // 假设你有一个 API 能通过 SSH 执行命令，下面是伪代码：
   const payload = {
     hostname: HOST,
     username: SSH_USER,
