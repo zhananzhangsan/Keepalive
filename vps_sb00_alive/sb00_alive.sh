@@ -24,6 +24,8 @@ export SSH_PASS=${SSH_PASS:-'12345678'}  # serv00或ct8密码
 export VMESS_PORT=${VMESS_PORT:-'1234'}     # 四合一vmess端口
 export SOCKS_PORT=${SOCKS_PORT:-'5678'}   # 四合一socks5端口
 export HY2_PORT=${HY2_PORT:-'6789'}   # 四合一hy2端口
+export SOCKS_USER=${SOCKS_USER:-'yutian'}  # SK5用户名
+export SOCKS_PASS=${SOCKS_PASS:-'yutian=abcd'}  # SK5密码
 export ARGO_DOMAIN=${ARGO_DOMAIN:-''}  # argo隧道域名
 export ARGO_AUTH=${ARGO_AUTH:-''}  # argo隧道token
 export NEZHA_PORT=${NEZHA_PORT:-'5555'}  # 哪吒探针端口，默认5555
@@ -64,13 +66,13 @@ jq -c '.[]' "sb00ssh.json" | while IFS= read -r server; do
     VMESS_PORT=$(echo "$server" | jq -r '.VMESS_PORT')
     SOCKS_PORT=$(echo "$server" | jq -r '.SOCKS_PORT')
     HY2_PORT=$(echo "$server" | jq -r '.HY2_PORT')
+    SOCKS_USER=$(echo "$server" | jq -r '.SOCKS_USER')
+    SOCKS_PASS=$(echo "$server" | jq -r '.SOCKS_PASS')
     ARGO_DOMAIN=$(echo "$server" | jq -r '.ARGO_DOMAIN')
     ARGO_AUTH=$(echo "$server" | jq -r '.ARGO_AUTH')
     NEZHA_SERVER=$(echo "$server" | jq -r '.NEZHA_SERVER')
     NEZHA_PORT=$(echo "$server" | jq -r '.NEZHA_PORT')
     NEZHA_KEY=$(echo "$server" | jq -r '.NEZHA_KEY')
-    SOCKS_USER=$(echo "$server" | jq -r '.SOCKS_USER')
-    SOCKS_PASS=$(echo "$server" | jq -r '.SOCKS_PASS')
     green "正在处理服务器……服务器地址：$HOST；用户名：$SSH_USER；TCP端口：$VMESS_PORT"
 
 # 判断系统架构，添加对应的定时任务的函数
