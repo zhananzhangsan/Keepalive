@@ -146,17 +146,20 @@ install_singbox() {
     [ ! -d "${work_dir}" ] && mkdir -p "${work_dir}" && chmod 777 "${work_dir}"
     latest_version=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '[.[] | select(.prerelease==false)][0].tag_name | sub("^v"; "")')
     curl -sLo "${work_dir}/${server_name}.tar.gz" "https://github.com/SagerNet/sing-box/releases/download/v${latest_version}/sing-box-${latest_version}-linux-${ARCH}.tar.gz"
-    curl -sLo "${work_dir}/qrencode" "https://github.com/eooce/test/releases/download/${ARCH}/qrencode-linux-${ARCH}"
     curl -sLo "${work_dir}/argo" "https://github.com/eooce/test/releases/download/$ARCH/bot13"
     tar -xzvf "${work_dir}/${server_name}.tar.gz" -C "${work_dir}/" && \
     mv "${work_dir}/sing-box-${latest_version}-linux-${ARCH}/sing-box" "${work_dir}/" && \
     rm -rf "${work_dir}/${server_name}.tar.gz" "${work_dir}/sing-box-${latest_version}-linux-${ARCH}"
-    chown root:root ${work_dir} && chmod +x ${work_dir}/${server_name} ${work_dir}/argo ${work_dir}/qrencode
+    chown root:root ${work_dir} && chmod +x ${work_dir}/${server_name} ${work_dir}/argo
 
    # 生成随机端口和密码
     socks_port=$(($vless_port + 1)) 
     tuic_port=$(($vless_port + 2))
     hy2_port=$(($vless_port + 3)) 
+    #socks_user=$(< /dev/urandom tr -dc 'A-Za-z0-9' | head -c 8)
+    #socks_pass=$(< /dev/urandom tr -dc 'A-Za-z0-9' | head -c 8)
+    socks_user="yutian"
+    socks_pass="yutian=abcd"
     uuid=$(cat /proc/sys/kernel/random/uuid)
     password=$(< /dev/urandom tr -dc 'A-Za-z0-9' | head -c 24)
     output=$(/etc/sing-box/sing-box generate reality-keypair)
@@ -232,6 +235,18 @@ cat > "${config_dir}" << EOF
         "path": "/vmess",
         "early_data_header_name": "Sec-WebSocket-Protocol"
         }
+    },
+    {
+      "tag": "socks-in",
+      "type": "socks",
+      "listen": "::",
+      "listen_port": $socks_port,
+      "users": [
+        {
+          "username": "$socks_user",
+          "password": "$socks_pass"
+        }
+      ]
     },
     {
         "tag": "hysteria2",
@@ -540,13 +555,14 @@ vless://${uuid}@${server_ip}:${vless_port}?encryption=none&flow=xtls-rprx-vision
 
 vmess://$(echo "$VMESS" | base64 -w0)
 
+socks5://$socks_user:$socks_pass@${server_ip}:$socks_port
+
 hysteria2://${uuid}@${server_ip}:${hy2_port}/?sni=www.bing.com&insecure=1&alpn=h3&obfs=none#${isp}
 
 tuic://${uuid}:${password}@${server_ip}:${tuic_port}?sni=www.bing.com&congestion_control=bbr&udp_relay_mode=native&alpn=h3&allow_insecure=1#${isp}
 EOF
 echo ""
 while IFS= read -r line; do echo -e "${purple}$line"; done < ${work_dir}/url.txt
-base64 -w0 ${work_dir}/url.txt > ${work_dir}/sub.txt
 yellow "\n温馨提醒：需打开V2rayN或其他软件里的 “跳过证书验证”，或将节点的Insecure或TLS里设置为“true”\n"
 echo ""
 }
@@ -726,7 +742,6 @@ uninstall_singbox() {
                 # 禁用 sing-box 服务
                 systemctl disable "${server_name}"
                 systemctl disable argo
-
                 # 重新加载 systemd
                 systemctl daemon-reload || true
             fi
@@ -788,11 +803,13 @@ if [ ${check_singbox} -eq 0 ]; then
             echo ""
             green "1. 修改vless-reality端口"
             skyblue "------------"
-            green "2. 修改hysteria2端口"
+	    green "2. 修改socks5端口"
             skyblue "------------"
-            green "3. 修改tuic端口"
+            green "3. 修改hysteria2端口"
             skyblue "------------"
-            purple "4. 返回上一级菜单"
+            green "4. 修改tuic端口"
+            skyblue "------------"
+            purple "5. 返回上一级菜单"
             skyblue "------------"
             reading "请输入选择: " choice
             case "${choice}" in
@@ -802,31 +819,37 @@ if [ ${check_singbox} -eq 0 ]; then
                     sed -i '/"type": "vless"/,/listen_port/ s/"listen_port": [0-9]\+/"listen_port": '"$new_port"'/' $config_dir
                     restart_singbox
                     sed -i 's/\(vless:\/\/[^@]*@[^:]*:\)[0-9]\{1,\}/\1'"$new_port"'/' $client_dir
-                    base64 -w0 /etc/sing-box/url.txt > /etc/sing-box/sub.txt
                     while IFS= read -r line; do yellow "$line"; done < ${work_dir}/url.txt
-                    green "\nvless-reality端口已修改成：${purple}$new_port${re} ${green}请更新订阅或手动更改vless-reality端口${re}\n"
+                    green "\nvless-reality端口已修改成：${purple}$new_port${re} ${green}请手动更改vless-reality端口${re}\n"
                     ;;
                 2)
+                    reading "\n请输入socks5端口 (回车跳过将使用默认的yutian): " new_port
+                    [ -z "$new_port" ] && new_port=$(shuf -i 2000-65000 -n 1)
+                    sed -i '/"type": "socks"/,/listen_port/ s/"listen_port": [0-9]\+/"listen_port": '"$new_port"'/' $config_dir
+                    restart_singbox
+                    sed -i 's/\(socks5:\/\/[^@]*@[^:]*:\)[0-9]\{1,\}/\1'"$new_port"'/' $client_dir
+                    while IFS= read -r line; do yellow "$line"; done < ${work_dir}/url.txt
+                    green "\nsock5端口已修改成：${purple}$new_port${re} ${green}请手动更改sock5端口${re}\n"
+                    ;;
+                3)
                     reading "\n请输入hysteria2端口 (回车跳过将使用随机端口): " new_port
                     [ -z "$new_port" ] && new_port=$(shuf -i 2000-65000 -n 1)
                     sed -i '/"type": "hysteria2"/,/listen_port/ s/"listen_port": [0-9]\+/"listen_port": '"$new_port"'/' $config_dir
                     restart_singbox
                     sed -i 's/\(hysteria2:\/\/[^@]*@[^:]*:\)[0-9]\{1,\}/\1'"$new_port"'/' $client_dir
-                    base64 -w0 $client_dir > /etc/sing-box/sub.txt
                     while IFS= read -r line; do yellow "$line"; done < ${work_dir}/url.txt
-                    green "\nhysteria2端口已修改为：${purple}${new_port}${re} ${green}请更新订阅或手动更改hysteria2端口${re}\n"
+                    green "\nhysteria2端口已修改为：${purple}${new_port}${re} ${green}请手动更改hysteria2端口${re}\n"
                     ;;
-                3)
+                4)
                     reading "\n请输入tuic端口 (回车跳过将使用随机端口): " new_port
                     [ -z "$new_port" ] && new_port=$(shuf -i 2000-65000 -n 1)
                     sed -i '/"type": "tuic"/,/listen_port/ s/"listen_port": [0-9]\+/"listen_port": '"$new_port"'/' $config_dir
                     restart_singbox
                     sed -i 's/\(tuic:\/\/[^@]*@[^:]*:\)[0-9]\{1,\}/\1'"$new_port"'/' $client_dir
-                    base64 -w0 $client_dir > /etc/sing-box/sub.txt
                     while IFS= read -r line; do yellow "$line"; done < ${work_dir}/url.txt
-                    green "\ntuic端口已修改为：${purple}${new_port}${re} ${green}请更新订阅或手动更改tuic端口${re}\n"
+                    green "\ntuic端口已修改为：${purple}${new_port}${re} ${green}请手动更改tuic端口${re}\n"
                     ;;
-                4)  change_config ;;
+                5)  change_config ;;
                 *)  red "无效的选项，请输入 1 到 4" ;;
             esac
             ;;
@@ -847,9 +870,8 @@ if [ ${check_singbox} -eq 0 ]; then
             VMESS="{ \"v\": \"2\", \"ps\": \"${isp}\", \"add\": \"www.visa.com.sg\", \"port\": \"443\", \"id\": \"${new_uuid}\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"${argodomain}\", \"path\": \"/vmess?ed=2048\", \"tls\": \"tls\", \"sni\": \"${argodomain}\", \"alpn\": \"\", \"fp\": \"randomized\", \"allowlnsecure\": \"flase\"}"
             encoded_vmess=$(echo "$VMESS" | base64 -w0)
             sed -i -E '/vmess:\/\//{s@vmess://.*@vmess://'"$encoded_vmess"'@}' $client_dir
-            base64 -w0 $client_dir > /etc/sing-box/sub.txt
             while IFS= read -r line; do yellow "$line"; done < ${work_dir}/url.txt
-            green "\nUUID已修改为：${purple}${new_uuid}${re} ${green}请更新订阅或手动更改所有节点的UUID${re}\n"
+            green "\nUUID已修改为：${purple}${new_uuid}${re} ${green}请手动更改所有节点的UUID${re}\n"
             ;;
         3)  
             clear
@@ -876,10 +898,9 @@ if [ ${check_singbox} -eq 0 ]; then
                 ' "$config_dir" > "$config_file.tmp" && mv "$config_file.tmp" "$config_dir"
                 restart_singbox
                 sed -i "s/\(vless:\/\/[^\?]*\?\([^\&]*\&\)*sni=\)[^&]*/\1$new_sni/" $client_dir
-                base64 -w0 $client_dir > /etc/sing-box/sub.txt
                 while IFS= read -r line; do yellow "$line"; done < ${work_dir}/url.txt
                 echo ""
-                green "\nReality sni已修改为：${purple}${new_sni}${re} ${green}请更新订阅或手动更改reality节点的sni域名${re}\n"
+                green "\nReality sni已修改为：${purple}${new_sni}${re} ${green}请手动更改reality节点的sni域名${re}\n"
             ;; 
         4)  
             purple "端口跳跃需确保跳跃区间的端口没有被占用，nat鸡请注意可用端口范围，否则可能造成节点不通\n"
@@ -929,9 +950,8 @@ EOF
             isp=$(curl -s --max-time 2 https://speed.cloudflare.com/meta | awk -F\" '{print $26"-"$18}' | sed -e 's/ /_/g' || echo "vps")
             sed -i.bak "/hysteria2:/d" $client_dir
             sed -i "${line_number}i hysteria2://$uuid@$ip:$listen_port?peer=www.bing.com&insecure=1&alpn=h3&obfs=none&mport=$listen_port,$min_port-$max_port#$isp" $client_dir
-            base64 -w0 $client_dir > /etc/sing-box/sub.txt
             while IFS= read -r line; do yellow "$line"; done < ${work_dir}/url.txt
-            green "\nhysteria2端口跳跃已开启,跳跃端口为：${purple}$min_port-$max_port${re} ${green}请更新订阅或手动复制以上hysteria2节点${re}\n"
+            green "\nhysteria2端口跳跃已开启,跳跃端口为：${purple}$min_port-$max_port${re} ${green}请手动复制以上hysteria2节点${re}\n"
             ;;
         5)  
             iptables -t nat -F PREROUTING  > /dev/null 2>&1
@@ -947,7 +967,6 @@ EOF
                 manage_packages uninstall iptables ip6tables iptables-persistent iptables-service > /dev/null 2>&1
             fi
             sed -i '/hysteria2/s/&mport=[^#&]*//g' /etc/sing-box/url.txt
-            base64 -w0 $client_dir > /etc/sing-box/sub.txt
             green "\n端口跳跃已删除\n"
             ;;
         6)  menu ;;
@@ -1118,7 +1137,7 @@ green "ArgoDomain：${purple}$get_argodomain${re}\n"
 ArgoDomain=$get_argodomain
 }
 
-# 更新Argo域名到订阅
+# 更新Argo域名到节点链接
 change_argo_domain() {
 content=$(cat "$client_dir")
 vmess_url=$(grep -o 'vmess://[^ ]*' "$client_dir")
@@ -1130,8 +1149,7 @@ encoded_updated_vmess=$(echo "$updated_vmess" | base64 | tr -d '\n')
 new_vmess_url="$vmess_prefix$encoded_updated_vmess"
 new_content=$(echo "$content" | sed "s|$vmess_url|$new_vmess_url|")
 echo "$new_content" > "$client_dir"
-base64 -w0 ${work_dir}/url.txt > ${work_dir}/sub.txt
-green "vmess节点已更新,更新订阅或手动复制以下vmess-argo节点\n"
+green "vmess节点已更新,请手动复制以下vmess-argo节点\n"
 purple "$new_vmess_url\n" 
 }
 
