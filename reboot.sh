@@ -14,7 +14,7 @@ USERNAME=$(whoami)
 HOSTNAME=$(hostname)
 WORKDIR="/home/${USERNAME}/logs"
 chmod 777 "${WORKDIR}"
-cd "${WORKDIR}" || { echo "无法切换到工作目录 ${WORKDIR}"; exit 1; }
+cd ${WORKDIR} || { echo "无法切换到工作目录 ${WORKDIR}"; exit 1; }
 
 # 确保脚本和程序有执行权限
 [ -x "${WORKDIR}/nezha.sh" ] || chmod +x "${WORKDIR}/nezha.sh"
@@ -24,50 +24,44 @@ cd "${WORKDIR}" || { echo "无法切换到工作目录 ${WORKDIR}"; exit 1; }
 [ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
 [ -x "${WORKDIR}/bot" ] || chmod +x "${WORKDIR}/bot"
 
-ps aux | grep $(whoami) | grep -v 'sshd\|bash\|grep' | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
-red "已清理所有进程"
-
-nohup ./nezha.sh >/dev/null 2>&1 &
-sleep 2
+# 重启哪吒探针
 if pgrep -x 'npm' > /dev/null; then
-   green "NEZHA 已重启"
+   green "NEZHA 正在运行"
 else
-   red "NEZHA 重启失败，尝试再次重启……"
-   pkill -x 'npm' 2>/dev/null && nohup ./nezha.sh >/dev/null 2>&1 &
+   red "NEZHA 已停止，尝试重启……"
+   pkill -x 'npm' && nohup ./nezha.sh >/dev/null 2>&1 &
    sleep 2
    if pgrep -x 'npm' > /dev/null; then
-      green "NEZHA 已重启"
+      green "NEZHA 重启成功"
    else
-      red "NEZHA 重启失败"
+      red "NEZHA 重启失败！"
    fi
 fi
 
-nohup ./web run -c config.json >/dev/null 2>&1 &
-sleep 2
+# 重启singbox
+if pgrep -x 'web' > /dev/null; then
+   green "singbox 正在运行"
+else
+   red "singbox 已停止，尝试重启……"
+   pkill -x 'web' && nohup ./web run -c config.json >/dev/null 2>&1 &
+   sleep 2
    if pgrep -x 'web' > /dev/null; then
-      green "singbox 已重启"
+      green "singbox 重启成功"
    else
-      red "singbox 重启失败，尝试再次重启……"
-      pkill -x 'web' && nohup ./web run -c config.json >/dev/null 2>&1 &
-      sleep 2
-      if pgrep -x 'web' > /dev/null; then
-         purple "singbox 已重启"
-      else
-         red "singbox 重启失败"
-      fi
-    fi
+      red "singbox 重启失败！"
+   fi
+fi
 
-nohup ./argo.sh >/dev/null 2>&1 &
-sleep 2
+# 重启argo
+if pgrep -x 'bot' > /dev/null; then
+   green "ARGO 正在运行"
+else
+   red "ARGO 已停止，尝试重启……"
+   pkill -x 'bot' && nohup ./argo.sh >/dev/null 2>&1 &
+   sleep 2
    if pgrep -x 'bot' > /dev/null; then
-      green "ARGO 已重启"
+      green "ARGO 重启成功"
    else
-      red "ARGO 重启失败，尝试再次重启……"
-      pkill -x 'bot' && nohup ./argo.sh >/dev/null 2>&1 &
-      sleep 2
-         if pgrep -x 'bot' > /dev/null; then
-	    purple "ARGO 已重启"
-         else
-            red "ARGO 重启失败"
-         fi
-    fi
+      red "ARGO 重启失败！"
+   fi
+fi
