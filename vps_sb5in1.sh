@@ -54,20 +54,6 @@ else
 fi
 }
 
-# 检查 nginx 是否已安装
-check_nginx() {
-if command -v nginx &>/dev/null; then
-    if [ -f /etc/alpine-release ]; then
-        rc-service nginx status | grep -q "stoped" && yellow "not running" && return 1 || green "running" && return 0
-    else 
-        [ "$(systemctl is-active nginx)" = "active" ] && green "running" && return 0 || yellow "not running" && return 1
-    fi
-else
-    red "not installed"
-    return 2
-fi
-}
-
 #根据系统类型安装、卸载依赖
 manage_packages() {
     if [ $# -lt 2 ]; then
@@ -168,7 +154,7 @@ install_singbox() {
     chown root:root ${work_dir} && chmod +x ${work_dir}/${server_name} ${work_dir}/argo ${work_dir}/qrencode
 
    # 生成随机端口和密码
-    nginx_port=$(($vless_port + 1)) 
+    socks_port=$(($vless_port + 1)) 
     tuic_port=$(($vless_port + 2))
     hy2_port=$(($vless_port + 3)) 
     uuid=$(cat /proc/sys/kernel/random/uuid)
@@ -562,62 +548,7 @@ echo ""
 while IFS= read -r line; do echo -e "${purple}$line"; done < ${work_dir}/url.txt
 base64 -w0 ${work_dir}/url.txt > ${work_dir}/sub.txt
 yellow "\n温馨提醒：需打开V2rayN或其他软件里的 “跳过证书验证”，或将节点的Insecure或TLS里设置为“true”\n"
-green "节点订阅链接：http://${server_ip}:${nginx_port}/${password}\n\n订阅链接适用于V2rayN,Nekbox,Sterisand,Loon,小火箭,圈X等\n"
-green "订阅二维码"
-$work_dir/qrencode "http://${server_ip}:${nginx_port}/${password}"
 echo ""
-}
-
-# 修复nginx因host无法安装的问题
-fix_nginx() {
-    HOSTNAME=$(hostname)
-    NGINX_CONFIG_FILE="/etc/nginx/nginx.conf"
-    grep -q "127.0.1.1 $HOSTNAME" /etc/hosts || echo "127.0.1.1 $HOSTNAME" | tee -a /etc/hosts >/dev/null
-    id -u nginx >/dev/null 2>&1 || useradd -r -d /var/www -s /sbin/nologin nginx >/dev/null 2>&1
-    grep -q "^user nginx;" $NGINX_CONFIG_FILE || sed -i "s/^user .*/user nginx;/" $NGINX_CONFIG_FILE >/dev/null 2>&1
-}
-
-# nginx订阅配置
-add_nginx_conf() {
-cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak
-    cat > /etc/nginx/nginx.conf << EOF
-# nginx_conf
-user nginx;
-worker_processes auto;
-error_log /var/log/nginx/error.log;
-pid /run/nginx.pid;
-
-events {
-    worker_connections 1024;
-}
-
-http {
-    server {
-      listen $nginx_port;
-      listen [::]:$nginx_port;
-
-    location /$password {
-      alias /etc/sing-box/sub.txt;
-      default_type 'text/plain; charset=utf-8';
-    }
-  }
-}
-EOF
-
-nginx -t > /dev/null
-
-if [ $? -eq 0 ]; then
-    if [ -f /etc/alpine-release ]; then
-     	pkill -f '[n]ginx'
-        touch /run/nginx.pid
-        nginx -s reload
-        rc-service nginx restart
-    else
-        rm /run/nginx.pid
-        systemctl daemon-reload
-        systemctl restart nginx
-    fi
-fi
 }
 
 # 启动 sing-box
@@ -776,49 +707,6 @@ else
 fi
 }
 
-# 启动 nginx
-start_nginx() {
-if command -v nginx &>/dev/null; then
-    yellow "正在启动 nginx 服务\n"
-    if [ -f /etc/alpine-release ]; then
-        rc-service nginx start
-    else
-        systemctl daemon-reload
-        systemctl start nginx
-    fi
-    if [ $? -eq 0 ]; then
-        green "Nginx 服务已成功启动\n"
-    else
-        red "Nginx 启动失败\n"
-    fi
-else
-    yellow "Nginx 尚未安装！\n"
-    sleep 1
-    menu
-fi
-}
-
-# 重启 nginx
-restart_nginx() {
-if command -v nginx &>/dev/null; then
-    yellow "正在重启 nginx 服务\n"
-    if [ -f /etc/alpine-release ]; then
-        rc-service nginx restart
-    else
-        systemctl restart nginx
-    fi
-    if [ $? -eq 0 ]; then
-        green "Nginx 服务已成功重启\n"
-    else
-        red "Nginx 重启失败\n"
-    fi
-else
-    yellow "Nginx 尚未安装！\n"
-    sleep 1
-    menu
-fi
-}
-
 # 卸载 sing-box
 uninstall_singbox() {
    reading "确定要卸载 sing-box 吗? (y/n): " choice
@@ -845,20 +733,8 @@ uninstall_singbox() {
            # 删除配置文件和日志
            rm -rf "${work_dir}" || true
            rm -f "${log_dir}" || true
-	   rm -rf /etc/systemd/system/sing-box.service /etc/systemd/system/argo.service > /dev/null 2>&1
-           
-           # 卸载Nginx
-           reading "\n是否卸载 Nginx？${green}(卸载请输入 ${yellow}y${re} ${green}回车将跳过卸载Nginx) (y/n): ${re}" choice
-            case "${choice}" in
-                y|Y)
-                    manage_packages uninstall nginx
-                    ;;
-                 *) 
-                    yellow "取消卸载Nginx\n\n"
-                    ;;
-            esac
-
-            green "\nsing-box 卸载成功\n\n" && exit 0
+	   rm -rf /etc/systemd/system/sing-box.service /etc/systemd/system/argo.service > /dev/null 2>&1           
+           green "\nsing-box 卸载成功\n\n" && exit 0
            ;;
        *)
            purple "已取消卸载操作\n\n"
@@ -1084,70 +960,6 @@ else
 fi
 }
 
-disable_open_sub() {
-if [ ${check_singbox} -eq 0 ]; then
-    clear
-    echo ""
-    green "1. 关闭节点订阅"
-    skyblue "------------"
-    green "2. 开启节点订阅"
-    skyblue "------------"
-    green "3. 更换订阅端口"
-    skyblue "------------"
-    purple "4. 返回主菜单"
-    skyblue "------------"
-    reading "请输入选择: " choice
-    case "${choice}" in
-        1)
-            if command -v nginx &>/dev/null; then
-                if [ -f /etc/alpine-release ]; then
-                    rc-service nginx status | grep -q "started" && rc-service nginx stop || red "nginx not running"
-                else 
-                    [ "$(systemctl is-active nginx)" = "active" ] && systemctl stop nginx || red "ngixn not running"
-                fi
-            else
-                yellow "Nginx is not installed"
-            fi
-
-            green "\n已关闭节点订阅\n"     
-            ;; 
-        2)
-            green "\n已开启节点订阅\n"
-            server_ip=$(get_realip)
-            password=$(tr -dc A-Za-z < /dev/urandom | head -c 32) 
-            sed -i -E "s/(location \/)[^ ]+/\1${password//\//\\/}/" /etc/nginx/nginx.conf
-	    sub_port=$(port=$(grep -E 'listen [0-9]+;' /etc/nginx/nginx.conf | awk '{print $2}' | sed 's/;//'); if [ "$port" -eq 80 ]; then echo ""; else echo "$port"; fi)
-            start_nginx
-            (port=$(grep -E 'listen [0-9]+;' /etc/nginx/nginx.conf | awk '{print $2}' | sed 's/;//'); if [ "$port" -eq 80 ]; then echo ""; else green "订阅端口：$port"; fi); link=$(if [ -z "$sub_port" ]; then echo "http://$server_ip/$password"; else echo "http://$server_ip:$sub_port/$password"; fi); green "\n新的节点订阅链接：$link\n"
-            ;; 
-
-        3)
-            reading "请输入新的订阅端口(1-65535):" sub_port
-            [ -z "$sub_port" ] && sub_port=$(shuf -i 2000-65000 -n 1)
-            until [[ -z $(netstat -tuln | grep -w tcp | awk '{print $4}' | sed 's/.*://g' | grep -w "$sub_port") ]]; do
-                if [[ -n $(netstat -tuln | grep -w tcp | awk '{print $4}' | sed 's/.*://g' | grep -w "$sub_port") ]]; then
-                    echo -e "${red}${new_port}端口已经被其他程序占用，请更换端口重试${re}"
-                    reading "请输入新的订阅端口(1-65535):" sub_port
-                    [[ -z $sub_port ]] && sub_port=$(shuf -i 2000-65000 -n 1)
-                fi
-            done
-            sed -i 's/listen [0-9]\+;/listen '$sub_port';/g' /etc/nginx/nginx.conf
-            path=$(sed -n 's/.*location \/\([^ ]*\).*/\1/p' /etc/nginx/nginx.conf)
-            server_ip=$(get_realip)
-            restart_nginx
-            green "\n订阅端口更换成功\n"
-            green "新的订阅链接为：http://$server_ip:$sub_port/$path\n"
-            ;; 
-        4)  menu ;; 
-        *)  red "无效的选项！" ;;
-    esac
-else
-    yellow "sing-box 尚未安装！"
-    sleep 1
-    menu
-fi
-}
-
 # singbox 管理
 manage_singbox() {
     green "1. 启动sing-box服务"
@@ -1323,14 +1135,10 @@ green "vmess节点已更新,更新订阅或手动复制以下vmess-argo节点\n"
 purple "$new_vmess_url\n" 
 }
 
-# 查看节点信息和订阅链接
+# 查看节点信息
 check_nodes() {
 if [ ${check_singbox} -eq 0 ]; then
     while IFS= read -r line; do purple "${purple}$line"; done < ${work_dir}/url.txt
-    server_ip=$(get_realip)
-    lujing=$(grep -oP 'location /\K[^ ]+' "/etc/nginx/nginx.conf")
-    sub_port=$(sed -n 's/^\s*listen \([0-9]\+\);/\1/p' /etc/nginx/nginx.conf)
-    green "\n节点订阅链接：http://${server_ip}:${sub_port}/${lujing}\n"
 else 
     yellow "sing-box 尚未安装或未运行,请先安装或启动sing-box"
     sleep 1
@@ -1341,17 +1149,14 @@ fi
 # 主菜单
 menu() {
    check_singbox &>/dev/null; check_singbox=$?
-   check_nginx &>/dev/null; check_nginx=$?
    check_argo &>/dev/null; check_argo=$?
    check_singbox_status=$(check_singbox) > /dev/null 2>&1
-   check_nginx_status=$(check_nginx) > /dev/null 2>&1
    check_argo_status=$(check_argo) > /dev/null 2>&1
    clear
    echo ""
    purple "=== 老王sing-box一键安装脚本 ===\n"
-   purple "---Argo 状态: ${check_argo_status}"   
-   purple "--Nginx 状态: ${check_nginx_status}"
-   purple "singbox 状态: ${check_singbox_status}\n"
+   purple "--Argo-- 状态: ${check_argo_status}"   
+   purple "--singbox-- 状态: ${check_singbox_status}\n"
    green "1. 安装sing-box"
    red "2. 卸载sing-box"
    echo "==============="
@@ -1360,13 +1165,12 @@ menu() {
    echo  "==============="
    green  "5. 查看节点信息"
    green  "6. 修改节点配置"
-   green  "7. 管理节点订阅"
    echo  "==============="
-   purple "8. ssh综合工具箱"
+   purple "7. ssh综合工具箱"
    echo  "==============="
    red "0. 退出脚本"
    echo "==========="
-   reading "请输入选择(0-8): " choice
+   reading "请输入选择(0-7): " choice
    echo ""
 }
 
@@ -1381,8 +1185,7 @@ while true; do
             if [ ${check_singbox} -eq 0 ]; then
                 yellow "sing-box 已经安装！"
             else
-                fix_nginx
-                manage_packages install nginx jq tar openssl iptables
+                manage_packages install jq tar openssl iptables
                 [ -n "$(curl -s --max-time 2 ipv6.ip.sb)" ] && manage_packages install ip6tables
                 install_singbox
 
@@ -1400,7 +1203,6 @@ while true; do
 
                 sleep 5
                 get_info
-                add_nginx_conf
                 create_shortcut
             fi
            ;;
@@ -1409,8 +1211,7 @@ while true; do
         4) manage_argo ;;
         5) check_nodes ;;
         6) change_config ;;
-        7) disable_open_sub ;;
-        8) 
+        7) 
            clear
            curl -fsSL https://raw.githubusercontent.com/eooce/ssh_tool/main/ssh_tool.sh -o ssh_tool.sh && chmod +x ssh_tool.sh && ./ssh_tool.sh
            ;;           
