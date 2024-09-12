@@ -292,7 +292,7 @@ run_nezha() {
     else
        red "NEZHA 未运行，重启中……"
        pkill -x 'npm' 2>/dev/null && nohup ./nezha.sh >/dev/null 2>&1 &
-	   sleep 2
+       sleep 2
           if pgrep -x 'npm' > /dev/null; then
              purple "NEZHA 已重启"
           else
