@@ -35,7 +35,7 @@ UUID=123456 NEZHA_SERVER=nz.abcd.com NEZHA_PORT=5555 NEZHA_KEY=123ABC ARGO_DOMAI
 
 ## VPS版一键无交互脚本 5in1：vless+reality|vmess+argo|hy2|tuic|socks5
 ```
-vless_port=自定义端口 bash <(curl -Ls https://raw.githubusercontent.com/eooce/sing-box/main/sing-box.sh)
+vless_port=自定义端口 bash <(curl -Ls https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb5in1.sh)
 ```
 ----
 
