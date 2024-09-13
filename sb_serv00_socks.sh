@@ -152,7 +152,7 @@ argo_configure() {
     echo "${ARGO_AUTH}" > tunnel.json
     cat > tunnel.yml << EOF
 tunnel: $(cut -d\" -f12 <<< "$ARGO_AUTH")
-credentials-file: tunnel.json
+credentials-file: ${WORKDIR}/tunnel.json
 protocol: http2
 
 ingress:
