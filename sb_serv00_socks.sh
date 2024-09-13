@@ -29,7 +29,7 @@ export vmess_port=${vmess_port:-'40000'}
 export hy2_port=${hy2_port:-'41000'}
 export socks_port=${socks_port:-'42000'}
 export socks_user=${socks_user:-'abc123'}
-export socks_pass=${socks_pass:-'abc123'}
+export socks_pass=${socks_pass:-'abc456'}
 export CFIP=${CFIP:-'fan.yutian.us.kg'} 
 export CFPORT=${CFPORT:-'443'} 
 
