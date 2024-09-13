@@ -25,9 +25,6 @@ export TMPDIR=$(pwd)
 [ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
 [ -x "${WORKDIR}/bot" ] || chmod +x "${WORKDIR}/bot"
 
-ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
-red "已清理所有进程"
-
 # 重启哪吒探针
 if pgrep -x 'npm' > /dev/null; then
    green "NEZHA 正在运行"
