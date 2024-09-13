@@ -12,13 +12,7 @@
 
 ----
 
-## 本人魔改四合一脚本，适用于serv00 & ct8
-> 含 vmess|vmess+argo|hy2|socks5|nezha
-
-- 一键重置服务器，无需重连ssh
-```
-curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/clean.sh -o clean.sh && bash clean.sh  
-```
+## 本人魔改四合一脚本，适用于serv00 & ct8，含vmess|vmess+argo|hy2|socks5|nezha
 
 - **四合一安装脚本，需要交互式输入**
 ```
@@ -39,7 +33,7 @@ UUID=123456 NEZHA_SERVER=nz.abcd.com NEZHA_PORT=5555 NEZHA_KEY=123ABC ARGO_DOMAI
 
 ----
 
-## VPS版一键无交互脚本 5in1：vless+reality | vmess+argo | hy2 | tuic | socks5
+## VPS版一键无交互脚本 5in1：vless+reality|vmess+argo|hy2|tuic|socks5
 ```
 vless_port=自定义端口 bash <(curl -Ls https://raw.githubusercontent.com/eooce/sing-box/main/sing-box.sh)
 ```
