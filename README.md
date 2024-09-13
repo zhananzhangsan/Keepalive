@@ -12,7 +12,7 @@
 
 ----
 
-## 本人魔改四合一脚本
+## 本人魔改四合一脚本，适用于serv00 & ct8
 > 含 vmess|vmess+argo|hy2|socks5|nezha
 
 - 一键重置服务器，无需重连ssh
@@ -39,6 +39,12 @@ UUID=123456 NEZHA_SERVER=nz.abcd.com NEZHA_PORT=5555 NEZHA_KEY=123ABC ARGO_DOMAI
 
 ----
 
+## VPS版一键无交互脚本 5in1：vless+reality | vmess+argo | hy2 | tuic | socks5
+```
+vless_port=自定义端口 bash <(curl -Ls https://raw.githubusercontent.com/eooce/sing-box/main/sing-box.sh)
+```
+----
+
 ## 关于节点保活
 #### action方式保活
 - [CM的博文](https://blog.cmliussss.com/p/Serv00-Socks5/#%E6%AD%A5%E9%AA%A44-%E5%BC%80%E5%90%AFGithub-Actions%E4%BF%9D%E6%B4%BB)
@@ -57,7 +63,7 @@ UUID=123456 NEZHA_SERVER=nz.abcd.com NEZHA_PORT=5555 NEZHA_KEY=123ABC ARGO_DOMAI
 - [天诚相关代码](https://github.com/yutian81/serv00-ct8-ssh/tree/main/cf-sb00-alive)
 
 #### vps远程登录ssh方式保活
-- [老王相关代码](https://github.com/yutian81/serv00-ct8-ssh/tree/main/vps_sb00_alive)
+- [老王相关代码及本人修改的多服务器批量保活代码](https://github.com/yutian81/serv00-ct8-ssh/tree/main/vps_sb00_alive)
 
 ----
 
