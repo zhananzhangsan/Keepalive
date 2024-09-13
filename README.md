@@ -8,7 +8,7 @@
 > 特点：一次生成多协议节点。无论单协议还是多协议，均可以通过vps或action远程登录ssh安装无交互一键脚本来保活
 
 - CM的socks5+nezha项目，[仓库地址](https://github.com/cmliu/socks5-for-serv00)
-> 特点：仅生成socks5协议，用于其edt项目的SOCKS5反打变量
+> 特点：仅生成socks5协议，用于其edt项目的`SOCKS5变量`, 实现与 proxyip 相同的作用
 
 ----
 
