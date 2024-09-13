@@ -166,7 +166,7 @@ EOF
     declare -g args="tunnel --edge-ip-version auto --config tunnel.yml run"
     green "ARGO_AUTH 是 Json 格式，将使用 Json 连接 ARGO；tunnel.yml 配置文件已生成"
   elif [[ "${ARGO_AUTH}" =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
-    declare -g args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token ${ARGO_AUTH}"
+    declare -g args=args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token \"${ARGO_AUTH}\""
     green "ARGO_AUTH 是 Token 格式，将使用 Token 连接 ARGO"
   else
     declare -g args="tunnel --edge-ip-version auto --no-autoupdate --protocol http2 --logfile boot.log --loglevel info --url http://localhost:$vmess_port"
@@ -175,20 +175,12 @@ EOF
   # 生成 argo.sh 脚本
   cat > "${WORKDIR}/argo.sh" << EOF
 #!/bin/bash
+
 pgrep -f 'bot' | xargs -r kill
-cd "${WORKDIR}"
+cd ${WORKDIR} || exit
 export TMPDIR=$(pwd)
-chmod +x bot
-exec ./bot "${args}" >/dev/null 2>&1 & 
-sleep 2
-# 检查 bot 进程是否成功启动
-pgrep -x 'bot' > /dev/null && green "ARGO 正在运行" || {
-  red "ARGO 未运行，重启中……"
-  pkill -x 'bot' 2>/dev/null
-  nohup ./bot "${args}" >/dev/null 2>&1 & 
-  sleep 2
-  green "ARGO 已重启"
-}
+chmod +x ./bot
+./bot ${args} >/dev/null 2>&1 &
 EOF
   chmod +x "${WORKDIR}/argo.sh"
 }
@@ -220,20 +212,12 @@ read_nz_variables() {
   # 生成 nezha.sh 脚本
   cat > "${WORKDIR}/nezha.sh" << EOF
 #!/bin/bash
+
 pgrep -f 'npm' | xargs -r kill
-cd "${WORKDIR}"
+cd ${WORKDIR} || exit
 export TMPDIR=$(pwd)
-chmod +x npm
-exec ./npm -s "${NEZHA_SERVER}:${NEZHA_PORT}" -p "${NEZHA_KEY}" "${NEZHA_TLS}" >/dev/null 2>&1 &
-sleep 2
-# 检查 npm 进程是否成功启动
-pgrep -x 'npm' > /dev/null && green "Nezha 探针正在运行" || {
-  red "Nezha 探针未运行，重启中……"
-  pkill -x 'npm' 2>/dev/null
-  nohup ./npm -s "${NEZHA_SERVER}:${NEZHA_PORT}" -p "${NEZHA_KEY}" "${NEZHA_TLS}" >/dev/null 2>&1 &
-  sleep 2
-  green "Nezha 客户端已重启"
-}
+chmod +x ./npm
+./npm -s "${NEZHA_SERVER}:${NEZHA_PORT}" -p "${NEZHA_KEY}" "${NEZHA_TLS}" >/dev/null 2>&1 &
 EOF
   chmod +x "${WORKDIR}/nezha.sh"
 }
