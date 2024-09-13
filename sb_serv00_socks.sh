@@ -275,10 +275,11 @@ run_nezha() {
        green "NEZHA 正在运行"
     else
        red "NEZHA 未运行，重启中……"
-       pkill -x 'npm' 2>/dev/null && nohup ./nezha.sh >/dev/null 2>&1 &
+       pkill -x 'npm' 2>/dev/null
+       nohup ./nezha.sh >/dev/null 2>&1 &
        sleep 2
           if pgrep -x 'npm' > /dev/null; then
-             purple "NEZHA 已重启"
+             green "NEZHA 已重启"
           else
              red "NEZHA 重启失败"
           fi
@@ -301,10 +302,11 @@ run_sb() {
        green "singbox 正在运行"
     else
        red "singbox 未运行，重启中……"
-       pkill -x 'web' && nohup ./web run -c config.json >/dev/null 2>&1 &
+       pkill -x 'web' 2>/dev/null
+       nohup ./web run -c config.json >/dev/null 2>&1 &
        sleep 2
           if pgrep -x 'web' > /dev/null; then
-             purple "singbox 已重启"
+             green "singbox 已重启"
           else
              red "singbox 重启失败"
           fi
@@ -320,16 +322,17 @@ run_argo() {
     export TMPDIR=$(pwd)
     [ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
     [ -x "${WORKDIR}/bot" ] || chmod +x "${WORKDIR}/bot"
-    nohup ./bot ${args} >/dev/null 2>&1 &
+    nohup ./argo.sh >/dev/null 2>&1 &
     sleep 2
     if pgrep -x 'bot' > /dev/null; then
        green "ARGO 正在运行"
     else
        red "ARGO 未运行，重启中……"
-       pkill -x 'bot' && nohup ./bot "${args}" >/dev/null 2>&1 &
+       pkill -x 'bot' 2>/dev/null
+       nohup ./argo.sh >/dev/null 2>&1 &
        sleep 2
           if pgrep -x 'bot' > /dev/null; then
-	         purple "ARGO 已重启"
+             green "ARGO 已重启"
           else
              red "ARGO 重启失败"
           fi
