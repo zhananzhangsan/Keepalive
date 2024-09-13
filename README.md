@@ -21,10 +21,10 @@ curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00
 ![主菜单截图](https://fastly.jsdelivr.net/gh/yutian81/yutian81.github.io@master/assets/images/17258552404381725855239743.png)
 
 - 也可以支持老王的无交互安装
-例如：  
-VMESS_PORT=tcp端口 HY2_PORT=udp端口 SOCKS_PORT=udp端口 bash <(curl -Ls https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh)
+例如（注意大小写）：  
+vmess_port=tcp端口 hy2_port=udp端口 socks_port=udp端口 socks_user=abc123 socks_pass=abc456 bash <(curl -Ls https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh)
 
-- 其他变量也可一并写入，例如：  
+- 其他变量也可一并写入，例如（注意大小写）：  
 UUID=123456 NEZHA_SERVER=nz.abcd.com NEZHA_PORT=5555 NEZHA_KEY=123ABC ARGO_DOMAIN=2go.admin.com ARGO_AUTH=abc123
 
 ***已修复 argo 密钥为 token 格式时无法重启的问题，现在 json 和 token 都可以重启***
