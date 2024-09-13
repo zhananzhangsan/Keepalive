@@ -50,3 +50,4 @@ fi
 # 将 crontab 任务更新一次性添加
 (crontab -l; echo -e "$NEW_CRONTAB") | crontab -
 green "Crontab 任务已添加完成"
+sleep2
