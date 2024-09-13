@@ -326,7 +326,7 @@ run_argo() {
        green "ARGO 正在运行"
     else
        red "ARGO 未运行，重启中……"
-       pkill -x 'bot' && nohup ./bot ${args} >/dev/null 2>&1 &
+       pkill -x 'bot' && nohup ./bot "${args}" >/dev/null 2>&1 &
        sleep 2
           if pgrep -x 'bot' > /dev/null; then
 	         purple "ARGO 已重启"
