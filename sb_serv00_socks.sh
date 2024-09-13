@@ -25,11 +25,11 @@ export NEZHA_PORT=${NEZHA_PORT:-'443'}
 export NEZHA_KEY=${NEZHA_KEY:-''} 
 export ARGO_DOMAIN=${ARGO_DOMAIN:-''}   
 export ARGO_AUTH=${ARGO_AUTH:-''} 
-export VMESS_PORT=${VMESS_PORT:-'40000'}
-export HY2_PORT=${HY2_PORT:-'41000'}
-export SOCKS_PORT=${SOCKS_PORT:-'42000'}
-export SOCKS_USER=${SOCKS_USER:-'abc123'}
-export SOCKS_PASS=${SOCKS_PASS:-'abc123'}
+export vmess_port=${vmess_port:-'40000'}
+export hy2_port=${hy2_port:-'41000'}
+export socks_port=${socks_port:-'42000'}
+export socks_user=${socks_user:-'abc123'}
+export socks_pass=${socks_pass:-'abc123'}
 export CFIP=${CFIP:-'fan.yutian.us.kg'} 
 export CFPORT=${CFPORT:-'443'} 
 
