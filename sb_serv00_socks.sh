@@ -176,7 +176,6 @@ EOF
   cat > "${WORKDIR}/argo.sh" << EOF
 #!/bin/bash
 
-pgrep -f 'bot' | xargs -r kill
 cd ${WORKDIR} || exit
 export TMPDIR=$(pwd)
 chmod +x ./bot
@@ -213,7 +212,6 @@ read_nz_variables() {
   cat > "${WORKDIR}/nezha.sh" << EOF
 #!/bin/bash
 
-pgrep -f 'npm' | xargs -r kill
 cd ${WORKDIR} || exit
 export TMPDIR=$(pwd)
 chmod +x ./npm
