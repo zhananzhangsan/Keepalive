@@ -37,6 +37,11 @@ UUID=123456 NEZHA_SERVER=nz.abcd.com NEZHA_PORT=5555 NEZHA_KEY=123ABC ARGO_DOMAI
 ```
 vless_port=自定义端口 bash <(curl -Ls https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb5in1.sh)
 ```
+
+### 测试socks5是否通畅：运行以下命令，若正确返回服务器ip则节点通畅
+```
+curl ip.sb --socks5 用户名:密码@localhost:端口
+```
 ----
 
 ## 关于节点保活
