@@ -400,7 +400,9 @@ creat_corn() {
     case "$choice" in
         [Yy])
 	   bash <(curl -s ${CORN_URL})
-           green "已成功添加 corn 定时任务" && menu ;;
+           green "已成功添加 corn 定时任务"
+	   sleep 2
+           menu ;;
         [Nn]) menu ;;
         *) red "无效的选择，请重新输入 y 或 n" && menu ;;
     esac
