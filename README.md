@@ -27,7 +27,7 @@ VMESS_PORT=tcp端口 HY2_PORT=udp端口 SOCKS_PORT=udp端口 bash <(curl -Ls htt
 - 其他变量也可一并写入，例如：  
 UUID=123456 NEZHA_SERVER=nz.abcd.com NEZHA_PORT=5555 NEZHA_KEY=123ABC ARGO_DOMAIN=2go.admin.com ARGO_AUTH=abc123
 
-## *已修复argo密钥为token格式的无法重启的问题，现在json和token都可以重启*
+***已修复argo密钥为token格式的无法重启的问题，现在json和token都可以重启***
 
 可以通过F大的API获取json：https://fscarmen.cloudflare.now.cc
 
