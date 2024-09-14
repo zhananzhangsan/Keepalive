@@ -36,7 +36,7 @@ export CFPORT=${CFPORT:-'443'}
 # 定义文件下载地址
 SB_WEB_ARMURL="https://github.com/eooce/test/releases/download/arm64/sb"
 # AG_BOT_ARMURL="https://github.com/eooce/test/releases/download/arm64/bot13"
-AG_BOT_ARMURL="https://github.com/yutian81/serv00-ct8-ssh/releases/download/arm64/cloudflared"
+AG_BOT_ARMURL="https://github.com/yutian81/serv00-ct8-ssh/releases/download/arm64/cloudflared_arm64"
 NZ_NPM_ARMURL="https://github.com/eooce/test/releases/download/ARM/swith"
 SB_WEB_X86URL="https://00.2go.us.kg/web"
 AG_BOT_X86URL="https://00.2go.us.kg/bot"
