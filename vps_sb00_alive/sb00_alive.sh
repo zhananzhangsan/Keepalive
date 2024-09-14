@@ -13,6 +13,10 @@ SCRIPT_PATH="/root/sb00_alive.sh"  # 本脚本路径，不要改变文件名
 SCRIPT_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_alive/sb00-sk5.sh"  # yutian81魔改serv00无交互脚本
 VPS_JSON_URL="https://raw.githubusercontent.com/yutian81/Wanju-Nodes/main/serv00-panel3/sb00ssh.json"  # vps登录信息json文件
 REBOOT_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/reboot.sh"   # 仅支持重启yutian81魔改serv00有交互脚本
+MAX_ATTEMPTS=5  # 最大尝试检测次数
+ARGO_HTTP_CODE=""  # Argo 连接状态码
+
+# 定义传入参数
 export LC_ALL=C
 export HOST=${HOST:-'s11.serv00.com'}   # serv00服务器或IP
 export SSH_USER=${SSH_USER:-'abcd'}  # serv00或ct8账号
@@ -30,11 +34,6 @@ export TERM=xterm
 export DEBIAN_FRONTEND=noninteractive
 export CFIP=${CFIP:-'www.visa.com.tw'}  # 优选域名或优选ip
 export CFPORT=${CFPORT:-'443'}     # 优选域名或优选ip对应端口
-
-# 最大尝试检测次数
-MAX_ATTEMPTS=5
-# argo 连接状态码
-ARGO_HTTP_CODE=""
 
 # 根据对应系统安装依赖
 install_packages() {
@@ -109,7 +108,10 @@ run_remote_command() {
 
 # 循环遍历服务器检测
 # 拉取远程 json 文件并遍历每个服务器的配置
-curl -s ${VPS_JSON_URL} -o sb00ssh.json
+if ! curl -s ${VPS_JSON_URL} -o sb00ssh.json; then
+    red "VPS 参数文件下载失败！"
+    exit 1
+fi
 jq -c '.[]' "sb00ssh.json" | while IFS= read -r servers; do
     HOST=$(echo "$servers" | jq -r '.HOST')
     SSH_USER=$(echo "$servers" | jq -r '.SSH_USER')
@@ -124,13 +126,13 @@ jq -c '.[]' "sb00ssh.json" | while IFS= read -r servers; do
     NEZHA_SERVER=$(echo "$servers" | jq -r '.NEZHA_SERVER')
     NEZHA_PORT=$(echo "$servers" | jq -r '.NEZHA_PORT')
     NEZHA_KEY=$(echo "$servers" | jq -r '.NEZHA_KEY')
-    green "正在处理服务器……服务器: $HOST  账户：$SSH_USER"
+    green "正在处理……  服务器: $HOST  账户：$SSH_USER"
 
     attempt=0
     time=$(TZ="Asia/Hong_Kong" date +"%Y-%m-%d %H:%M")
 
     while [ $attempt -lt $MAX_ATTEMPTS ]; do
-        if ! check_vmess_port "$HOST" "$VMESS_PORT"; then
+        if ! check_tcp_port "$HOST" "$VMESS_PORT"; then
             red "TCP 端口 $VMESS_PORT 不通畅，进程可能不存在，休眠30s后重试"
             sleep 30
             attempt=$((attempt+1))
