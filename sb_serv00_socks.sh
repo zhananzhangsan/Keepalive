@@ -69,8 +69,8 @@ reading "\n确定继续安装吗？【y/n】: " choice
         run_argo
         get_links
         creat_corn ;;
-    [Nn]) exit 0 ;;
-    *) red "无效的选择，请输入 y 或 n" && menu ;;
+    [Nn]) menu ;;
+    *) red "无效的选择，请输入 y 或 n" && install_singbox ;;
   esac
 }
 
