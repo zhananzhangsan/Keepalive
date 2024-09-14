@@ -24,8 +24,8 @@ export ARGO_AUTH=${ARGO_AUTH:-''}
 export VMESS_PORT=${VMESS_PORT:-'40000'}
 export SOCKS_PORT=${SOCKS_PORT:-'50000'}
 export HY2_PORT=${HY2_PORT:-'60000'}
-export SOCKS_USER=${SOCKS_USER:-'yutian'}
-export SOCKS_PASS=${SOCKS_PASS:-'yutian=abcd'}
+export SOCKS_USER=${SOCKS_USER:-'abc123'}
+export SOCKS_PASS=${SOCKS_PASS:-'abc456'}
 export CFIP=${CFIP:-'www.visa.com.tw'} 
 export CFPORT=${CFPORT:-'443'} 
 
