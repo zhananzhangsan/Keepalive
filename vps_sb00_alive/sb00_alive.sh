@@ -88,8 +88,15 @@ run_remote_command() {
 
 # 下载服务器 JSON 文件
 if ! curl -s "$VPS_JSON_URL" -o sb00ssh.json; then
-    red "VPS 参数文件下载失败！"
-    exit 1
+    red "VPS 参数文件下载失败，尝试使用 wget 下载！"
+    if ! wget -q "$VPS_JSON_URL" -O sb00ssh.json; then
+        red "VPS 参数文件下载失败，请检查下载地址是否正确！"
+        exit 1
+    else
+        green "VPS 参数文件通过 wget 下载成功！"
+    fi
+else
+    green "VPS 参数文件通过 curl 下载成功！"
 fi
 
 # 处理服务器列表并遍历
