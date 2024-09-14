@@ -82,24 +82,6 @@ add_cron_job() {
 }
 add_cron_job
 
-# 拉取远程 json 文件并遍历每个服务器的配置
-curl -s ${VPS_JSON_URL} -o sb00ssh.json
-jq -c '.[]' "sb00ssh.json" | while IFS= read -r servers; do
-    HOST=$(echo "$servers" | jq -r '.HOST')
-    SSH_USER=$(echo "$servers" | jq -r '.SSH_USER')
-    SSH_PASS=$(echo "$servers" | jq -r '.SSH_PASS')
-    VMESS_PORT=$(echo "$servers" | jq -r '.VMESS_PORT')
-    SOCKS_PORT=$(echo "$servers" | jq -r '.SOCKS_PORT')
-    HY2_PORT=$(echo "$servers" | jq -r '.HY2_PORT')
-    SOCKS_USER=$(echo "$servers" | jq -r '.SOCKS_USER')
-    SOCKS_PASS=$(echo "$servers" | jq -r '.SOCKS_PASS')
-    ARGO_DOMAIN=$(echo "$servers" | jq -r '.ARGO_DOMAIN')
-    ARGO_AUTH=$(echo "$servers" | jq -r '.ARGO_AUTH')
-    NEZHA_SERVER=$(echo "$servers" | jq -r '.NEZHA_SERVER')
-    NEZHA_PORT=$(echo "$servers" | jq -r '.NEZHA_PORT')
-    NEZHA_KEY=$(echo "$servers" | jq -r '.NEZHA_KEY')
-    green "正在处理服务器……服务器: $HOST  账户：$SSH_USER  TCP端口：$VMESS_PORT"
-
 # 检测 TCP 端口
 check_tcp_port() {
     local HOST=$1
@@ -126,8 +108,24 @@ run_remote_command() {
 }
 
 # 循环遍历服务器检测
-for host in "${!servers[@]}"; do
-    IFS= read -r servers HOST SSH_USER SSH_PASS VMESS_PORT HY2_PORT SOCKS_PORT NEZHA_SERVER NEZHA_PORT NEZHA_KEY ARGO_DOMAIN ARGO_AUTH <<< "${servers[$host]}"
+# 拉取远程 json 文件并遍历每个服务器的配置
+curl -s ${VPS_JSON_URL} -o sb00ssh.json
+jq -c '.[]' "sb00ssh.json" | while IFS= read -r servers; do
+    HOST=$(echo "$servers" | jq -r '.HOST')
+    SSH_USER=$(echo "$servers" | jq -r '.SSH_USER')
+    SSH_PASS=$(echo "$servers" | jq -r '.SSH_PASS')
+    VMESS_PORT=$(echo "$servers" | jq -r '.VMESS_PORT')
+    SOCKS_PORT=$(echo "$servers" | jq -r '.SOCKS_PORT')
+    HY2_PORT=$(echo "$servers" | jq -r '.HY2_PORT')
+    SOCKS_USER=$(echo "$servers" | jq -r '.SOCKS_USER')
+    SOCKS_PASS=$(echo "$servers" | jq -r '.SOCKS_PASS')
+    ARGO_DOMAIN=$(echo "$servers" | jq -r '.ARGO_DOMAIN')
+    ARGO_AUTH=$(echo "$servers" | jq -r '.ARGO_AUTH')
+    NEZHA_SERVER=$(echo "$servers" | jq -r '.NEZHA_SERVER')
+    NEZHA_PORT=$(echo "$servers" | jq -r '.NEZHA_PORT')
+    NEZHA_KEY=$(echo "$servers" | jq -r '.NEZHA_KEY')
+    green "正在处理服务器……服务器: $HOST  账户：$SSH_USER"
+
     attempt=0
     time=$(TZ="Asia/Hong_Kong" date +"%Y-%m-%d %H:%M")
 
@@ -145,8 +143,7 @@ for host in "${!servers[@]}"; do
             attempt=$((attempt+1))
             continue
         fi
-        green "Singbox：TCP端口 $VMESS_PORT 通畅，Argo：状态码 $ARGO_HTTP_CODE，运行正常；\
-        服务器: $HOST 账户：$SSH_USER [$time]"
+        green "TCP端口 $VMESS_PORT 通畅；Argo 运行正常，状态码 $ARGO_HTTP_CODE；服务器: $HOST 账户：$SSH_USER [$time]"
         break
     done
 
