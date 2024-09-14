@@ -407,19 +407,26 @@ creat_corn() {
 	   sleep 2
            menu ;;
         [Nn]) menu ;;
-        *) red "无效的选择，请重新输入 y 或 n" && menu ;;
+        *) red "无效的选择，请重新输入 y 或 n" && creat_corn ;;
     esac
 }
 
 # 卸载并重置服务器
 clean_all() {
-   green "输入 1 为仅卸载singbox；输入 2 为重置服务器；输入 0 为返回主菜单"
-   reading "\n请输入选项【0/1/2】: " choice
+   echo ""
+   green "1. 仅卸载singbox"
+   echo  "----------------"
+   green "2. 重置整个服务器"
+   echo  "----------------"
+   yellow "0. 返回主菜单"
+   echo "----------------"
+   reading "\n请输入选择 (0-2): " choice
+   echo ""
      case "${choice}" in
         1) uninstall_singbox ;;
         2) clean_all_files ;;
         0) menu ;;
-        *) red "无效的选项，请输入 0-2" && menu ;;
+        *) red "无效的选项，请输入 0-2" && clean_all ;;
      esac
 }
 
@@ -433,8 +440,8 @@ uninstall_singbox() {
           kill -9 $(ps aux | grep '[n]pm' | awk '{print $2}')
           rm -rf "${WORKDIR}"
           ;;
-        [Nn]) menu ;;
-    	*) red "无效的选择，请重新输入 y 或 n" && menu ;;
+       [Nn]) menu ;;
+       *) red "无效的选择，请重新输入 y 或 n" && uninstall_singbox ;;
     esac
 }
 
