@@ -19,8 +19,10 @@ chmod 777 "${WORKDIR}"
 green "检查并添加 crontab 任务"
 # 先清除旧的相关任务
 (crontab -l | grep -v -E "@reboot pkill -kill -u $(whoami)|pgrep -x \"npm\"|pgrep -x \"web\"|pgrep -x \"bot\"") | crontab -
+#green "清除所有已存在的 crontab 任务"
+#crontab -r
 
-# 初始化一个 crontab 文件内容
+# 初始化一个新的 crontab 文件内容
 NEW_CRONTAB=""
 
 # 判断文件是否存在，并根据情况添加任务
