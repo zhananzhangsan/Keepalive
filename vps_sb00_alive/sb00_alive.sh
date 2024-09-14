@@ -17,19 +17,6 @@ MAX_ATTEMPTS=5  # 最大尝试检测次数
 ARGO_HTTP_CODE=""  # Argo 连接状态码
 
 # 定义传入参数
-export LC_ALL=C
-export HOST=${HOST:-'s11.serv00.com'}   # serv00服务器或IP
-export SSH_USER=${SSH_USER:-'abcd'}  # serv00或ct8账号
-export SSH_PASS=${SSH_PASS:-'12345678'}  # serv00或ct8密码
-export VMESS_PORT=${VMESS_PORT:-'1234'}     # 四合一vmess端口
-export SOCKS_PORT=${SOCKS_PORT:-'5678'}   # 四合一socks5端口
-export HY2_PORT=${HY2_PORT:-'6789'}   # 四合一hy2端口
-export SOCKS_USER=${SOCKS_USER:-'yutian'}  # SK5用户名
-export SOCKS_PASS=${SOCKS_PASS:-'yutian=abcd'}  # SK5密码
-export ARGO_DOMAIN=${ARGO_DOMAIN:-''}  # argo隧道域名
-export ARGO_AUTH=${ARGO_AUTH:-''}  # argo隧道token
-export NEZHA_PORT=${NEZHA_PORT:-'5555'}  # 哪吒探针端口，默认5555
-export NEZHA_KEY=${NEZHA_KEY:-''}  # 哪吒探针密钥
 export TERM=xterm
 export DEBIAN_FRONTEND=noninteractive
 export CFIP=${CFIP:-'www.visa.com.tw'}  # 优选域名或优选ip
