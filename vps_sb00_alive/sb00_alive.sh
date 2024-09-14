@@ -140,7 +140,7 @@ process_servers() {
             red "多次检测失败，尝试 SSH 连接远程执行命令。服务器: $HOST  账户：$SSH_USER  [$time]"
             if sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$HOST" -q exit; then
                 green "SSH 连接成功。服务器: $HOST  账户：$SSH_USER  [$time]"
-                output=$(run_remote_command "$HOST" "$SSH_USER" "$SSH_PASS" "$VMESS_PORT" "$HY2_PORT" "$SOCKS_PORT" "$SOCKS_USER" "$SOCKS_PASS" "$ARGO_DOMAIN" "$ARGO_AUTH" "$NEZHA_SERVER" "$NEZHA_PORT" "$NEZHA_KEY")
+                output=$(run_remote_command "$HOST" "$SSH_USER" "$SSH_PASS" "$VMESS_PORT" "$HY2_PORT" "$SOCKS_PORT")
                 if [ $? -eq 0 ]; then
                     green "远程命令执行成功，结果如下："
                     echo "$output"
