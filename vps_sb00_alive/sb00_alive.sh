@@ -112,13 +112,14 @@ check_argo_status() {
 # 连接并执行远程命令的函数
 run_remote_command() {
     sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$HOST" \
-    "ps aux | grep $(whoami) | grep -v 'sshd\|bash\|grep' | awk '{print \$2}' | xargs -r kill -9 > /dev/null 2>&1 && \
+    "ps aux | grep \"$(whoami)\" | grep -v 'sshd\|bash\|grep' | awk '{print \$2}' | xargs -r kill -9 > /dev/null 2>&1 && \
     VMESS_PORT=$VMESS_PORT HY2_PORT=$HY2_PORT SOCKS_PORT=$SOCKS_PORT \
-    SOCKS_USER=$SOCKS_USER SOCKS_PASS="${SOCKS_PASS}" \
-    ARGO_DOMAIN=$ARGO_DOMAIN ARGO_AUTH="${ARGO_AUTH}" \
+    SOCKS_USER=$SOCKS_USER SOCKS_PASS=\"$SOCKS_PASS\" \
+    ARGO_DOMAIN=$ARGO_DOMAIN ARGO_AUTH=\"$ARGO_AUTH\" \
     NEZHA_SERVER=$NEZHA_SERVER NEZHA_PORT=$NEZHA_PORT NEZHA_KEY=$NEZHA_KEY \
     bash <(curl -Ls ${SCRIPT_URL})"
     #cd /home/$SSH_USER/logs && \
+    #chmod +x ./nezha.sh; chmod +x ./web; chmod +x ./argo.sh \
     #nohup ./nezha.sh >/dev/null 2>&1 & \
     #nohup ./web run -c config.json >/dev/null 2>&1 & \
     #nohup ./argo.sh >/dev/null 2>&1 &"
@@ -126,23 +127,21 @@ run_remote_command() {
 
 # 循环检测
 while [ $attempt -lt $MAX_ATTEMPTS ]; do
-    if check_vmess_port; then
-        green "程序已运行，TCP 端口 $VMESS_PORT 通畅"
-        break
-    else
+    if ! check_vmess_port; then
         red "TCP 端口 $VMESS_PORT 不通畅，进程可能不存在，休眠30s后重试"
         sleep 30
         attempt=$((attempt+1))
+        continue
     fi
     check_argo_status
     if [ "$ARGO_HTTP_CODE" == "530" ]; then
         red "Argo 隧道不可用！状态码：$ARGO_HTTP_CODE，进程可能不存在，休眠30s后重试"
         sleep 30
-        attempt=$((attempt+1))        
-    else
-        green "Argo 隧道正常"
-        break
+        attempt=$((attempt+1))
+        continue
     fi
+    green "Singbox：TCP端口 $VMESS_PORT 通畅，运行正常；Argo：状态码 $ARGO_HTTP_CODE，运行正常"
+    break
 done
 
 # 如果达到最大尝试次数，连接服务器并执行远程命令
