@@ -33,7 +33,6 @@ if pgrep -x 'npm' > /dev/null; then
    green "NEZHA 正在运行"
 else
    red "NEZHA 已停止，尝试重启……"
-   pgrep -f 'npm' | xargs -r kill
    nohup ./nezha.sh >/dev/null 2>&1 &
    sleep 2
    if pgrep -x 'npm' > /dev/null; then
@@ -48,7 +47,6 @@ if pgrep -x 'web' > /dev/null; then
    green "singbox 正在运行"
 else
    red "singbox 已停止，尝试重启……"
-   pgrep -f 'web' | xargs -r kill
    nohup ./web run -c config.json >/dev/null 2>&1 &
    sleep 2
    if pgrep -x 'web' > /dev/null; then
@@ -63,7 +61,6 @@ if pgrep -x 'bot' > /dev/null; then
    green "ARGO 正在运行"
 else
    red "ARGO 已停止，尝试重启……"
-   pgrep -f 'bot' | xargs -r kill
    nohup ./argo.sh >/dev/null 2>&1 &
    sleep 2
    if pgrep -x 'bot' > /dev/null; then
