@@ -142,8 +142,13 @@ jq -c '.[]' "sb00ssh.json" | while IFS= read -r servers; do
         if sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$HOST" -q exit; then
             green "SSH远程连接成功, 服务器: $HOST  账户：$SSH_USER  [$time]"
             output=$(run_remote_command "$HOST" "$SSH_USER" "$SSH_PASS" "$VMESS_PORT" "$HY2_PORT" "$SOCKS_PORT" "$NEZHA_SERVER" "$NEZHA_PORT" "$NEZHA_KEY" "$ARGO_DOMAIN" "$ARGO_AUTH")
-            green "远程命令执行结果："
-            echo "$output"
+            if [ $? -eq 0 ]; then
+                green "远程命令执行成功，结果如下："
+                echo "$output"
+            else
+                red "远程命令执行失败，结果如下："
+                echo "$output"
+            fi
         else
             red "连接失败，请检查你的账户和密码, 服务器: $HOST  账户：$SSH_USER  [$time]"
         fi
