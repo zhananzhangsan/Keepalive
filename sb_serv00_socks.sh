@@ -21,7 +21,7 @@ WORKDIR="/home/${USERNAME}/logs"
 export LC_ALL=C
 export UUID=${UUID:-'5195c04a-552f-4f9e-8bf9-216d257c0839'}
 export NEZHA_SERVER=${NEZHA_SERVER:-'nezha.yutian81.top'} 
-export NEZHA_PORT=${NEZHA_PORT:-'443'}     
+export NEZHA_PORT=${NEZHA_PORT:-'5555'}     
 export NEZHA_KEY=${NEZHA_KEY:-''} 
 export ARGO_DOMAIN=${ARGO_DOMAIN:-''}   
 export ARGO_AUTH=${ARGO_AUTH:-''} 
@@ -33,7 +33,7 @@ export socks_pass=${socks_pass:-'abc456'}
 export CFIP=${CFIP:-'fan.yutian.us.kg'} 
 export CFPORT=${CFPORT:-'443'} 
 
-# 定义文件下载地址和文件名
+# 定义文件下载地址
 SB_WEB_ARMURL="https://github.com/eooce/test/releases/download/arm64/sb"
 # AG_BOT_ARMURL="https://github.com/eooce/test/releases/download/arm64/bot13"
 AG_BOT_ARMURL="https://github.com/yutian81/serv00-ct8-ssh/releases/download/arm64/cloudflared"
@@ -197,8 +197,8 @@ read_nz_variables() {
       [[ "$nz_choice" != "y" && "$nz_choice" != "Y" ]] && return
       reading "请输入哪吒探针域名或ip：" NEZHA_SERVER
       green "你的哪吒域名为: $NEZHA_SERVER"
-      reading "请输入哪吒探针端口（回车跳过默认使用443）：" NEZHA_PORT
-      [[ -z "{$NEZHA_PORT}" ]] && NEZHA_PORT="443"
+      reading "请输入哪吒探针端口（回车跳过默认使用5555）：" NEZHA_PORT
+      [[ -z "${NEZHA_PORT}" ]] && NEZHA_PORT="5555"
       green "你的哪吒端口为: $NEZHA_PORT"
       reading "请输入哪吒探针密钥：" NEZHA_KEY
       green "你的哪吒密钥为: $NEZHA_KEY"
@@ -457,7 +457,7 @@ clean_all_files() {
         rm -rf ~/*
         sleep 2
         green "清理已完成" ;;
-      [Nn]) exit 0 ;; 
+      [Nn]) menu ;; 
       *) red "无效的选择，请重新输入 y 或 n" && menu ;;
   esac
 }
