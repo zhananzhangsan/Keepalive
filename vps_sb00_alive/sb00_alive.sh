@@ -10,8 +10,9 @@ yellow() { echo -e "\e[1;33m$1\033[0m"; }
 
 # 定义变量
 SCRIPT_PATH="/root/sb00_alive.sh"  # 本脚本路径，不要改变文件名
-SCRIPT_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_alive/sb00-sk5.sh"  # 一键脚本下载地址
+SCRIPT_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_alive/sb00-sk5.sh"  # yutian81魔改serv00无交互脚本
 VPS_JSON_URL="https://raw.githubusercontent.com/yutian81/Wanju-Nodes/main/serv00-panel3/sb00ssh.json"  # vps登录信息json文件
+REBOOT_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/reboot.sh"   # 仅支持重启yutian81魔改serv00有交互脚本
 export LC_ALL=C
 export HOST=${HOST:-'s11.serv00.com'}   # serv00服务器或IP
 export SSH_USER=${SSH_USER:-'abcd'}  # serv00或ct8账号
@@ -118,11 +119,7 @@ run_remote_command() {
     ARGO_DOMAIN=$ARGO_DOMAIN ARGO_AUTH=\"$ARGO_AUTH\" \
     NEZHA_SERVER=$NEZHA_SERVER NEZHA_PORT=$NEZHA_PORT NEZHA_KEY=$NEZHA_KEY \
     bash <(curl -Ls ${SCRIPT_URL})"
-    #cd /home/$SSH_USER/logs && \
-    #chmod +x ./nezha.sh; chmod +x ./web; chmod +x ./argo.sh \
-    #nohup ./nezha.sh >/dev/null 2>&1 & \
-    #nohup ./web run -c config.json >/dev/null 2>&1 & \
-    #nohup ./argo.sh >/dev/null 2>&1 &"
+    #bash <(curl -Ls ${REBOOT_URL})
 }
 
 # 循环检测
