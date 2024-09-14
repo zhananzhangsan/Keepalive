@@ -119,7 +119,7 @@ run_remote_command() {
     ARGO_DOMAIN=$ARGO_DOMAIN ARGO_AUTH=\"$ARGO_AUTH\" \
     NEZHA_SERVER=$NEZHA_SERVER NEZHA_PORT=$NEZHA_PORT NEZHA_KEY=$NEZHA_KEY \
     bash <(curl -Ls ${SCRIPT_URL})"
-    #bash <(curl -Ls ${REBOOT_URL})
+    #bash <(curl -Ls ${REBOOT_URL})  #使用此脚本无需重装节点，它将直接启动原本存储在服务器中的命令和配置文件，实现节点重启
 }
 
 # 循环检测
