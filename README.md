@@ -29,7 +29,9 @@ UUID=123456 NEZHA_SERVER=nz.abcd.com NEZHA_PORT=5555 NEZHA_KEY=123ABC ARGO_DOMAI
 
 ***已修复 argo 密钥为 token 格式时无法重启的问题，现在 json 和 token 都可以重启***
 
-可以通过F大的API获取json：https://fscarmen.cloudflare.now.cc
+可以通过F大的API获取json：https://fscarmen.cloudflare.now.cc, 获取方式请看F大的教程：
+
+[获取json教程](https://github.com/fscarmen/ArgoX?tab=readme-ov-file#argo-json-%E7%9A%84%E8%8E%B7%E5%8F%96); [获取token教程](https://github.com/fscarmen/ArgoX?tab=readme-ov-file#argo-token-%E7%9A%84%E8%8E%B7%E5%8F%96)
 
 ----
 
