@@ -29,6 +29,8 @@ export NEZHA_KEY=${NEZHA_KEY:-''}  # 哪吒探针密钥
 # 最大尝试检测次数
 MAX_ATTEMPTS=5
 attempt=0
+# argo 连接状态码
+ARGO_HTTP_CODE=""
 
 # 根据对应系统安装依赖
 install_packages() {
@@ -102,27 +104,9 @@ check_vmess_port() {
     return $?
 }
 
-# 检测 TCP 端口是否通畅
-#check_vmess_port() {
-#    if nc -zv "$HOST" "$VMESS_PORT" &> /dev/null; then
-#        green "Vmess 端口 $VMESS_PORT 通畅"
-#        return 0
-#    else
-#        red "Vmess 端口 $VMESS_PORT 无法访问"
-#        return 1
-#    fi
-#}
-
 # 检查 Argo 隧道状态
 check_argo_status() {
-    http_code=$(curl -o /dev/null -s -w "%{http_code}\n" "https://$ARGO_DOMAIN")
-#    if [ "$http_code" == "530" ]; then
-#        ((ARGO_FAILURE_COUNT++))
-#        red "Argo 隧道不可用！失败次数：$ARGO_FAILURE_COUNT"
-#    else
-#        ARGO_FAILURE_COUNT=0
-#        green "Argo 隧道正常"
-#    fi
+    ARGO_HTTP_CODE=$(curl -o /dev/null -s -w "%{http_code}\n" "https://$ARGO_DOMAIN")
 }
 
 # 连接并执行远程命令的函数
@@ -150,12 +134,14 @@ while [ $attempt -lt $MAX_ATTEMPTS ]; do
         sleep 30
         attempt=$((attempt+1))
     fi
-    if check_argo_status && [ "$http_code" == "530" ]; then
-        ARGO_FAILURE_COUNT=0
-        green "Argo 隧道正常"
+    check_argo_status
+    if [ "$ARGO_HTTP_CODE" == "530" ]; then
+        red "Argo 隧道不可用！状态码：$ARGO_HTTP_CODE，进程可能不存在，休眠30s后重试"
+        sleep 30
+        attempt=$((attempt+1))        
     else
-        ((ARGO_FAILURE_COUNT++))
-        red "Argo 隧道不可用！失败次数：$ARGO_FAILURE_COUNT"
+        green "Argo 隧道正常"
+        break
     fi
 done
 
