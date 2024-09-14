@@ -1,17 +1,12 @@
 #!/bin/bash
-#原始脚本仅支持单服务器保活：老王 https://github.com/eooce/scripts
+#老王原始脚本：https://github.com/eooce/Sing-box，支持老王的无交互四合一脚本保活
+#yutian81修改脚本：https://github.com/yutian81/serv00-ct8-ssh/vps_sb00_alive，支持yutian81魔改无交互四合一保活
+#魔改无交互四合一脚本一键安装：bash <(curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/vps_sb00_alive/main/sb00-sk5.sh)
 
 # 定义颜色
-re="\033[0m"
-red="\033[1;91m"
-green="\e[1;32m"
-yellow="\e[1;33m"
-purple="\e[1;35m"
 red() { echo -e "\e[1;91m$1\033[0m"; }
 green() { echo -e "\e[1;32m$1\033[0m"; }
 yellow() { echo -e "\e[1;33m$1\033[0m"; }
-purple() { echo -e "\e[1;35m$1\033[0m"; }
-reading() { read -p "$(red "$1")" "$2"; }
 
 # 定义变量
 SCRIPT_PATH="/root/sb00_alive.sh"  # 本脚本路径，不要改变文件名
@@ -101,10 +96,33 @@ add_cron_job() {
 }
 add_cron_job
 
-# 检测 TCP 端口是否通畅
+# 检测 TCP 端口
 check_vmess_port() {
     nc -zv "$HOST" "$VMESS_PORT" &> /dev/null
     return $?
+}
+
+# 检测 TCP 端口是否通畅
+#check_vmess_port() {
+#    if nc -zv "$HOST" "$VMESS_PORT" &> /dev/null; then
+#        green "Vmess 端口 $VMESS_PORT 通畅"
+#        return 0
+#    else
+#        red "Vmess 端口 $VMESS_PORT 无法访问"
+#        return 1
+#    fi
+#}
+
+# 检查 Argo 隧道状态
+check_argo_status() {
+    http_code=$(curl -o /dev/null -s -w "%{http_code}\n" "https://$ARGO_DOMAIN")
+#    if [ "$http_code" == "530" ]; then
+#        ((ARGO_FAILURE_COUNT++))
+#        red "Argo 隧道不可用！失败次数：$ARGO_FAILURE_COUNT"
+#    else
+#        ARGO_FAILURE_COUNT=0
+#        green "Argo 隧道正常"
+#    fi
 }
 
 # 连接并执行远程命令的函数
@@ -131,6 +149,13 @@ while [ $attempt -lt $MAX_ATTEMPTS ]; do
         red "TCP 端口 $VMESS_PORT 不通畅，进程可能不存在，休眠30s后重试"
         sleep 30
         attempt=$((attempt+1))
+    fi
+    if check_argo_status && [ "$http_code" == "530" ]; then
+        ARGO_FAILURE_COUNT=0
+        green "Argo 隧道正常"
+    else
+        ((ARGO_FAILURE_COUNT++))
+        red "Argo 隧道不可用！失败次数：$ARGO_FAILURE_COUNT"
     fi
 done
 
