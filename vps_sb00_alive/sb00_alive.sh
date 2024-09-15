@@ -240,6 +240,7 @@ process_servers() {
                         green "服务器 $(yellow "$HOST") 恢复正常。端口 $(yellow "$VMESS_PORT") 正常; Argo $(yellow "$ARGO_DOMAIN") 正常; 哪吒 $(yellow "$server_name") 正常"
                     else
                         red "Argo 或 哪吒 状态异常，请检查 Argo 状态码或 哪吒 活跃状态。"
+                    fi
                 else
                     red "远程命令执行失败，请检查变量设置是否正确"
                 fi
