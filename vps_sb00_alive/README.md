@@ -84,11 +84,13 @@ https://raw.githubusercontent.com/yutian81/serv00/main/alive/sb00ssh.json
 
 ### 二、在vps中运行本脚本
 
-**首先，修改`sb00_alive.sh`中的 VPS_JSON_URL 变量为上述 json 文件的直链地址**
-
-如：`VPS_JSON_URL="https://raw.githubusercontent.com/yutian81/Wanju-Nodes/main/serv00/sb00ssh.json"`
-
-**其次，修改114行 `ids_found=("13" "14" "17" "23" "24")`中的数字，该数字为你需要检测的哪吒探针的ID，可以在面板管理后台查看**
+> [!IMPORTANT]  
+> **首先，需要修改`sb00_alive.sh`中的 VPS_JSON_URL 变量为上述 json 文件的直链地址**
+> 
+> 如：`VPS_JSON_URL="https://raw.githubusercontent.com/yutian81/Wanju-Nodes/main/serv00/sb00ssh.json"`
+> 
+> **其次，需要修改114行 `ids_found=("13" "14" "17" "23" "24")`中的数字，该数字为你需要检测的哪吒探针的ID，可以在面板管理后台查看**
+> 
 
 **然后，运行一键安装命令**
 
