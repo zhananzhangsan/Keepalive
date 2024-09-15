@@ -107,31 +107,32 @@ check_argo_status() {
 check_nezha_status() {
     # 获取哪吒agent列表
     agent_list=$(curl -s -H "Authorization: $NEZHA_APITOKEN" "$NEZHA_API")
-    if [ $agent_list -ne 0 ]; then
+    if [ $? -ne 0 ]; then; then
         red "哪吒面板访问失败，请检查面板地址和 API TOKEN 是否正确"
         exit 1
     fi
-    # 解析agent列表内容
     ids_found=("13" "14" "17" "23" "24")  # 此处填写需要检测的 serv00 哪吒探针的 ID
     server_found=false  # 用于标记是否找到符合条件的探针
+    # 遍历agent列表中的每个探针
     echo "$agent_list" | jq -c '.result[]' | while read -r server; do
         server_name=$(echo "$server" | jq -r '.name')
         last_active=$(echo "$server" | jq -r '.last_active')
         valid_ip=$(echo "$server" | jq -r '.valid_ip')
         server_id=$(echo "$server" | jq -r '.id')       
-        # 筛选符合条件的哪吒探针
+        # 以探针ID进行匹配，筛选符合条件的哪吒探针
         if [[ " ${ids_found[@]} " =~ " $server_id " ]]; then
-            green "已找到指定的探针 $server_name, ID 为 $server_id, 开始检查探针活动状态"
+            green "已找到serv00服务器 $server_name, ID 为 $server_id, 开始检查探针活动状态"
             server_found=true
-            # 将符合条件的哪吒探针写入一个 filtered_agents 变量
+            # 将serv00服务器的探针存储到 filtered_agents 变量中
             filtered_agents=$(
                 echo "$agent_list" | jq -c --argjson ids_found "$(printf '%s\n' "${ids_found[@]}" | jq -R . | jq -s .)" '
                 .result[] | select(.id as $id | $ids_found | index($id)) | { server_name: .name, last_active: .last_active, valid_ip: .valid_ip, server_id: .id }
             ')
         else [ "$server_found" = false ]; then
-            red "没有找到指定的探针，请检查 ids_found 变量填写是否正确"
+            red "没有找到 serv00 服务器探针，请检查 ids_found 变量填写是否正确"
         fi
         echo "$filtered_agents"
+    done
 }
 
 # 连接并执行远程命令的函数
@@ -149,7 +150,6 @@ run_remote_command() {
 
 # 处理服务器列表并遍历，TCP端口、Argo、哪吒探针三项检测有一项不通即连接 SSH 执行命令
 process_servers() {
-    local attempt=0
     local max_attempts=5  # 最大尝试检测次数
     local time=$(TZ="Asia/Hong_Kong" date +"%Y-%m-%d %H:%M")
     
@@ -168,7 +168,8 @@ process_servers() {
         NEZHA_PORT=$(echo "$servers" | jq -r '.NEZHA_PORT')
         NEZHA_KEY=$(echo "$servers" | jq -r '.NEZHA_KEY')
         green "正在处理…… 服务器: $(yellow "$HOST")  账户：$(yellow "$SSH_USER")"
-
+        
+        local attempt=0
         while [ $attempt -lt $max_attempts ]; do
             all_checks=true
             
