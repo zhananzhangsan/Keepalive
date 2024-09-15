@@ -229,9 +229,9 @@ process_servers() {
         
         # 三项循环检测达到 5 次，远程连接 SSH 执行安装命令
         if [ $attempt -ge $max_attempts ]; then
-            red "多次检测失败，尝试 SSH 连接远程执行命令。服务器: $(yellow "$HOST")  账户：$(yellow "$SSH_USER")  [$time]"
+            red "多次检测失败，开始连接服务器  $(yellow "$HOST") 重装脚本  [$time]"
             if sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$HOST" -q exit; then
-                green "SSH 连接成功。服务器: $(yellow "$HOST")  账户：$(yellow "$SSH_USER")  [$time]"
+                green "服务器  $(yellow "$HOST")  连接成功，账户：$(yellow "$SSH_USER")  [$time]"
                 run_remote_command "$HOST" "$SSH_USER" "$SSH_PASS" "$VMESS_PORT" "$HY2_PORT" "$SOCKS_PORT" "$SOCKS_USER" "$SOCKS_PASS" "$ARGO_DOMAIN" "$ARGO_AUTH" "$NEZHA_SERVER" "$NEZHA_PORT" "$NEZHA_KEY"
                 cmd_status=$?
                 sleep 3
@@ -240,13 +240,13 @@ process_servers() {
                         green "远程命令执行成功，结果如下："
                         green "服务器 $(yellow "$HOST") 恢复正常。端口 $(yellow "$VMESS_PORT") 正常; Argo $(yellow "$ARGO_DOMAIN") 正常; 哪吒 $(yellow "$server_name") 正常"
                     else
-                        red "Argo 或 哪吒 状态异常，请检查 Argo 状态码或 哪吒 活跃状态。"
+                        red "Vmess端口、Argo 或 哪吒 状态异常，请检查脚本 $SCRIPT_URL。"
                     fi
                 else
-                    red "远程命令执行失败，请检查变量设置是否正确"
+                    red "远程命令执行失败，请检查服务器 $(yellow "$HOST") 参数设置是否正确"
                 fi
             else
-                red "SSH 连接失败，请检查账户和密码。服务器: $(yellow "$HOST")  账户：$(yellow "$SSH_USER")  [$time]"
+                red "服务器: $(yellow "$HOST") 连接失败，请检查账户 $(yellow "$SSH_USER") 和 $(yellow "密码")  [$time]"
             fi
         fi
     done
