@@ -194,15 +194,19 @@ process_servers() {
             
             # 检查指定的serv00服务器的哪吒探针是否在线
             filtered_agents=$(check_nezha_status)
+            current_time=$(date +%s)
             # 解析筛选后符合条件的探针列表内容
             echo "$filtered_agents" | jq -c '.[]' | while read -r filtered; do
                 server_name=$(echo "$filtered" | jq -r '.server_name')
                 last_active=$(echo "$filtered" | jq -r '.last_active')
                 valid_ip=$(echo "$filtered" | jq -r '.valid_ip')
                 server_id=$(echo "$filtered" | jq -r '.server_id')
-                current_time=$(date +%s)
+                if ! [[ "$last_active" =~ ^[0-9]+$ ]]; then
+                    red "探针 $server_name 的最后活动时间不是有效的时间戳: $last_active"
+                    continue
+                fi
                 active_time=$((current_time - last_active))
-            # 指定服务器的探针在30秒内无活动，则重新检查探针活动状态 
+                # 指定服务器的探针在30秒内无活动，则重新检查探针活动状态 
                 if [ "$active_time" -gt 30 ]; then
                       red "哪吒探针 $(yellow "$server_name") - $(yellow "$valid_ip") 已离线，开始重新检查"
                       all_checks=false
