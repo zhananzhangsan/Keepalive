@@ -92,8 +92,10 @@ download_json
 check_tcp_port() {
     local HOST=$1
     local VMESS_PORT=$2
+    local port_status
     nc -zv "$HOST" "$VMESS_PORT" &> /dev/null
-    return $?
+    port_status=$?
+    echo $port_status
 }
 
 # 检查 Argo 隧道状态
@@ -151,8 +153,8 @@ process_servers() {
             all_checks=true
             
             # 检查 TCP 端口是否通畅，不通则 30 秒后重试
-            check_tcp_port "$HOST" "$VMESS_PORT"
-            if [ $? -ne 0 ]; then
+            port_status=$(check_tcp_port "$HOST" "$VMESS_PORT")
+            if [ $port_status -ne 0 ]; then
                 red "TCP 端口 $(yellow "$VMESS_PORT") 不可用！休眠 30 秒后重试"
                 all_checks=false
                 sleep 30
@@ -161,7 +163,7 @@ process_servers() {
             fi
             
             # 检查 Argo 连接是否通畅，不通则 30 秒后重试
-            check_argo_status "$ARGO_DOMAIN"
+            argo_status=$(check_argo_status "$ARGO_DOMAIN")
             if [ "$argo_status" == "530" ]; then
                 red "Argo $(yellow "$ARGO_DOMAIN") 不可用！状态码：$(yellow "$ARGO_HTTP_CODE")，休眠 30 秒后重试"
                 all_checks=false
@@ -171,8 +173,9 @@ process_servers() {
             fi
             
             # 检查哪吒探针是否在线
-            check_nezha_status
+            agent_list=$(check_nezha_status)
             current_time=$(date +%s)
+            active_time=$((current_time - last_active))
             ids_found=("13" "14" "17" "23" "24")  # 此处填写需要检测的 serv00 哪吒探针的 ID
             server_found=false  # 用于标记是否找到符合条件的探针
             echo "$agent_list" | jq -c '.result[]' | while read -r server; do
@@ -185,7 +188,7 @@ process_servers() {
                     green "已找到指定的探针 $server_name, ID 为 $server_id, 开始检查探针活动状态"
                     server_found=true
                     # 指定服务器的探针在30秒内无活动，则重新检查探针活动状态
-                    if [ $((current_time - last_active)) -gt 30 ]; then
+                    if [ $active_time -gt 30 ]; then
                         red "哪吒探针 $(yellow "$server_name") - $(yellow "$valid_ip") 已离线，立即重试"
                         all_checks=false
                         attempt=$((attempt + 1))
@@ -211,10 +214,14 @@ process_servers() {
             if sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$HOST" -q exit; then
                 green "SSH 连接成功。服务器: $(yellow "$HOST")  账户：$(yellow "$SSH_USER")  [$time]"
                 run_remote_command "$HOST" "$SSH_USER" "$SSH_PASS" "$VMESS_PORT" "$HY2_PORT" "$SOCKS_PORT" "$SOCKS_USER" "$SOCKS_PASS" "$ARGO_DOMAIN" "$ARGO_AUTH" "$NEZHA_SERVER" "$NEZHA_PORT" "$NEZHA_KEY"
+                cmd_status=$?
                 sleep 3
-                if [ $? -eq 0 ] && [ "$argo_status" != "530" ] && [ $((current_time - last_active)) -lt 30 ]; then
-                    green "远程命令执行成功，结果如下："
-                    green "服务器 $(yellow "$HOST") 恢复正常。端口 $(yellow "$VMESS_PORT") 正常; Argo $(yellow "$ARGO_DOMAIN") 正常; 哪吒 $(yellow "$server_name") 正常"
+                if [ $cmd_status -eq 0 ]; then
+                    if [ $port_status -eq 0 ] && [ "$argo_status" != "530" ] && [ $active_time -lt 30 ]; then
+                        green "远程命令执行成功，结果如下："
+                        green "服务器 $(yellow "$HOST") 恢复正常。端口 $(yellow "$VMESS_PORT") 正常; Argo $(yellow "$ARGO_DOMAIN") 正常; 哪吒 $(yellow "$server_name") 正常"
+                    else
+                        red "Argo 或 哪吒 状态异常，请检查 Argo 状态码或 哪吒 活跃状态。"
                 else
                     red "远程命令执行失败，请检查变量设置是否正确"
                 fi
