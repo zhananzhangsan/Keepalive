@@ -99,6 +99,10 @@ curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_
 ```
 再次运行输入：`bash sb.sh`即可
 
+**模拟输出效果**
+
+![17264015029571726401502712.png](https://fastly.jsdelivr.net/gh/yutian81/yutian81.github.io@master/assets/images/17264015029571726401502712.png)
+
 ----
 
 ## 文件说明
