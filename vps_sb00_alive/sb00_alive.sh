@@ -169,7 +169,7 @@ process_servers() {
         NEZHA_SERVER=$(echo "$servers" | jq -r '.NEZHA_SERVER')
         NEZHA_PORT=$(echo "$servers" | jq -r '.NEZHA_PORT')
         NEZHA_KEY=$(echo "$servers" | jq -r '.NEZHA_KEY')
-        green "正在解析服务器: $(yellow "$HOST")  的配置信息 ……"
+        green "正在解析服务器  $(yellow "$HOST")  的配置信息 ……"
         green "全部解析完成，即将开始检查 Vmess端口、Argo隧道、哪吒探针 是否可访问"
         
         local attempt=0
@@ -238,7 +238,7 @@ process_servers() {
                 if [ $cmd_status -eq 0 ]; then
                     if [ $port_status -eq 0 ] && [ "$argo_status" != "530" ] && [ $active_time -lt 30 ]; then
                         green "远程命令执行成功，结果如下："
-                        green "服务器 $(yellow "$HOST") 恢复正常。端口 $(yellow "$VMESS_PORT") 正常; Argo $(yellow "$ARGO_DOMAIN") 正常; 哪吒 $(yellow "$server_name") 正常"
+                        green "服务器 $(yellow "$HOST") 端口 $(yellow "$VMESS_PORT") 恢复正常; Argo $(yellow "$ARGO_DOMAIN") 恢复正常; 哪吒 $(yellow "$server_name") 恢复正常"
                     else
                         red "Vmess端口、Argo或哪吒状态异常，请检查服务器参数 $VPS_JSON_URL"
                     fi
