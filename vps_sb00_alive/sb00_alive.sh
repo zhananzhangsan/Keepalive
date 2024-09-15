@@ -169,7 +169,7 @@ process_servers() {
         NEZHA_SERVER=$(echo "$servers" | jq -r '.NEZHA_SERVER')
         NEZHA_PORT=$(echo "$servers" | jq -r '.NEZHA_PORT')
         NEZHA_KEY=$(echo "$servers" | jq -r '.NEZHA_KEY')
-        green "正在处理…… 服务器: $(yellow "$HOST")  账户：$(yellow "$SSH_USER")"
+        green "正在解析所有serv00的配置信息…… 服务器: $(yellow "$HOST")  账户：$(yellow "$SSH_USER")"
         
         local attempt=0
         while [ $attempt -lt $max_attempts ]; do
