@@ -88,6 +88,8 @@ https://raw.githubusercontent.com/yutian81/serv00/main/alive/sb00ssh.json
 
 如：`VPS_JSON_URL="https://raw.githubusercontent.com/yutian81/Wanju-Nodes/main/serv00/sb00ssh.json"`
 
+**其次，修改114行 `ids_found=("13" "14" "17" "23" "24")`中的数字，该数字为你需要检测的哪吒探针的ID，可以在面板管理后台查看**
+
 **然后，运行一键安装命令**
 
 ```
