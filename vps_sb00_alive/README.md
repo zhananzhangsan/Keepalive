@@ -85,7 +85,7 @@ https://raw.githubusercontent.com/yutian81/serv00/main/alive/sb00ssh.json
 ### 二、在vps中运行本脚本
 
 > [!IMPORTANT]  
-> **首先，需要修改`sb00_alive.sh`中的 VPS_JSON_URL 变量为上述 json 文件的直链地址**
+> **首先，需要修改`sb00_alive.sh`中20行的 VPS_JSON_URL 变量为上述 json 文件的直链地址**
 > 
 > 如：`VPS_JSON_URL="https://raw.githubusercontent.com/yutian81/Wanju-Nodes/main/serv00/sb00ssh.json"`
 > 
