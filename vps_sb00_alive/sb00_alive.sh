@@ -107,12 +107,13 @@ check_argo_status() {
 check_nezha_status() {
     # 获取哪吒agent列表
     agent_list=$(curl -s -H "Authorization: $NEZHA_APITOKEN" "$NEZHA_API")
-    if [ $? -ne 0 ]; then; then
+    if [ $? -ne 0 ]; then
         red "哪吒面板访问失败，请检查面板地址和 API TOKEN 是否正确"
         exit 1
     fi
     ids_found=("13" "14" "17" "23" "24")  # 此处填写需要检测的 serv00 哪吒探针的 ID
     server_found=false  # 用于标记是否找到符合条件的探针
+    filtered_agents=""
     # 遍历agent列表中的每个探针
     echo "$agent_list" | jq -c '.result[]' | while read -r server; do
         server_name=$(echo "$server" | jq -r '.name')
@@ -128,11 +129,12 @@ check_nezha_status() {
                 echo "$agent_list" | jq -c --argjson ids_found "$(printf '%s\n' "${ids_found[@]}" | jq -R . | jq -s .)" '
                 .result[] | select(.id as $id | $ids_found | index($id)) | { server_name: .name, last_active: .last_active, valid_ip: .valid_ip, server_id: .id }
             ')
-        else [ "$server_found" = false ]; then
+        fi
+    done
+        if [ "$server_found" = false ]; then
             red "没有找到 serv00 服务器探针，请检查 ids_found 变量填写是否正确"
         fi
         echo "$filtered_agents"
-    done
 }
 
 # 连接并执行远程命令的函数
@@ -186,7 +188,7 @@ process_servers() {
             # 检查 Argo 连接是否通畅，不通则 30 秒后重试
             argo_status=$(check_argo_status "$ARGO_DOMAIN")
             if [ "$argo_status" == "530" ]; then
-                red "Argo $(yellow "$ARGO_DOMAIN") 不可用！状态码：$(yellow "$ARGO_HTTP_CODE")，休眠 30 秒后重试"
+                red "Argo $(yellow "$ARGO_DOMAIN") 不可用！状态码：$(yellow "$argo_status")，休眠 30 秒后重试"
                 all_checks=false
                 sleep 30
                 attempt=$((attempt + 1))
