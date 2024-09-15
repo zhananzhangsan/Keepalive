@@ -92,31 +92,51 @@ download_json
 check_tcp_port() {
     local HOST=$1
     local VMESS_PORT=$2
-    local port_status
     nc -zv "$HOST" "$VMESS_PORT" &> /dev/null
-    port_status=$?
-    echo $port_status
+    return $?  # 返回 nc 命令的退出状态
 }
 
 # 检查 Argo 隧道状态
 check_argo_status() {
+    local ARGO_DOMAIN=$1
     argo_status=$(curl -o /dev/null -s -w "%{http_code}\n" "https://$ARGO_DOMAIN")
     echo "$argo_status"
 }
 
-# 检查 nezha 探针在线状态
+# 获取哪吒探针的服务器列表并筛选出 serv00 & ct8 的服务器
 check_nezha_status() {
     # 获取哪吒agent列表
     agent_list=$(curl -s -H "Authorization: $NEZHA_APITOKEN" "$NEZHA_API")
-    if [ $? -ne 0 ]; then
+    if [ $agent_list -ne 0 ]; then
         red "哪吒面板访问失败，请检查面板地址和 API TOKEN 是否正确"
         exit 1
     fi
-    echo "$agent_list"
+    # 解析agent列表内容
+    ids_found=("13" "14" "17" "23" "24")  # 此处填写需要检测的 serv00 哪吒探针的 ID
+    server_found=false  # 用于标记是否找到符合条件的探针
+    echo "$agent_list" | jq -c '.result[]' | while read -r server; do
+        server_name=$(echo "$server" | jq -r '.name')
+        last_active=$(echo "$server" | jq -r '.last_active')
+        valid_ip=$(echo "$server" | jq -r '.valid_ip')
+        server_id=$(echo "$server" | jq -r '.id')       
+        # 筛选符合条件的哪吒探针
+        if [[ " ${ids_found[@]} " =~ " $server_id " ]]; then
+            green "已找到指定的探针 $server_name, ID 为 $server_id, 开始检查探针活动状态"
+            server_found=true
+            # 将符合条件的哪吒探针写入一个 filtered_agents 变量
+            filtered_agents=$(
+                echo "$agent_list" | jq -c --argjson ids_found "$(printf '%s\n' "${ids_found[@]}" | jq -R . | jq -s .)" '
+                .result[] | select(.id as $id | $ids_found | index($id)) | { server_name: .name, last_active: .last_active, valid_ip: .valid_ip, server_id: .id }
+            ')
+        else [ "$server_found" = false ]; then
+            red "没有找到指定的探针，请检查 ids_found 变量填写是否正确"
+        fi
+        echo "$filtered_agents"
 }
 
 # 连接并执行远程命令的函数
 run_remote_command() {
+    local HOST=$1 SSH_USER=$2 SSH_PASS=$3 VMESS_PORT=$4 HY2_PORT=$5 SOCKS_PORT=$6 SOCKS_USER=$7 SOCKS_PASS=$8 ARGO_DOMAIN=$9 ARGO_AUTH=${10} NEZHA_SERVER=${11} NEZHA_PORT=${12} NEZHA_KEY=${13}
     sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$HOST" \
     "ps aux | grep \"$(whoami)\" | grep -v 'sshd\|bash\|grep' | awk '{print \$2}' | xargs -r kill -9 > /dev/null 2>&1 && \
     VMESS_PORT=$VMESS_PORT HY2_PORT=$HY2_PORT SOCKS_PORT=$SOCKS_PORT \
@@ -172,34 +192,25 @@ process_servers() {
                 continue
             fi
             
-            # 检查哪吒探针是否在线
-            agent_list=$(check_nezha_status)
-            current_time=$(date +%s)
-            active_time=$((current_time - last_active))
-            ids_found=("13" "14" "17" "23" "24")  # 此处填写需要检测的 serv00 哪吒探针的 ID
-            server_found=false  # 用于标记是否找到符合条件的探针
-            echo "$agent_list" | jq -c '.result[]' | while read -r server; do
-                server_name=$(echo "$server" | jq -r '.name')
-                last_active=$(echo "$server" | jq -r '.last_active')
-                valid_ip=$(echo "$server" | jq -r '.valid_ip')
-                server_id=$(echo "$server" | jq -r '.id')              
-                # 筛选指定服务器的探针
-                if [[ " ${ids_found[@]} " =~ " $server_id " ]]; then
-                    green "已找到指定的探针 $server_name, ID 为 $server_id, 开始检查探针活动状态"
-                    server_found=true
-                    # 指定服务器的探针在30秒内无活动，则重新检查探针活动状态
-                    if [ $active_time -gt 30 ]; then
-                        red "哪吒探针 $(yellow "$server_name") - $(yellow "$valid_ip") 已离线，立即重试"
-                        all_checks=false
-                        attempt=$((attempt + 1))
-                        continue
-                    fi
+            # 检查指定的serv00服务器的哪吒探针是否在线
+            filtered_agents=$(check_nezha_status)
+            # 解析筛选后符合条件的探针列表内容
+            echo "$filtered_agents" | jq -c '.[]' | while read -r filtered; do
+                server_name=$(echo "$filtered" | jq -r '.server_name')
+                last_active=$(echo "$filtered" | jq -r '.last_active')
+                valid_ip=$(echo "$filtered" | jq -r '.valid_ip')
+                server_id=$(echo "$filtered" | jq -r '.server_id')
+                current_time=$(date +%s)
+                active_time=$((current_time - last_active))
+            # 指定服务器的探针在30秒内无活动，则重新检查探针活动状态 
+                if [ "$active_time" -gt 30 ]; then
+                      red "哪吒探针 $(yellow "$server_name") - $(yellow "$valid_ip") 已离线，开始重新检查"
+                      all_checks=false
+                      attempt=$((attempt + 1))
+                      continue
                 fi
             done
-            if [ "$server_found" = false ]; then
-                red "没有找到指定的探针，请检查 ids_found 变量填写是否正确"
-            fi
- 
+            
             # 如果所有检查都通过，则打印通畅信息并退出循环
             if [ "$all_checks" == true ]; then
                 green "TCP 端口 $(yellow "$VMESS_PORT") 通畅; Argo $(yellow "$ARGO_DOMAIN") 正常; 哪吒探针 $(yellow "$server_name") 正常 \
