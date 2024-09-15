@@ -170,7 +170,7 @@ process_servers() {
         NEZHA_PORT=$(echo "$servers" | jq -r '.NEZHA_PORT')
         NEZHA_KEY=$(echo "$servers" | jq -r '.NEZHA_KEY')
         green "正在解析服务器  $(yellow "$HOST")  的配置信息 ……"
-        green "全部解析完成，即将开始检查 Vmess端口、Argo隧道、哪吒探针 是否可访问"
+        green "解析完成，正在检查 Vmess端口、Argo隧道、哪吒探针 是否可访问"
         
         local attempt=0
         while [ $attempt -lt $max_attempts ]; do
