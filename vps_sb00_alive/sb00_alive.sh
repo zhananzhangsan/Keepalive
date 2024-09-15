@@ -221,7 +221,7 @@ process_servers() {
             # 如果所有检查都通过，则打印通畅信息并退出循环
             if [ "$all_checks" == true ]; then
                 green "TCP 端口 $(yellow "$VMESS_PORT") 通畅; Argo $(yellow "$ARGO_DOMAIN") 正常; 哪吒探针 $(yellow "$server_name") 正常 \
-                服务器 $(yellow "$HOST") 一切正常！ IP：$(yellow "$valid_ip"), 账户：$(yellow "$SSH_USER")"
+                服务器 $(yellow "$HOST") 一切正常！ 账户：$(yellow "$SSH_USER")  [$time]"
                 break
             fi
         done
