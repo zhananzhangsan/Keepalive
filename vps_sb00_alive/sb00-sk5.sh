@@ -12,20 +12,22 @@ green() { echo -e "\e[1;32m$1\033[0m"; }
 yellow() { echo -e "\e[1;33m$1\033[0m"; }
 purple() { echo -e "\e[1;35m$1\033[0m"; }
 reading() { read -p "$(red "$1")" "$2"; }
-export LC_ALL=C
+
 USERNAME=$(whoami)
 HOSTNAME=$(hostname)
+
+export LC_ALL=C
 export UUID=${UUID:-'bc97f674-c578-4940-9234-0a1da46041b9'}
-export NEZHA_SERVER=${NEZHA_SERVER:-''} 
-export NEZHA_PORT=${NEZHA_PORT:-'5555'}     
-export NEZHA_KEY=${NEZHA_KEY:-''} 
-export ARGO_DOMAIN=${ARGO_DOMAIN:-''}   
-export ARGO_AUTH=${ARGO_AUTH:-''}
 export VMESS_PORT=${VMESS_PORT:-'40000'}
 export SOCKS_PORT=${SOCKS_PORT:-'50000'}
 export HY2_PORT=${HY2_PORT:-'60000'}
 export SOCKS_USER=${SOCKS_USER:-'abc123'}
 export SOCKS_PASS=${SOCKS_PASS:-'abc456'}
+export ARGO_DOMAIN=${ARGO_DOMAIN:-''}   
+export ARGO_AUTH=${ARGO_AUTH:-''}
+export NEZHA_SERVER=${NEZHA_SERVER:-''} 
+export NEZHA_PORT=${NEZHA_PORT:-'5555'}     
+export NEZHA_KEY=${NEZHA_KEY:-''} 
 export CFIP=${CFIP:-'www.visa.com.tw'} 
 export CFPORT=${CFPORT:-'443'} 
 
