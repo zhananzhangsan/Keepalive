@@ -240,7 +240,7 @@ process_servers() {
                         green "远程命令执行成功，结果如下："
                         green "服务器 $(yellow "$HOST") 恢复正常。端口 $(yellow "$VMESS_PORT") 正常; Argo $(yellow "$ARGO_DOMAIN") 正常; 哪吒 $(yellow "$server_name") 正常"
                     else
-                        red "Vmess端口、Argo 或 哪吒 状态异常，请检查脚本 $SCRIPT_URL。"
+                        red "Vmess端口、Argo或哪吒状态异常，请检查服务器参数 $VPS_JSON_URL"
                     fi
                 else
                     red "远程命令执行失败，请检查服务器 $(yellow "$HOST") 参数设置是否正确"
