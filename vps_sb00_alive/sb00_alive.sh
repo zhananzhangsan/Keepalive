@@ -75,15 +75,15 @@ add_cron_job
 # 下载存储有服务器登录及无交互脚本外部变量信息的 JSON 文件
 download_json() {
     if ! curl -s "$VPS_JSON_URL" -o sb00ssh.json; then
-        red "VPS 参数文件下载失败，尝试使用 wget 下载！"
+        red "Serv00 配置文件下载失败，尝试使用 wget 下载！"
         if ! wget -q "$VPS_JSON_URL" -O sb00ssh.json; then
-            red "VPS 参数文件下载失败，请检查下载地址是否正确！"
+            red "Serv00 配置文件下载失败，请检查下载地址是否正确！"
             exit 1
         else
-            green "VPS 参数文件通过 wget 下载成功！"
+            green "Serv00 配置文件通过 wget 下载成功！"
         fi
     else
-        green "VPS 参数文件通过 curl 下载成功！"
+        green "Serv00 配置文件通过 curl 下载成功！"
     fi
 }
 download_json
