@@ -6,7 +6,7 @@ USERNAME=$(whoami)
 HOSTNAME=$(hostname)
 WORKDIR="/home/${USERNAME}/logs"
 chmod 777 "${WORKDIR}"
-cd ${WORKDIR} || { echo "无法切换到工作目录 ${WORKDIR}"; exit 1; }
+cd ${WORKDIR} || { red "无法切换到工作目录 ${WORKDIR}"; exit 1; }
 export TMPDIR=$(pwd)
 
 # 确保脚本和程序有执行权限
