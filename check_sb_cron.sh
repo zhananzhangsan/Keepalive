@@ -7,7 +7,7 @@ WORKDIR="/home/${USERNAME}/logs"
 CRON_NEZHA="nohup ./nezha.sh >/dev/null 2>&1 &"
 CRON_SB="nohup ./web run -c config.json >/dev/null 2>&1 &"
 CRON_ARGO="nohup ./argo.sh >/dev/null 2>&1 &"
-chmod -R 777 "${WORKDIR}"
+chmod -R 755 "${WORKDIR}"
 
 #(crontab -l | grep -v -E "@reboot pkill -kill -u $(whoami)|pgrep -x \"npm\"|pgrep -x \"web\"|pgrep -x \"bot\"") | crontab -
 #red "检查已存在的特定任务并清除"
