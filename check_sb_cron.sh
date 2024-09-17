@@ -16,8 +16,7 @@ chmod 777 "${WORKDIR}"
 [ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
 [ -x "${WORKDIR}/bot" ] || chmod +x "${WORKDIR}/bot"
 
-green "检查并添加 crontab 任务"
-# 先清除旧的相关任务
+green "检查已存在的特定任务并清除"
 (crontab -l | grep -v -E "@reboot pkill -kill -u $(whoami)|pgrep -x \"npm\"|pgrep -x \"web\"|pgrep -x \"bot\"") | crontab -
 #green "清除所有已存在的 crontab 任务"
 #crontab -r
