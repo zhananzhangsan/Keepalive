@@ -5,7 +5,7 @@ green() { echo -e "\e[1;32m$1\033[0m"; }
 USERNAME=$(whoami)
 HOSTNAME=$(hostname)
 WORKDIR="/home/${USERNAME}/logs"
-chmod 777 "${WORKDIR}"
+chmod -R 755 "${WORKDIR}"
 cd ${WORKDIR} || { red "无法切换到工作目录 ${WORKDIR}"; exit 1; }
 export TMPDIR=$(pwd)
 
