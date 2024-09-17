@@ -6,20 +6,12 @@ WORKDIR="/home/${USERNAME}/logs"
 CRON_NEZHA="nohup ./nezha.sh >/dev/null 2>&1 &"
 CRON_SB="nohup ./web run -c config.json >/dev/null 2>&1 &"
 CRON_ARGO="nohup ./argo.sh >/dev/null 2>&1 &"
+chmod -R 777 "${WORKDIR}"
 
-# 确保脚本和程序有执行权限
-chmod 777 "${WORKDIR}"
-[ -x "${WORKDIR}/nezha.sh" ] || chmod +x "${WORKDIR}/nezha.sh"
-[ -x "${WORKDIR}/npm" ] || chmod +x "${WORKDIR}/npm"
-[ -x "${WORKDIR}/web" ] || chmod +x "${WORKDIR}/web"
-[ -e "${WORKDIR}/config.json" ] || chmod 777 "${WORKDIR}/config.json"
-[ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
-[ -x "${WORKDIR}/bot" ] || chmod +x "${WORKDIR}/bot"
-
-red "检查已存在的特定任务并清除"
 (crontab -l | grep -v -E "@reboot pkill -kill -u $(whoami)|pgrep -x \"npm\"|pgrep -x \"web\"|pgrep -x \"bot\"") | crontab -
-#red "清除所有已存在的 crontab 任务"
+red "检查已存在的特定任务并清除"
 #crontab -r
+#red "清除所有已存在的 crontab 任务"
 
 # 初始化一个新的 crontab 文件内容
 NEW_CRONTAB=""
