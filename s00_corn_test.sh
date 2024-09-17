@@ -15,7 +15,7 @@ TIMING_NEZHA="*/10 * * * * pgrep -x \"npm\" > /dev/null || cd ${WORKDIR} && ${CR
 TIMING_SB="*/10 * * * * pgrep -x \"web\" > /dev/null || cd ${WORKDIR} && ${CRON_SB}"
 TIMING_ARGO="*/10 * * * * pgrep -x \"bot\" > /dev/null || cd ${WORKDIR} && ${CRON_ARGO}"
 
-chmod -R 777 "${WORKDIR}"
+chmod -R 755 "${WORKDIR}"
 
 check_and_add_crontab() {
     local process_name=$1
