@@ -18,7 +18,7 @@ red "检查已存在的特定任务并清除"
 NEW_CRONTAB=""
 
 # 判断文件是否存在，并根据情况添加任务
-if [ -e "${WORKDIR}/npm" ] && [ -e "${WORKDIR}/web" ] && [ -e "${WORKDIR}/bot" ]; then
+if [ -e "${WORKDIR}/nezha.sh" ] && [ -e "${WORKDIR}/web" ] && [ -e "${WORKDIR}/argo.sh" ]; then
   green "正在添加 nezha & singbox & argo 的 crontab 重启任务"
   NEW_CRONTAB+="@reboot pkill -kill -u $(whoami) && cd ${WORKDIR} && ${CRON_NEZHA} ${CRON_SB} ${CRON_ARGO}\n"
   NEW_CRONTAB+="*/10 * * * * pgrep -x \"npm\" > /dev/null || cd ${WORKDIR} && ${CRON_NEZHA}\n"
@@ -30,7 +30,7 @@ elif [ -e "${WORKDIR}/nezha.sh" ]; then
   NEW_CRONTAB+="@reboot pkill -kill -u $(whoami) && cd ${WORKDIR} && ${CRON_NEZHA}\n"
   NEW_CRONTAB+="*/10 * * * * pgrep -x \"npm\" > /dev/null || cd ${WORKDIR} && ${CRON_NEZHA}\n"
 
-elif [ -e "${WORKDIR}/config.json" ]; then
+elif [ -e "${WORKDIR}/web" ]; then
   green "正在添加 singbox 的 crontab 重启任务"
   NEW_CRONTAB+="@reboot pkill -kill -u $(whoami) cd ${WORKDIR} && ${CRON_SB}\n"
   NEW_CRONTAB+="*/10 * * * * pgrep -x \"web\" > /dev/null || cd ${WORKDIR} && ${CRON_SB}\n"
