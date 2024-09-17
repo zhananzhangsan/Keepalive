@@ -45,7 +45,7 @@ CORN_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/check_s
 UPDATA_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh"
 REBOOT_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/reboot.sh"
 
-[ -d "${WORKDIR}" ] || (mkdir -p "${WORKDIR}" && chmod 777 "${WORKDIR}")
+[ -d "${WORKDIR}" ] || (mkdir -p "${WORKDIR}" && chmod 755 "${WORKDIR}")
 
 # 安装singbox
 install_singbox() {
