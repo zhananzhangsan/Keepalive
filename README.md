@@ -22,7 +22,7 @@ curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00
 
 - 也可以支持老王的无交互安装
 例如（注意大小写）：  
-vmess_port=tcp端口 hy2_port=udp端口 socks_port=udp端口 socks_user=abc123 socks_pass=abc456 bash <(curl -Ls https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00_socks.sh)
+vmess_port=tcp端口 hy2_port=udp端口 socks_port=udp端口 socks_user=abc123 socks_pass=abc456 bash <(curl -Ls https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/vps_sb00_alive/main/sb00-sk5.sh)
 
 - 其他变量也可一并写入，例如（注意大小写）：  
 UUID=123456 NEZHA_SERVER=nz.abcd.com NEZHA_PORT=5555 NEZHA_KEY=123ABC ARGO_DOMAIN=2go.admin.com ARGO_AUTH=abc123
