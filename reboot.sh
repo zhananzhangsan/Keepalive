@@ -9,14 +9,6 @@ chmod -R 755 "${WORKDIR}"
 cd ${WORKDIR} || { red "无法切换到工作目录 ${WORKDIR}"; exit 1; }
 export TMPDIR=$(pwd)
 
-# 确保脚本和程序有执行权限
-[ -x "${WORKDIR}/nezha.sh" ] || chmod +x "${WORKDIR}/nezha.sh"
-[ -x "${WORKDIR}/npm" ] || chmod +x "${WORKDIR}/npm"
-[ -x "${WORKDIR}/web" ] || chmod +x "${WORKDIR}/web"
-[ -e "${WORKDIR}/config.json" ] || chmod 777 "${WORKDIR}/config.json"
-[ -x "${WORKDIR}/argo.sh" ] || chmod +x "${WORKDIR}/argo.sh"
-[ -x "${WORKDIR}/bot" ] || chmod +x "${WORKDIR}/bot"
-
 ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
 red "已清理所有进程"
 
