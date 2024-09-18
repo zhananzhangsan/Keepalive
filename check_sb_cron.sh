@@ -9,10 +9,10 @@ CRON_SB="nohup ./web run -c config.json >/dev/null 2>&1 &"
 CRON_ARGO="nohup ./argo.sh >/dev/null 2>&1 &"
 chmod -R 755 "${WORKDIR}"
 
-#(crontab -l | grep -v -E "@reboot pkill -kill -u $(whoami)|pgrep -x \"npm\"|pgrep -x \"web\"|pgrep -x \"bot\"") | crontab -
-#red "检查已存在的特定任务并清除"
-crontab -r
-red "清除所有已存在的 crontab 任务"
+(crontab -l | grep -v -E "@reboot pkill -kill -u $(whoami)|pgrep -x \"npm\"|pgrep -x \"web\"|pgrep -x \"bot\"") | crontab -
+red "检查已存在的特定任务并清除"
+#crontab -r
+#red "清除所有已存在的 crontab 任务"
 
 # 初始化一个新的 crontab 文件内容
 NEW_CRONTAB=""
