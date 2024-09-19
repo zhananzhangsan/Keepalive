@@ -3,10 +3,14 @@ addEventListener('fetch', event => {
 });
 
 async function handleRequest(request) {
-  const VPS_JSON_URL = 'https://raw.githubusercontent.com/yutian81/Wanju-Nodes/main/serv00-panel3/sb00ssh.json';
-  const NEZHA_URL = 'https://nezha.yutian81.top';
-  const NEZHA_APITOKEN = '';  // 替换为你的 API token（如果有的话）
-  const NEZHA_API = `${NEZHA_URL}/api/v1/server/list`;
+  // 从环境变量中读取配置
+  const VPS_JSON_URL = ENV_VPS_JSON_URL;
+  const NEZHA_URL = ENV_NEZHA_URL;
+  const NEZHA_APITOKEN = ENV_NEZHA_APITOKEN;
+  const ACCOUNTS_JSON = JSON.parse(ENV_ACCOUNTS_JSON);
+  const KV_NAMESPACE = 'YOUR_KV_NAMESPACE'; // 替换为你的 KV 员名空间 ID
+  const MAX_RETRIES = 5;
+  const RETRY_INTERVAL = 30000; // 30秒
 
   try {
     // 下载 JSON 文件
@@ -14,13 +18,14 @@ async function handleRequest(request) {
     if (!vpsResponse.ok) throw new Error('无法获取 VPS JSON 文件');
     const vpsData = await vpsResponse.json();
 
-    // 检查 Nezha 状态
-    const agentList = await checkNezhaStatus(NEZHA_API, NEZHA_APITOKEN);
-    if (!agentList) throw new Error('无法获取 Nezha 状态或没有找到符合条件的探针');
+    // 执行检查
+    const results = await checkStatusWithRetries(vpsData, NEZHA_URL, NEZHA_APITOKEN, ACCOUNTS_JSON);
 
-    // 处理服务器
-    const filteredAgents = await processServers(vpsData, agentList);
-    return new Response(JSON.stringify(filteredAgents, null, 2), {
+    // 将结果保存到 KV 存储
+    await saveResultsToKV(KV_NAMESPACE, results);
+
+    // 返回结果
+    return new Response(JSON.stringify(results, null, 2), {
       headers: { 'Content-Type': 'application/json' }
     });
 
@@ -29,32 +34,34 @@ async function handleRequest(request) {
   }
 }
 
-async function processServers(vpsData, agentList) {
-  const idsFound = ["13", "14", "17", "23", "24"];  // 要检查的服务器 ID
-  const currentTime = Math.floor(Date.now() / 1000); // 当前时间（秒）
+async function checkStatusWithRetries(vpsData, nezhaUrl, nezhaApiToken, accountsJson) {
+  let retries = 0;
+  let allChecks = false;
 
-  return Promise.all(vpsData.map(async server => {
-    const { HOST, VMESS_PORT, SOCKS_PORT, HY2_PORT, SOCKS_USER, SOCKS_PASS, ARGO_DOMAIN, ARGO_AUTH, NEZHA_SERVER, NEZHA_PORT, NEZHA_KEY } = server;
+  while (retries < MAX_RETRIES) {
+    const agentList = await checkNezhaStatus(nezhaUrl, nezhaApiToken);
 
-    const allChecks = await checkTCPPort(HOST, VMESS_PORT) &&
-                      await checkArgoStatus(ARGO_DOMAIN) &&
-                      await checkNezhaStatus(agentList, idsFound, currentTime);
+    allChecks = await Promise.all(vpsData.map(async server => {
+      const { HOST, VMESS_PORT, SOCKS_PORT, HY2_PORT, ARGO_DOMAIN } = server;
+      return await checkTCPPort(HOST, VMESS_PORT) &&
+             await checkArgoStatus(ARGO_DOMAIN) &&
+             await checkNezhaStatus(agentList);
+    })).then(results => results.every(check => check));
 
-    return {
-      HOST,
-      VMESS_PORT,
-      SOCKS_PORT,
-      HY2_PORT,
-      SOCKS_USER,
-      SOCKS_PASS,
-      ARGO_DOMAIN,
-      ARGO_AUTH,
-      NEZHA_SERVER,
-      NEZHA_PORT,
-      NEZHA_KEY,
-      status: allChecks ? '正常' : '发现问题'
-    };
-  }));
+    if (allChecks) {
+      return { status: '所有检查项通过' };
+    }
+
+    retries++;
+    if (retries < MAX_RETRIES) {
+      await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL));
+    }
+  }
+
+  // 如果仍有检查项不通，登录服务器检查 cron 任务
+  await checkCronJobs(vpsData, accountsJson);
+
+  return { status: '检查失败，所有检查项都未通过' };
 }
 
 async function checkTCPPort(host, port) {
@@ -79,7 +86,7 @@ async function checkArgoStatus(domain) {
 
 async function checkNezhaStatus(apiUrl, apiToken) {
   const idsFound = ["13", "14", "17", "23", "24"];  // 需要检测的探针 ID
-  const response = await fetch(apiUrl, {
+  const response = await fetch(`${apiUrl}/api/v1/server/list`, {
     headers: { 'Authorization': `Bearer ${apiToken}` }
   });
 
@@ -91,7 +98,7 @@ async function checkNezhaStatus(apiUrl, apiToken) {
   const currentTime = Math.floor(Date.now() / 1000);
 
   const filteredAgents = agentList.result.filter(agent => {
-    const { id, last_active, valid_ip, name } = agent;
+    const { id, last_active } = agent;
     if (idsFound.includes(id) && !isNaN(last_active)) {
       const activeTime = currentTime - last_active;
       return activeTime <= 30;
@@ -111,4 +118,47 @@ async function checkNezhaStatus(apiUrl, apiToken) {
   }
 
   return filteredAgents;
+}
+
+async function saveResultsToKV(namespace, results) {
+  // 将结果保存到 KV 存储
+  await MY_KV_NAMESPACE.put('status', JSON.stringify(results));
+}
+
+async function checkCronJobs(vpsData, accountsJson) {
+  for (const server of vpsData) {
+    const panelUrl = server.panel; // 从 server 对象获取 panel URL
+    const account = accountsJson.find(acc => acc.panel === panelUrl);
+
+    if (!account) {
+      console.error(`找不到与面板 ${panelUrl} 匹配的登录信息`);
+      continue;
+    }
+
+    const { panel, username, password } = account;
+    try {
+      // 登录到面板
+      const loginResponse = await fetch(`https://${panel}/login`, {
+        method: 'POST',
+        body: JSON.stringify({ username, password }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!loginResponse.ok) throw new Error('面板登录失败');
+
+      const loginResult = await loginResponse.json();
+      // 假设登录成功后可以用来检查 cron 任务的 API
+      const cronResponse = await fetch(`https://${panel}/api/cron-jobs`, {
+        headers: { 'Authorization': `Bearer ${loginResult.token}` }  // 使用登录时获得的 Token
+      });
+
+      if (!cronResponse.ok) throw new Error('无法检查 cron 任务');
+
+      const cronResult = await cronResponse.json();
+      console.log(`面板 ${panel} 的 cron 任务:`, cronResult);
+
+    } catch (error) {
+      console.error(`检查面板 ${panel} 的 cron 任务失败: ${error.message}`);
+    }
+  }
 }
