@@ -36,11 +36,11 @@ function processServers(vpsData, agentList) {
   const idsFound = ["13", "14", "17", "23", "24"];  // 要检查的服务器 ID
   const currentTime = Math.floor(Date.now() / 1000); // 当前时间（秒）
 
-  return vpsData.map(server => {
+  return vpsData.map(async server => {
     const { HOST, VMESS_PORT, SOCKS_PORT, HY2_PORT, SOCKS_USER, SOCKS_PASS, ARGO_DOMAIN, ARGO_AUTH, NEZHA_SERVER, NEZHA_PORT, NEZHA_KEY } = server;
 
-    const allChecks = checkTCPPort(HOST, VMESS_PORT) &&
-                      checkArgoStatus(ARGO_DOMAIN) &&
+    const allChecks = await checkTCPPort(HOST, VMESS_PORT) &&
+                      await checkArgoStatus(ARGO_DOMAIN) &&
                       checkNezhaStatus(agentList, idsFound, currentTime);
 
     return {
@@ -60,39 +60,25 @@ function processServers(vpsData, agentList) {
   });
 }
 
-function checkTCPPort(host, port) {
-  return new Promise((resolve, reject) => {
-    const socket = new net.Socket();
-    let timeout = false;
-
-    // 设置连接超时时间
-    const timeoutId = setTimeout(() => {
-      timeout = true;
-      socket.destroy();
-      reject(new Error('连接超时'));
-    }, 5000); // 5秒超时
-
-    socket.on('connect', () => {
-      clearTimeout(timeoutId);
-      socket.end();
-      resolve(true);
-    });
-
-    socket.on('error', (err) => {
-      clearTimeout(timeoutId);
-      if (!timeout) {
-        resolve(false);
-      }
-    });
-
-    socket.connect(port, host);
-  });
+async function checkTCPPort(host, port) {
+  // 使用 fetch 模拟 TCP 端口检查
+  const url = `http://${host}:${port}`;
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
 
-function checkArgoStatus(domain) {
-  // 模拟 Argo 状态检查（这里通常会使用服务来检查域名状态）
-  // 目前仅为占位符
-  return true;  // 替换为实际检查逻辑
+async function checkArgoStatus(domain) {
+  const url = `https://${domain}`;
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    return response.status !== 530; // 状态码 530 表示不可达
+  } catch {
+    return false;
+  }
 }
 
 function checkNezhaStatus(agentList, idsFound, currentTime) {
