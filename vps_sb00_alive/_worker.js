@@ -15,14 +15,11 @@ async function handleRequest(request) {
     const vpsData = await vpsResponse.json();
 
     // 检查 Nezha 状态
-    const nezhaResponse = await fetch(NEZHA_API, {
-      headers: { 'Authorization': `Bearer ${NEZHA_APITOKEN}` }
-    });
-    if (!nezhaResponse.ok) throw new Error('无法获取 Nezha 状态');
-    const agentList = await nezhaResponse.json();
+    const agentList = await checkNezhaStatus(NEZHA_API, NEZHA_APITOKEN);
+    if (!agentList) throw new Error('无法获取 Nezha 状态或没有找到符合条件的探针');
 
     // 处理服务器
-    const filteredAgents = processServers(vpsData, agentList);
+    const filteredAgents = await processServers(vpsData, agentList);
     return new Response(JSON.stringify(filteredAgents, null, 2), {
       headers: { 'Content-Type': 'application/json' }
     });
@@ -32,16 +29,16 @@ async function handleRequest(request) {
   }
 }
 
-function processServers(vpsData, agentList) {
+async function processServers(vpsData, agentList) {
   const idsFound = ["13", "14", "17", "23", "24"];  // 要检查的服务器 ID
   const currentTime = Math.floor(Date.now() / 1000); // 当前时间（秒）
 
-  return vpsData.map(async server => {
+  return Promise.all(vpsData.map(async server => {
     const { HOST, VMESS_PORT, SOCKS_PORT, HY2_PORT, SOCKS_USER, SOCKS_PASS, ARGO_DOMAIN, ARGO_AUTH, NEZHA_SERVER, NEZHA_PORT, NEZHA_KEY } = server;
 
     const allChecks = await checkTCPPort(HOST, VMESS_PORT) &&
                       await checkArgoStatus(ARGO_DOMAIN) &&
-                      checkNezhaStatus(agentList, idsFound, currentTime);
+                      await checkNezhaStatus(agentList, idsFound, currentTime);
 
     return {
       HOST,
@@ -57,11 +54,10 @@ function processServers(vpsData, agentList) {
       NEZHA_KEY,
       status: allChecks ? '正常' : '发现问题'
     };
-  });
+  }));
 }
 
 async function checkTCPPort(host, port) {
-  // 使用 fetch 模拟 TCP 端口检查
   const url = `http://${host}:${port}`;
   try {
     const response = await fetch(url, { method: 'HEAD' });
@@ -81,10 +77,38 @@ async function checkArgoStatus(domain) {
   }
 }
 
-function checkNezhaStatus(agentList, idsFound, currentTime) {
-  return agentList.result.some(agent => {
-    const { id, last_active } = agent;
-    return idsFound.includes(id) &&
-           (!isNaN(last_active) && (currentTime - last_active) <= 30);
+async function checkNezhaStatus(apiUrl, apiToken) {
+  const idsFound = ["13", "14", "17", "23", "24"];  // 需要检测的探针 ID
+  const response = await fetch(apiUrl, {
+    headers: { 'Authorization': `Bearer ${apiToken}` }
   });
+
+  if (!response.ok) {
+    throw new Error('无法访问 Nezha 面板，请检查 API 地址和 Token');
+  }
+
+  const agentList = await response.json();
+  const currentTime = Math.floor(Date.now() / 1000);
+
+  const filteredAgents = agentList.result.filter(agent => {
+    const { id, last_active, valid_ip, name } = agent;
+    if (idsFound.includes(id) && !isNaN(last_active)) {
+      const activeTime = currentTime - last_active;
+      return activeTime <= 30;
+    }
+    return false;
+  }).map(agent => {
+    return {
+      server_name: agent.name,
+      last_active: agent.last_active,
+      valid_ip: agent.valid_ip,
+      server_id: agent.id
+    };
+  });
+
+  if (filteredAgents.length === 0) {
+    throw new Error('没有找到符合条件的 Nezha 探针，请检查 ID 列表');
+  }
+
+  return filteredAgents;
 }
