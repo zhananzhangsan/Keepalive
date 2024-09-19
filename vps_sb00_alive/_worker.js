@@ -1,45 +1,109 @@
 addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request));
+  event.respondWith(handleRequest(event.request, event.env));
 });
 
-async function handleRequest(request) {
+async function handleRequest(request, env) {
+  const url = new URL(request.url);
+
   // 从环境变量中读取配置
-  const VPS_JSON_URL = ENV_VPS_JSON_URL;
-  const NEZHA_URL = ENV_NEZHA_URL;
-  const NEZHA_APITOKEN = ENV_NEZHA_APITOKEN;
-  const ACCOUNTS_JSON = JSON.parse(ENV_ACCOUNTS_JSON);
-  const KV_NAMESPACE = 'YOUR_KV_NAMESPACE'; // 替换为你的 KV 员名空间 ID
+  const VPS_JSON_URL = env.VPS_JSON_URL;
+  const NEZHA_SERVER = env.NEZHA_SERVER;
+  const NEZHA_APITOKEN = env.NEZHA_APITOKEN;
+  const ACCOUNTS_JSON = JSON.parse(env.ACCOUNTS_JSON);
+  const KV_NAMESPACE = env.KV_NAMESPACE; // 替换为你的 KV 命名空间 ID
   const MAX_RETRIES = 5;
   const RETRY_INTERVAL = 30000; // 30秒
 
-  try {
-    // 下载 JSON 文件
-    const vpsResponse = await fetch(VPS_JSON_URL);
-    if (!vpsResponse.ok) throw new Error('无法获取 VPS JSON 文件');
-    const vpsData = await vpsResponse.json();
+  if (url.pathname === '/check-status') {
+    try {
+      // 执行检查
+      const vpsResponse = await fetch(VPS_JSON_URL);
+      if (!vpsResponse.ok) throw new Error('无法获取 VPS JSON 文件');
+      const vpsData = await vpsResponse.json();
+      const results = await checkStatusWithRetries(vpsData, NEZHA_SERVER, NEZHA_APITOKEN, ACCOUNTS_JSON, env);
 
-    // 执行检查
-    const results = await checkStatusWithRetries(vpsData, NEZHA_URL, NEZHA_APITOKEN, ACCOUNTS_JSON);
+      // 将结果保存到 KV 存储
+      await saveResultsToKV(KV_NAMESPACE, results);
 
-    // 将结果保存到 KV 存储
-    await saveResultsToKV(KV_NAMESPACE, results);
+      // 返回结果
+      return new Response(JSON.stringify(results, null, 2), {
+        headers: { 'Content-Type': 'application/json' }
+      });
 
-    // 返回结果
-    return new Response(JSON.stringify(results, null, 2), {
+    } catch (error) {
+      return new Response(error.message, { status: 500 });
+    }
+  } else if (url.pathname === '/login' && request.method === 'POST') {
+    return await handleLogin(request, ACCOUNTS_JSON);
+  } else if (url.pathname === '/run' && request.method === 'POST') {
+    if (!isAuthenticated(request)) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+    await handleScheduled(new Date().toISOString());
+    const results = await KV_NAMESPACE.get('lastResults', 'json');
+    return new Response(JSON.stringify(results), {
       headers: { 'Content-Type': 'application/json' }
     });
-
-  } catch (error) {
-    return new Response(error.message, { status: 500 });
+  } else if (url.pathname === '/results' && request.method === 'GET') {
+    if (!isAuthenticated(request)) {
+      return new Response(JSON.stringify({ authenticated: false }), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    const results = await KV_NAMESPACE.get('lastResults', 'json');
+    return new Response(JSON.stringify({ authenticated: true, results: results || [] }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } else if (url.pathname === '/check-auth' && request.method === 'GET') {
+    return new Response(JSON.stringify({ authenticated: isAuthenticated(request) }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } else {
+    // 对于其他路径，返回 404
+    return new Response('Not Found', { status: 404 });
   }
 }
 
-async function checkStatusWithRetries(vpsData, nezhaUrl, nezhaApiToken, accountsJson) {
+async function handleLogin(request, accountsJson) {
+  const formData = await request.formData();
+  const panelUrl = formData.get('panel');
+  const username = formData.get('username');
+  const password = formData.get('password');
+
+  // 从 ACCOUNTS_JSON 中获取存储的密码
+  const account = accountsJson.find(acc => acc.panel === panelUrl && acc.username === username);
+
+  if (account && password === account.password) {
+    const response = new Response(JSON.stringify({ success: true }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    response.headers.set('Set-Cookie', `auth=${password}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=86400`);
+    return response;
+  } else {
+    return new Response(JSON.stringify({ success: false }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+
+function isAuthenticated(request) {
+  const cookies = request.headers.get('Cookie');
+  if (cookies) {
+    const authCookie = cookies.split(';').find(c => c.trim().startsWith('auth='));
+    if (authCookie) {
+      const authValue = authCookie.split('=')[1];
+      return authValue === 'your_password'; // 替换为你的密码
+    }
+  }
+  return false;
+}
+
+async function checkStatusWithRetries(vpsData, nezhaServer, nezhaApiToken, accountsJson, env) {
   let retries = 0;
   let allChecks = false;
 
   while (retries < MAX_RETRIES) {
-    const agentList = await checkNezhaStatus(nezhaUrl, nezhaApiToken);
+    const agentList = await checkNezhaStatus(nezhaServer, nezhaApiToken);
 
     allChecks = await Promise.all(vpsData.map(async server => {
       const { HOST, VMESS_PORT, SOCKS_PORT, HY2_PORT, ARGO_DOMAIN } = server;
@@ -122,7 +186,7 @@ async function checkNezhaStatus(apiUrl, apiToken) {
 
 async function saveResultsToKV(namespace, results) {
   // 将结果保存到 KV 存储
-  await MY_KV_NAMESPACE.put('status', JSON.stringify(results));
+  await namespace.put('status', JSON.stringify(results));
 }
 
 async function checkCronJobs(vpsData, accountsJson) {
@@ -136,9 +200,10 @@ async function checkCronJobs(vpsData, accountsJson) {
     }
 
     const { panel, username, password } = account;
+
     try {
       // 登录到面板
-      const loginResponse = await fetch(`https://${panel}/login`, {
+      const loginResponse = await fetch(`https://${panel}/api/login`, {
         method: 'POST',
         body: JSON.stringify({ username, password }),
         headers: { 'Content-Type': 'application/json' }
@@ -146,19 +211,33 @@ async function checkCronJobs(vpsData, accountsJson) {
 
       if (!loginResponse.ok) throw new Error('面板登录失败');
 
-      const loginResult = await loginResponse.json();
-      // 假设登录成功后可以用来检查 cron 任务的 API
-      const cronResponse = await fetch(`https://${panel}/api/cron-jobs`, {
-        headers: { 'Authorization': `Bearer ${loginResult.token}` }  // 使用登录时获得的 Token
+      // 使用登录成功后的 Token 检查 cron 任务
+      const token = (await loginResponse.json()).token;
+
+      const cronResponse = await fetch(`https://${panel}/api/cron`, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      if (!cronResponse.ok) throw new Error('无法检查 cron 任务');
+      if (!cronResponse.ok) throw new Error('无法获取 cron 任务');
 
       const cronResult = await cronResponse.json();
-      console.log(`面板 ${panel} 的 cron 任务:`, cronResult);
-
+      console.log(`Cron 任务检查结果: ${JSON.stringify(cronResult)}`);
+      
     } catch (error) {
-      console.error(`检查面板 ${panel} 的 cron 任务失败: ${error.message}`);
+      console.error(`检查服务器 ${panelUrl} 的 cron 任务时出错: ${error.message}`);
     }
   }
+}
+
+function isAuthenticated(request) {
+  const cookies = request.headers.get('Cookie');
+  if (cookies) {
+    const authCookie = cookies.split(';').find(c => c.trim().startsWith('auth='));
+    if (authCookie) {
+      const authValue = authCookie.split('=')[1];
+      return authValue === 'your_password'; // 替换为你的密码
+    }
+  }
+  return false;
 }
