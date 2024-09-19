@@ -7,45 +7,89 @@ WORKDIR="/home/${USERNAME}/logs"
 CRON_NEZHA="nohup ./nezha.sh >/dev/null 2>&1 &"
 CRON_SB="nohup ./web run -c config.json >/dev/null 2>&1 &"
 CRON_ARGO="nohup ./argo.sh >/dev/null 2>&1 &"
-REBOOT_TASK="@reboot pkill -kill -u $(whoami) && cd ${WORKDIR} && ${CRON_NEZHA} ${CRON_SB} ${CRON_ARGO}"
-REBOOT_NEZHA="@reboot pkill -kill -u $(whoami) && cd ${WORKDIR} && ${CRON_NEZHA}"
-REBOOT_SB="@reboot pkill -kill -u $(whoami) && cd ${WORKDIR} && ${CRON_SB}"
-REBOOT_ARGO="@reboot pkill -kill -u $(whoami) && cd ${WORKDIR} && ${CRON_ARGO}"
-TIMING_NEZHA="*/10 * * * * pgrep -x \"npm\" > /dev/null || cd ${WORKDIR} && ${CRON_NEZHA}"
-TIMING_SB="*/10 * * * * pgrep -x \"web\" > /dev/null || cd ${WORKDIR} && ${CRON_SB}"
-TIMING_ARGO="*/10 * * * * pgrep -x \"bot\" > /dev/null || cd ${WORKDIR} && ${CRON_ARGO}"
-
 chmod -R 755 "${WORKDIR}"
 
-check_and_add_crontab() {
-    local process_name=$1
-    local reboot_task=$2
-    local timing_task=$3
-    local required_files=("${@:4}")
-
-    for file in "${required_files[@]}"; do
-        if [ ! -e "${WORKDIR}/${file}" ]; then
-            red "${process_name} 的文件 ${file} 缺失，请检查节点搭建是否成功"
-            return
-        fi
-    done
-    
-    green "${process_name} 的进程和配置文件都已存在，正在检查相关任务是否存在"
-    
-    current_cron=$(crontab -l 2>/dev/null)
-    if echo "$current_cron" | grep -qF "$reboot_task" && echo "$current_cron" | grep -qF "$timing_task"; then
-        green "${process_name} 的重启和定时任务已存在"
-    else
-        red "${process_name} 的重启或定时任务不存在，正在添加任务"
-        (echo "$current_cron" | grep -v -E "@reboot pkill -kill -u $(whoami)|pgrep -x \"npm\"|pgrep -x \"web\"|pgrep -x \"bot\"") | crontab -
-        (echo "$current_cron"; echo "$reboot_task"; echo "$timing_task") | crontab -      
-        green "${process_name} 的重启和定时任务都已添加成功"
-    fi
+# 检查是否存在指定的 crontab 任务
+check_crontab() {
+  crontab -l | grep -q "$1"
+  return $?
 }
 
-cd "${WORKDIR}"
-check_and_add_crontab "nezha & singbox & argo" "$REBOOT_TASK" "$TIMING_NEZHA" "npm" "nezha.sh" "web" "config.json" "bot" "argo.sh"
-check_and_add_crontab "nezha" "$REBOOT_NEZHA" "$TIMING_NEZHA" "npm" "nezha.sh"
-check_and_add_crontab "singbox" "$REBOOT_SB" "$TIMING_SB" "web" "config.json"
-check_and_add_crontab "argo" "$REBOOT_ARGO" "$TIMING_ARGO" "bot" "argo.sh"
-green "corntab 重启和定时任务添加完成"
+# 添加新的 crontab 任务
+add_crontab() {
+  (crontab -l; echo -e "$1") | crontab -
+}
+
+# 检查 nezha.sh, web, argo.sh 文件是否都存在
+if [ -e "${WORKDIR}/nezha.sh" ] && [ -e "${WORKDIR}/web" ] && [ -e "${WORKDIR}/argo.sh" ]; then
+  green "文件完整，正在检查 corntab 任务"
+
+  # 检查重启和定时任务是否存在
+  if check_crontab "@reboot pkill -kill -u $(whoami)" && check_crontab "pgrep -x \"npm\"" && check_crontab "pgrep -x \"web\"" && check_crontab "pgrep -x \"bot\""; then
+    green "nezha、singbox、argo 重启和定时任务均已存在"
+  else
+    if ! check_crontab "@reboot pkill -kill -u $(whoami)"; then
+      add_crontab "@reboot pkill -kill -u $(whoami) && cd ${WORKDIR} && ${CRON_NEZHA} ${CRON_SB} ${CRON_ARGO}" && \
+      green "nezha、singbox、argo 重启任务添加完成"
+    fi
+    if ! check_crontab "pgrep -x \"npm\""; then
+      add_crontab "*/10 * * * * pgrep -x \"npm\" > /dev/null || cd ${WORKDIR} && ${CRON_NEZHA}" && \
+      green "nezha 定时任务添加完成"
+    fi
+    if ! check_crontab "pgrep -x \"web\""; then
+      add_crontab "*/10 * * * * pgrep -x \"web\" > /dev/null || cd ${WORKDIR} && ${CRON_SB}" && \
+      green "singbox 定时任务添加完成"
+    fi
+    if ! check_crontab "pgrep -x \"bot\""; then
+      add_crontab "*/10 * * * * pgrep -x \"bot\" > /dev/null || cd ${WORKDIR} && ${CRON_ARGO}" && \
+      green "argo 定时任务添加完成"
+    fi
+  fi
+
+else
+  red "仅存在部分启动文件"
+
+  # 检查 nezha.sh 文件是否存在
+  if [ -e "${WORKDIR}/nezha.sh" ]; then
+    green "哪吒已安装"
+    if check_crontab "@reboot pkill -kill -u $(whoami)" && check_crontab "pgrep -x \"npm\""; then
+      green "nezha 任务已存在"
+    else
+      add_crontab "@reboot pkill -kill -u $(whoami) && cd ${WORKDIR} && ${CRON_NEZHA}" && \
+      add_crontab "*/10 * * * * pgrep -x \"npm\" > /dev/null || cd ${WORKDIR} && ${CRON_NEZHA}" && \
+      green "nezha 重启和定时任务添加完成"
+    fi
+  else
+    red "nezha 未安装，进程启动文件不存在"
+  fi
+
+  # 检查 web 文件是否存在
+  if [ -e "${WORKDIR}/web" ]; then
+    green "singbox 已安装"
+    if check_crontab "@reboot pkill -kill -u $(whoami)" && check_crontab "pgrep -x \"web\""; then
+      green "singbox 任务已存在"
+    else
+      add_crontab "@reboot pkill -kill -u $(whoami) && cd ${WORKDIR} && ${CRON_SB}" && \
+      add_crontab "*/10 * * * * pgrep -x \"web\" > /dev/null || cd ${WORKDIR} && ${CRON_SB}" && \
+      green "singbox 重启和定时任务添加完成"
+    fi
+  else
+    red "singbox 未安装，进程启动文件不存在"
+  fi
+
+  # 检查 argo.sh 文件是否存在
+  if [ -e "${WORKDIR}/argo.sh" ]; then
+    green "argo 已安装"
+    if check_crontab "@reboot pkill -kill -u $(whoami)" && check_crontab "pgrep -x \"bot\""; then
+      green "argo 任务已存在"
+    else
+      add_crontab "@reboot pkill -kill -u $(whoami) && cd ${WORKDIR} && ${CRON_ARGO}" && \
+      add_crontab "*/10 * * * * pgrep -x \"bot\" > /dev/null || cd ${WORKDIR} && ${CRON_ARGO}" && \
+      green "argo 重启和定时任务添加完成"
+    fi
+  else
+    red "argo 未安装，进程启动文件不存在"
+  fi
+fi
+
+green "所有 crontab 任务已添加完成"
