@@ -5,20 +5,20 @@ addEventListener('fetch', event => {
 async function handleRequest(request) {
   const VPS_JSON_URL = 'https://raw.githubusercontent.com/yutian81/Wanju-Nodes/main/serv00-panel3/sb00ssh.json';
   const NEZHA_URL = 'https://nezha.yutian81.top';
-  const NEZHA_APITOKEN = '';  // 如果有可用的API令牌，请在此处替换
+  const NEZHA_APITOKEN = '';  // 替换为你的 API token（如果有的话）
   const NEZHA_API = `${NEZHA_URL}/api/v1/server/list`;
 
   try {
     // 下载 JSON 文件
     const vpsResponse = await fetch(VPS_JSON_URL);
-    if (!vpsResponse.ok) throw new Error('获取 VPS JSON 文件失败');
+    if (!vpsResponse.ok) throw new Error('无法获取 VPS JSON 文件');
     const vpsData = await vpsResponse.json();
 
     // 检查 Nezha 状态
     const nezhaResponse = await fetch(NEZHA_API, {
       headers: { 'Authorization': `Bearer ${NEZHA_APITOKEN}` }
     });
-    if (!nezhaResponse.ok) throw new Error('获取 Nezha 状态失败');
+    if (!nezhaResponse.ok) throw new Error('无法获取 Nezha 状态');
     const agentList = await nezhaResponse.json();
 
     // 处理服务器
@@ -55,15 +55,38 @@ function processServers(vpsData, agentList) {
       NEZHA_SERVER,
       NEZHA_PORT,
       NEZHA_KEY,
-      status: allChecks ? '正常' : '检测到问题'
+      status: allChecks ? '正常' : '发现问题'
     };
   });
 }
 
 function checkTCPPort(host, port) {
-  // 模拟 TCP 端口检查（这里通常会使用服务来检查端口的可用性）
-  // 目前仅为占位符
-  return true;  // 替换为实际检查逻辑
+  return new Promise((resolve, reject) => {
+    const socket = new net.Socket();
+    let timeout = false;
+
+    // 设置连接超时时间
+    const timeoutId = setTimeout(() => {
+      timeout = true;
+      socket.destroy();
+      reject(new Error('连接超时'));
+    }, 5000); // 5秒超时
+
+    socket.on('connect', () => {
+      clearTimeout(timeoutId);
+      socket.end();
+      resolve(true);
+    });
+
+    socket.on('error', (err) => {
+      clearTimeout(timeoutId);
+      if (!timeout) {
+        resolve(false);
+      }
+    });
+
+    socket.connect(port, host);
+  });
 }
 
 function checkArgoStatus(domain) {
