@@ -1,72 +1,81 @@
-// 定时触发器
-addEventListener('scheduled', event => {
-  event.waitUntil(handleScheduledEvent());
+addEventListener('fetch', event => {
+  event.respondWith(handleRequest(event.request));
 });
 
-// 从 Secrets 读取 VPS_JSON_URL 和 SCRIPT_URL
-async function handleScheduledEvent() {
-  const SCRIPT_URL = env.SCRIPT_URL;
-  const VPS_JSON_URL = env.VPS_JSON_URL;
-  if (!SCRIPT_URL || !VPS_JSON_URL) {
-    console.error("缺少环境变量 SCRIPT_URL 或 VPS_JSON_URL");
-    return;
-  }
-
-// 拉取 VPS JSON 文件
-async function fetchVpsJson(VPS_JSON_URL) {
-  try {
-    const response = await fetch(VPS_JSON_URL);
-    if (response.ok) {
-      return await response.json();
-    } else {
-      console.error('无法获取 VPS JSON 文件');
-      return null;
-    }
-  } catch (error) {
-    console.error('错误:', error);
-    return null;
-  }
-}
-
-// 遍历每个服务器，提取相关变量
-for (const server of vpsData) {
-  const { HOST, SSH_USER, SSH_PASS, VMESS_PORT } = servers;
-}
-
-// 检测 TCP 端口是否通畅
-async function checkPort(host, port) {
-  try {
-    const response = await fetch(`https://api.portchecker.io/${HOST}:${VMESS_PORT}`);
-    return response.ok;  // 端口通畅时返回 true
-  } catch (error) {
-    console.error(`端口检测失败 ${HOST}:${VMESS_PORT} - 错误: ${error}`);
-    return false;
-  }
-}
-
-// 通过第三方API执行远程命令
-async function runRemoteCommand(server, SCRIPT_URL) {
-  const { HOST, SSH_USER, SSH_PASS, VMESS_PORT, SOCKS_PORT, HY2_PORT, SOCKS_USER, SOCKS_PASS, ARGO_DOMAIN, ARGO_AUTH, NEZHA_SERVER, NEZHA_PORT, NEZHA_KEY } = server;
-  const payload = {
-    hostname: HOST,
-    username: SSH_USER,
-    password: SSH_PASS,
-    command: `VMESS_PORT=${VMESS_PORT} HY2_PORT=${HY2_PORT} SOCKS_PORT=${SOCKS_PORT} \
-    SOCKS_USER=${SOCKS_USER} SOCKS_PASS='${SOCKS_PASS}' \
-    ARGO_DOMAIN=${ARGO_DOMAIN} ARGO_AUTH='${ARGO_AUTH}' \
-    NEZHA_SERVER=${NEZHA_SERVER} NEZHA_PORT=${NEZHA_PORT} NEZHA_KEY=${NEZHA_KEY} \
-    bash <(curl -Ls ${SCRIPT_URL})`
-  };
+async function handleRequest(request) {
+  const VPS_JSON_URL = 'https://raw.githubusercontent.com/yutian81/Wanju-Nodes/main/serv00-panel3/sb00ssh.json';
+  const NEZHA_URL = 'https://nezha.yutian81.top';
+  const NEZHA_APITOKEN = '';  // 如果有可用的API令牌，请在此处替换
+  const NEZHA_API = `${NEZHA_URL}/api/v1/server/list`;
 
   try {
-    const response = await fetch("https://ssh.yzong.us.kg/?hostname=HOST&port=22&username=SSH_USER&password=SSH_PASS&command=", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+    // 下载 JSON 文件
+    const vpsResponse = await fetch(VPS_JSON_URL);
+    if (!vpsResponse.ok) throw new Error('获取 VPS JSON 文件失败');
+    const vpsData = await vpsResponse.json();
+
+    // 检查 Nezha 状态
+    const nezhaResponse = await fetch(NEZHA_API, {
+      headers: { 'Authorization': `Bearer ${NEZHA_APITOKEN}` }
     });
-    return response.ok;
+    if (!nezhaResponse.ok) throw new Error('获取 Nezha 状态失败');
+    const agentList = await nezhaResponse.json();
+
+    // 处理服务器
+    const filteredAgents = processServers(vpsData, agentList);
+    return new Response(JSON.stringify(filteredAgents, null, 2), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
   } catch (error) {
-    console.error(`远程命令执行失败: ${error}`);
-    return false;
+    return new Response(error.message, { status: 500 });
   }
+}
+
+function processServers(vpsData, agentList) {
+  const idsFound = ["13", "14", "17", "23", "24"];  // 要检查的服务器 ID
+  const currentTime = Math.floor(Date.now() / 1000); // 当前时间（秒）
+
+  return vpsData.map(server => {
+    const { HOST, VMESS_PORT, SOCKS_PORT, HY2_PORT, SOCKS_USER, SOCKS_PASS, ARGO_DOMAIN, ARGO_AUTH, NEZHA_SERVER, NEZHA_PORT, NEZHA_KEY } = server;
+
+    const allChecks = checkTCPPort(HOST, VMESS_PORT) &&
+                      checkArgoStatus(ARGO_DOMAIN) &&
+                      checkNezhaStatus(agentList, idsFound, currentTime);
+
+    return {
+      HOST,
+      VMESS_PORT,
+      SOCKS_PORT,
+      HY2_PORT,
+      SOCKS_USER,
+      SOCKS_PASS,
+      ARGO_DOMAIN,
+      ARGO_AUTH,
+      NEZHA_SERVER,
+      NEZHA_PORT,
+      NEZHA_KEY,
+      status: allChecks ? '正常' : '检测到问题'
+    };
+  });
+}
+
+function checkTCPPort(host, port) {
+  // 模拟 TCP 端口检查（这里通常会使用服务来检查端口的可用性）
+  // 目前仅为占位符
+  return true;  // 替换为实际检查逻辑
+}
+
+function checkArgoStatus(domain) {
+  // 模拟 Argo 状态检查（这里通常会使用服务来检查域名状态）
+  // 目前仅为占位符
+  return true;  // 替换为实际检查逻辑
+}
+
+function checkNezhaStatus(agentList, idsFound, currentTime) {
+  return agentList.result.some(agent => {
+    const { id, last_active } = agent;
+    return idsFound.includes(id) &&
+           (!isNaN(last_active) && (currentTime - last_active) <= 30);
+  });
 }
