@@ -26,11 +26,11 @@ if [ -e "${WORKDIR}/nezha.sh" ] && [ -e "${WORKDIR}/web" ] && [ -e "${WORKDIR}/a
 
   # 检查重启和定时任务是否存在
   if check_crontab "@reboot pkill -kill -u $(whoami)" && check_crontab "pgrep -x \"npm\"" && check_crontab "pgrep -x \"web\"" && check_crontab "pgrep -x \"bot\""; then
-    green "nezha、singbox、argo 重启和定时任务均已存在"
+    green "全部重启和定时任务均已存在"
   else
     if ! check_crontab "@reboot pkill -kill -u $(whoami)"; then
       add_crontab "@reboot pkill -kill -u $(whoami) && cd ${WORKDIR} && ${CRON_NEZHA} ${CRON_SB} ${CRON_ARGO}" && \
-      green "nezha、singbox、argo 重启任务添加完成"
+      green "全部重启任务添加完成"
     fi
     if ! check_crontab "pgrep -x \"npm\""; then
       add_crontab "*/10 * * * * pgrep -x \"npm\" > /dev/null || cd ${WORKDIR} && ${CRON_NEZHA}" && \
@@ -91,5 +91,3 @@ else
     red "argo 未安装，启动文件不存在"
   fi
 fi
-
-green "所有 corntab 任务已添加完成"
