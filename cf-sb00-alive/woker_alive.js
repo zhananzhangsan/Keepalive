@@ -18,7 +18,7 @@ async function handleRequest(event) {
     const REBOOT_SCRIPT = env.REBOOT_SCRIPT || 'https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/reboot.sh';
 
     try {
-        const results = await checkStatusWithRetries(ACCOUNTS_JSON, NEZHA_SERVER, NEZHA_APITOKEN, NEZHA_IDS, MAX_RETRIES, RETRY_INTERVAL, REBOOT_SCRIPT, env);
+        const results = await checkAllStatus(ACCOUNTS_JSON, NEZHA_SERVER, NEZHA_APITOKEN, NEZHA_IDS, MAX_RETRIES, RETRY_INTERVAL, REBOOT_SCRIPT, env);
         await saveResultsToKV(KV_NAMESPACE, results, env);
         return new Response(JSON.stringify(results, null, 2), {
             headers: { 'Content-Type': 'application/json' }
@@ -28,7 +28,7 @@ async function handleRequest(event) {
     }
 }
 
-async function checkStatusWithRetries(vpsData, nezhaServer, nezhaApiToken, nezhaIds, maxRetries, retryInterval, rebootScript, env) {
+async function checkAllStatus(vpsData, nezhaServer, nezhaApiToken, nezhaIds, maxRetries, retryInterval, rebootScript, env) {
     let retries = 0;
     let allChecksPassed = false;
     let failedChecks = [];
