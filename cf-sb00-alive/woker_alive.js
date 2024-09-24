@@ -35,13 +35,11 @@ async function checkAllStatus(vpsData, nezhaServer, nezhaApiToken, nezhaIds, max
 
     while (retries < maxRetries) {
         failedChecks = [];
-
         const checkResults = await Promise.all(vpsData.map(async (server) => {
             const { panel, argo_port, argo_domain } = server;
             const argoPortCheck = await checkArgoPort(panel, argo_port);
             const argoStatusCheck = await checkArgoStatus(argo_domain);
             const nezhaStatusCheck = await checkNezhaStatus(nezhaServer, nezhaApiToken, nezhaIds, env);
-
             if (!argoPortCheck) {
                 failedChecks.push({ server, check: 'Argo TCP端口连通检测', status: '失败' });
             }
@@ -51,7 +49,6 @@ async function checkAllStatus(vpsData, nezhaServer, nezhaApiToken, nezhaIds, max
             if (!nezhaStatusCheck) {
                 failedChecks.push({ server, check: 'Nezha 探针在线状态检测', status: '失败' });
             }
-
             return argoPortCheck && argoStatusCheck && nezhaStatusCheck;
         }));
 
@@ -59,7 +56,6 @@ async function checkAllStatus(vpsData, nezhaServer, nezhaApiToken, nezhaIds, max
         if (allChecksPassed) {
             return { status: '所有检查项通过' };
         }
-
         retries++;
         if (retries < maxRetries) {
             await new Promise(resolve => setTimeout(resolve, retryInterval));
@@ -67,7 +63,6 @@ async function checkAllStatus(vpsData, nezhaServer, nezhaApiToken, nezhaIds, max
     }
 
     await runRemoteCmd(vpsData, rebootScript);
-
     return {
         status: '检查失败，以下检测项未通过，正在尝试连接服务器SSH',
         failedChecks: failedChecks
@@ -118,8 +113,7 @@ async function runRemoteCmd(vpsData, rebootScript) {
             // 尝试连接 SSH
             const sshResponse = await fetch(sshApiUrl);
             if (sshResponse.ok) {
-                console.log(`SSH 登录成功，执行远程命令...`);
-                
+                console.log(`SSH 登录成功，执行远程命令...`);                
                 // 尝试执行远程命令
                 const commandResponse = await fetch(command);
                 if (commandResponse.ok) {
