@@ -25,7 +25,7 @@ curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/sb_serv00
 `VMESS_PORT=tcp端口 HY2_PORT=udp端口 SOCKS_PORT=udp端口 SOCKS_USER=abc123 SOCKS_PASS=abc456 bash <(curl -Ls https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_alive/sb00-sk5.sh)`
 
 - 其他变量也可一并写入，例如（注意大小写）：  
-`UUID=123456 NEZHA_SERVER=nz.abcd.com NEZHA_PORT=5555 NEZHA_KEY=123ABC ARGO_DOMAIN=2go.admin.com ARGO_AUTH=abc123`（如果是json格式的密钥，需要用英文 `'{abcabc}'` 单引号包裹）
+`UUID=123456 NEZHA_SERVER=nz.abcd.com NEZHA_PORT=5555 NEZHA_KEY=123ABC ARGO_DOMAIN=2go.admin.com ARGO_AUTH=abc123`（如果是json格式的密钥，需要用英文 `'abcabc'` 单引号包裹）
 
 ***已修复 argo 密钥为 token 格式时无法重启的问题，现在 json 和 token 都可以重启***
 
