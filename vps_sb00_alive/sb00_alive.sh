@@ -111,7 +111,7 @@ check_nezha_status() {
         red "哪吒面板访问失败，请检查面板地址和 API TOKEN 是否正确"
         exit 1
     fi
-    ids_found=("13" "14" "17" "23" "24" "26")  # 此处填写需要检测的 serv00 哪吒探针的 ID
+    ids_found=("13" "14" "17" "23" "24" "26" "27")  # 此处填写需要检测的 serv00 哪吒探针的 ID
     server_found=false  # 用于标记是否找到符合条件的探针
     filtered_agents=""
     # 遍历agent列表中的每个探针
