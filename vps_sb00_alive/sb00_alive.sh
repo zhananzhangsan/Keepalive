@@ -92,8 +92,12 @@ download_json
 check_tcp_port() {
     local HOST=$1
     local VMESS_PORT=$2
-    nc -zv "$HOST" "$VMESS_PORT" &> /dev/null
-    return $?  # 返回 nc 命令的退出状态
+    # 使用 nc 命令检测端口状态，返回0表示可用
+    if nc -zv "$HOST" "$VMESS_PORT" &>/dev/null; then
+        return 0  # 端口可用
+    else
+        return 1  # 端口不可用
+    fi
 }
 
 # 检查 Argo 隧道状态
@@ -154,7 +158,10 @@ run_remote_command() {
 process_servers() {
     local max_attempts=5  # 最大尝试检测次数
     local time=$(TZ="Asia/Hong_Kong" date +"%Y-%m-%d %H:%M")
-    
+    if [[ ! -s "sb00ssh.json" ]]; then
+        echo "配置文件 sb00ssh.json 不存在或为空"
+        exit 1
+    fi    
     jq -c '.[]' "sb00ssh.json" | while IFS= read -r servers; do
         HOST=$(echo "$servers" | jq -r '.HOST')
         SSH_USER=$(echo "$servers" | jq -r '.SSH_USER')
@@ -177,8 +184,7 @@ process_servers() {
             all_checks=true
             
             # 检查 TCP 端口是否通畅，不通则 30 秒后重试
-            port_status=$(check_tcp_port "$HOST" "$VMESS_PORT")
-            if [ $port_status -ne 0 ]; then
+            if ! check_tcp_port "$HOST" "$VMESS_PORT"; then
                 red "TCP 端口 $(yellow "$VMESS_PORT") 不可用！休眠 30 秒后重试"
                 all_checks=false
                 sleep 30
