@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #老王原始vps保活脚本：https://github.com/eooce/Sing-box/blob/main/keep_00.sh
 #yutian81修改vps保活脚本：https://github.com/yutian81/serv00-ct8-ssh/blob/main/vps_sb00_alive/sb00_alive.sh
 #老王原始serv00四合一无交互脚本：https://github.com/eooce/Sing-box/blob/main/sb_00.sh
@@ -141,11 +142,11 @@ check_nezha_status() {
                 '. += [{ server_name: $server_name, last_active: ($last_active | tonumber), valid_ip: $valid_ip, server_id: $server_id }]')
         fi
     done
-    if [[ "$filtered_agents" == "[]" ]]; then
-        echo "没有找到 serv00 服务器探针，请检查 ids_found 变量填写是否正确"
-    else
-        echo "$filtered_agents"
-    fi
+        if [ "$server_found" = false ]; then
+            red "没有找到 serv00 服务器探针，请检查 ids_found 变量填写是否正确"
+        else
+            echo "$filtered_agents"
+        fi
 }
 
 # 连接并执行远程命令的函数
