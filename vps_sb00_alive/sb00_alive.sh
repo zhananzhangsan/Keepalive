@@ -122,8 +122,7 @@ check_nezha_status() {
         exit 1
     fi
     ids_found=("13" "14" "17" "23" "24" "26" "27")  # 需要检测的 serv00 哪吒探针的 ID
-    server_found=false  # 用于标记是否找到符合条件的探针
-    filtered_agents="[]"    
+    filtered_agents="[]"
     # 遍历 agent 列表中的每个探针
     echo "$agent_list" | jq -c '.result[]' | while IFS= read -r server; do
         server_name=$(echo "$server" | jq -r '.name')
@@ -133,7 +132,6 @@ check_nezha_status() {
         # 以探针 ID 进行匹配，筛选符合条件的哪吒探针
         if [[ " ${ids_found[@]} " =~ " $server_id " ]]; then
             green "已找到 serv00 服务器 $server_name, ID 为 $server_id"
-            server_found=true           
             # 将符合条件的探针添加到 filtered_agents 数组中
             filtered_agents=$(echo "$filtered_agents" | jq --arg server_name "$server_name" \
                 --arg last_active "$last_active" \
@@ -142,11 +140,12 @@ check_nezha_status() {
                 '. += [{ server_name: $server_name, last_active: ($last_active | tonumber), valid_ip: $valid_ip, server_id: $server_id }]')
         fi
     done
-        if [ "$server_found" = false ]; then
-            red "没有找到 serv00 服务器探针，请检查 ids_found 变量填写是否正确"
-        else
-            echo "$filtered_agents"
-        fi
+    # 处理找到的探针情况
+    if [[ "$filtered_agents" == "[]" ]]; then
+        red "没有找到 serv00 服务器探针，请检查 ids_found 变量填写是否正确"
+    else
+        echo "$filtered_agents"
+    fi
 }
 
 # 连接并执行远程命令的函数
@@ -214,11 +213,6 @@ process_servers() {
             
             # 检查指定的serv00服务器的哪吒探针是否在线
             filtered_agents=$(check_nezha_status)
-            # 检查 filtered_agents 是否为空或 null
-            if [[ -z "$filtered_agents" || "$filtered_agents" == "null" ]]; then
-                red "探针数据为空，无法进行解析。"
-                continue  # 或者 exit 1
-            fi
             # 解析筛选后符合条件的探针列表内容
             echo "$filtered_agents" | jq -c '.[]?' | while read -r filtered; do
                 server_name=$(echo "$filtered" | jq -r '.server_name')
@@ -226,7 +220,7 @@ process_servers() {
                 valid_ip=$(echo "$filtered" | jq -r '.valid_ip')
                 server_id=$(echo "$filtered" | jq -r '.server_id')
                 if ! [[ "$last_active" =~ ^[0-9]+$ ]]; then
-                    red "探针 $server_name 的最后活动时间不是有效的时间戳: $last_active"
+                    red "探针 $(yellow "$server_name") 的最后活动时间 $(yellow "$last_active") 不是有效的时间戳"
                     continue
                 fi
                 active_time=$((current_time - last_active))
