@@ -115,14 +115,14 @@ check_nezha_status() {
     if [ $? -ne 0 ]; then
         red "哪吒面板访问失败，请检查面板地址和 API TOKEN 是否正确"
         exit 1
-    fi
+    fi    
     # 检查 agent_list 是否有效
     if [[ -z "$agent_list" || "$agent_list" == "null" ]]; then
         red "获取到的 agent_list 是空的或无效的: $agent_list"
         exit 1
     fi
     ids_found=("13" "14" "17" "23" "24" "26" "27")  # 需要检测的 serv00 哪吒探针的 ID
-    filtered_agents="[]"
+    filtered_agents="[]"   
     # 遍历 agent 列表中的每个探针
     echo "$agent_list" | jq -c '.result[]' | while IFS= read -r server; do
         server_name=$(echo "$server" | jq -r '.name')
@@ -134,7 +134,7 @@ check_nezha_status() {
             green "已找到 serv00 服务器 $server_name, ID 为 $server_id"          
             # 将符合条件的探针添加到 filtered_agents 数组中
             filtered_agents=$(echo "$filtered_agents" | jq --arg server_name "$server_name" \
-                --argjson last_active "$last_active" \  # 使用 --argjson 来处理时间戳数值
+                --argjson last_active "$last_active" \  # 确保这里没有换行
                 --arg valid_ip "$valid_ip" \
                 --arg server_id "$server_id" \
                 '. += [{ server_name: $server_name, last_active: $last_active, valid_ip: $valid_ip, server_id: $server_id }]')
@@ -223,6 +223,7 @@ process_servers() {
                     red "探针 $(yellow "$server_name") 的最后活动时间 $(yellow "$last_active") 不是有效的时间戳"
                     continue
                 fi
+                current_time=$(date +%s)
                 active_time=$((current_time - last_active))
                 if [ "$active_time" -gt 30 ]; then
                     red "哪吒探针 $(yellow "$server_name") - $(yellow "$valid_ip") 已离线，开始重新检查"
