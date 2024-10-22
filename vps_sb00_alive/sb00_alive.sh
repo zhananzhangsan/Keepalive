@@ -159,8 +159,10 @@ process_servers() {
     local max_attempts=5  # 最大尝试检测次数
     local time=$(TZ="Asia/Hong_Kong" date +"%Y-%m-%d %H:%M")
     if [[ ! -s "sb00ssh.json" ]]; then
-        echo "配置文件 sb00ssh.json 不存在或为空"
+        red "配置文件 sb00ssh.json 不存在或为空"
         exit 1
+    else
+        green "配置文件 sb00ssh.json 正常，正在解析服务器数据"
     fi    
     jq -c '.[]' "sb00ssh.json" | while IFS= read -r servers; do
         HOST=$(echo "$servers" | jq -r '.HOST')
@@ -176,8 +178,22 @@ process_servers() {
         NEZHA_SERVER=$(echo "$servers" | jq -r '.NEZHA_SERVER')
         NEZHA_PORT=$(echo "$servers" | jq -r '.NEZHA_PORT')
         NEZHA_KEY=$(echo "$servers" | jq -r '.NEZHA_KEY')
-        green "正在解析服务器  $(yellow "$HOST")  的配置信息 ……"
-        green "解析完成，正在检查 Vmess端口、Argo隧道、哪吒探针 是否可访问"
+        # 打印输出以验证变量是否正确
+        echo "HOST: $HOST"
+        echo "SSH_USER: $SSH_USER"
+        echo "SSH_PASS: $SSH_PASS"
+        echo "VMESS_PORT: $VMESS_PORT"
+        echo "SOCKS_PORT: $SOCKS_PORT"
+        echo "HY2_PORT: $HY2_PORT"
+        echo "SOCKS_USER: $SOCKS_USER"
+        echo "SOCKS_PASS: $SOCKS_PASS"
+        echo "ARGO_DOMAIN: $ARGO_DOMAIN"
+        echo "ARGO_AUTH: $ARGO_AUTH"
+        echo "NEZHA_SERVER: $NEZHA_SERVER"
+        echo "NEZHA_PORT: $NEZHA_PORT"
+        echo "NEZHA_KEY: $NEZHA_KEY"
+        green "已完成服务器  $(yellow "$HOST")  的配置信息解析 ……"
+        green "正在检查 Vmess端口、Argo隧道、哪吒探针 是否可访问"
         
         local attempt=0
         while [ $attempt -lt $max_attempts ]; do
