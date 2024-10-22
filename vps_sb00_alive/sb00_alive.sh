@@ -23,6 +23,7 @@ REBOOT_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/reboo
 NEZHA_URL="https://nezha.yutian81.top"  # 哪吒面板地址，需要 http(s):// 前缀
 NEZHA_APITOKEN="Fi3W8ProskZcpdPtFiBxkh6utZSJevL1"  # 哪吒面板的 API TOKEN
 NEZHA_API="$NEZHA_URL/api/v1/server/list"  # 获取哪吒探针列表的api接口，请勿修改
+NEZHA_SERVER_ID=("13" "14" "17" "23" "24" "26" "27")
 
 # 外部传入参数
 export TERM=xterm
@@ -121,7 +122,6 @@ check_nezha_status() {
         red "获取到的 agent_list 是空的或无效的: $agent_list"
         exit 1
     fi
-    ids_found=("13" "14" "17" "23" "24" "26" "27")  # 需要检测的 serv00 哪吒探针的 ID
     filtered_agents="[]"   
     # 遍历 agent 列表中的每个探针
     echo "$agent_list" | jq -c '.result[]' | while IFS= read -r server; do
@@ -130,15 +130,17 @@ check_nezha_status() {
         valid_ip=$(echo "$server" | jq -r '.valid_ip')
         server_id=$(echo "$server" | jq -r '.id')
         # 以探针 ID 进行匹配，筛选符合条件的哪吒探针
-        if [[ " ${ids_found[@]} " =~ " $server_id " ]]; then
-            green "已找到 serv00 服务器 $server_name, ID 为 $server_id"          
+        if [[ " ${NEZHA_SERVER_ID[@]} " =~ " $server_id " ]]; then
+            green "已找到 serv00 服务器 $server_name, ID 为 $server_id"            
             # 将符合条件的探针添加到 filtered_agents 数组中
-            filtered_agents=$(echo "$filtered_agents" | jq --arg server_name "$server_name" --arg last_active "$last_active" --arg valid_ip "$valid_ip" --arg server_id "$server_id" '. += [{ "server_name": $server_name, "last_active": $last_active, "valid_ip": $valid_ip, "server_id": $server_id }]')
+            filtered_agents=$(echo "$filtered_agents" | jq --arg server_name "$server_name" \
+                --argjson last_active "$last_active" --arg valid_ip "$valid_ip" --argjson server_id "$server_id" \
+                '. += [{ "server_name": $server_name, "last_active": $last_active, "valid_ip": $valid_ip, "server_id": $server_id }]')
         fi
     done
     # 处理找到的探针情况
     if [[ "$filtered_agents" == "[]" ]]; then
-        red "没有找到 serv00 服务器探针，请检查 ids_found 变量填写是否正确"
+        red "没有找到 serv00 服务器探针，请检查 NEZHA_SERVER_ID 变量填写是否正确"
     else
         echo "$filtered_agents"
     fi
