@@ -115,18 +115,23 @@ check_nezha_status() {
         red "哪吒面板访问失败，请检查面板地址和 API TOKEN 是否正确"
         exit 1
     fi
+    # 检查 agent_list 是否有效
+    if [[ -z "$agent_list" || "$agent_list" == "null" ]]; then
+        red "获取到的 agent_list 是空的或无效的: $agent_list"
+        exit 1
+    fi
     ids_found=("13" "14" "17" "23" "24" "26" "27")  # 需要检测的 serv00 哪吒探针的 ID
     server_found=false  # 用于标记是否找到符合条件的探针
-    filtered_agents="[]"
-    # 遍历agent列表中的每个探针
+    filtered_agents="[]"    
+    # 遍历 agent 列表中的每个探针
     echo "$agent_list" | jq -c '.result[]' | while IFS= read -r server; do
         server_name=$(echo "$server" | jq -r '.name')
         last_active=$(echo "$server" | jq -r '.last_active')
         valid_ip=$(echo "$server" | jq -r '.valid_ip')
         server_id=$(echo "$server" | jq -r '.id')
-        # 以探针ID进行匹配，筛选符合条件的哪吒探针
+        # 以探针 ID 进行匹配，筛选符合条件的哪吒探针
         if [[ " ${ids_found[@]} " =~ " $server_id " ]]; then
-            green "已找到serv00服务器 $server_name, ID 为 $server_id, 开始检查探针活动状态"
+            green "已找到 serv00 服务器 $server_name, ID 为 $server_id, 开始检查探针活动状态"
             server_found=true           
             # 将符合条件的探针添加到 filtered_agents 数组中
             filtered_agents=$(echo "$filtered_agents" | jq --arg server_name "$server_name" \
@@ -136,13 +141,15 @@ check_nezha_status() {
                 '. += [{ server_name: $server_name, last_active: ($last_active | tonumber), valid_ip: $valid_ip, server_id: $server_id }]')
         fi
     done
-
-    if [ "$server_found" = false ]; then
-        red "没有找到 serv00 服务器探针，请检查 ids_found 变量填写是否正确"
+    # 如果没有找到符合条件的探针，给出相应提示
+    if ! $server_found; then
+        echo "没有找到 serv00 服务器探针，请检查 ids_found 变量填写是否正确"
     fi
-
+    echo "待解析的 JSON 数据: $filtered_agents"
+    # 返回 filtered_agents 供后续使用
     echo "$filtered_agents"
 }
+
 # 连接并执行远程命令的函数
 run_remote_command() {
     local HOST=$1 SSH_USER=$2 SSH_PASS=$3 VMESS_PORT=$4 HY2_PORT=$5 SOCKS_PORT=$6 SOCKS_USER=$7 SOCKS_PASS=$8 ARGO_DOMAIN=$9 ARGO_AUTH=${10} NEZHA_SERVER=${11} NEZHA_PORT=${12} NEZHA_KEY=${13}
