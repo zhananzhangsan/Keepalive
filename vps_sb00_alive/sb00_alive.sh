@@ -141,10 +141,11 @@ check_nezha_status() {
                 '. += [{ server_name: $server_name, last_active: ($last_active | tonumber), valid_ip: $valid_ip, server_id: $server_id }]')
         fi
     done
-    if ! $server_found; then
+    if [[ "$filtered_agents" == "[]" ]]; then
         echo "没有找到 serv00 服务器探针，请检查 ids_found 变量填写是否正确"
+    else
+        echo "$filtered_agents"
     fi
-    echo "$filtered_agents"
 }
 
 # 连接并执行远程命令的函数
