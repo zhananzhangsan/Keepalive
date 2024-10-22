@@ -131,7 +131,7 @@ check_nezha_status() {
         server_id=$(echo "$server" | jq -r '.id')
         # 以探针 ID 进行匹配，筛选符合条件的哪吒探针
         if [[ " ${ids_found[@]} " =~ " $server_id " ]]; then
-            green "已找到 serv00 服务器 $server_name, ID 为 $server_id, 开始检查探针活动状态"
+            green "已找到 serv00 服务器 $server_name, ID 为 $server_id"
             server_found=true           
             # 将符合条件的探针添加到 filtered_agents 数组中
             filtered_agents=$(echo "$filtered_agents" | jq --arg server_name "$server_name" \
@@ -141,12 +141,9 @@ check_nezha_status() {
                 '. += [{ server_name: $server_name, last_active: ($last_active | tonumber), valid_ip: $valid_ip, server_id: $server_id }]')
         fi
     done
-    # 如果没有找到符合条件的探针，给出相应提示
     if ! $server_found; then
         echo "没有找到 serv00 服务器探针，请检查 ids_found 变量填写是否正确"
     fi
-    echo "待解析的 JSON 数据: $filtered_agents"
-    # 返回 filtered_agents 供后续使用
     echo "$filtered_agents"
 }
 
