@@ -109,38 +109,40 @@ check_argo_status() {
 
 # 获取哪吒探针的服务器列表并筛选出 serv00 & ct8 的服务器
 check_nezha_status() {
-    # 获取哪吒agent列表
+    # 获取哪吒 agent 列表
     agent_list=$(curl -s -H "Authorization: $NEZHA_APITOKEN" "$NEZHA_API")
     if [ $? -ne 0 ]; then
         red "哪吒面板访问失败，请检查面板地址和 API TOKEN 是否正确"
         exit 1
     fi
-    ids_found=("13" "14" "17" "23" "24" "26" "27")  # 此处填写需要检测的 serv00 哪吒探针的 ID
+    ids_found=("13" "14" "17" "23" "24" "26" "27")  # 需要检测的 serv00 哪吒探针的 ID
     server_found=false  # 用于标记是否找到符合条件的探针
-    filtered_agents=""
+    filtered_agents="[]"
     # 遍历agent列表中的每个探针
-    echo "$agent_list" | jq -c '.result[]' | while read -r server; do
+    echo "$agent_list" | jq -c '.result[]' | while IFS= read -r server; do
         server_name=$(echo "$server" | jq -r '.name')
         last_active=$(echo "$server" | jq -r '.last_active')
         valid_ip=$(echo "$server" | jq -r '.valid_ip')
-        server_id=$(echo "$server" | jq -r '.id')       
+        server_id=$(echo "$server" | jq -r '.id')
         # 以探针ID进行匹配，筛选符合条件的哪吒探针
         if [[ " ${ids_found[@]} " =~ " $server_id " ]]; then
             green "已找到serv00服务器 $server_name, ID 为 $server_id, 开始检查探针活动状态"
-            server_found=true
-            # 将serv00服务器的探针存储到 filtered_agents 变量中
-            filtered_agents=$(
-                echo "$agent_list" | jq -c --argjson ids_found "$(printf '%s\n' "${ids_found[@]}" | jq -R . | jq -s .)" '
-                .result[] | select(.id as $id | $ids_found | index($id)) | { server_name: .name, last_active: .last_active, valid_ip: .valid_ip, server_id: .id }
-            ')
+            server_found=true           
+            # 将符合条件的探针添加到 filtered_agents 数组中
+            filtered_agents=$(echo "$filtered_agents" | jq --arg server_name "$server_name" \
+                --arg last_active "$last_active" \
+                --arg valid_ip "$valid_ip" \
+                --arg server_id "$server_id" \
+                '. += [{ server_name: $server_name, last_active: ($last_active | tonumber), valid_ip: $valid_ip, server_id: $server_id }]')
         fi
     done
-        if [ "$server_found" = false ]; then
-            red "没有找到 serv00 服务器探针，请检查 ids_found 变量填写是否正确"
-        fi
-        echo "$filtered_agents"
-}
 
+    if [ "$server_found" = false ]; then
+        red "没有找到 serv00 服务器探针，请检查 ids_found 变量填写是否正确"
+    fi
+
+    echo "$filtered_agents"
+}
 # 连接并执行远程命令的函数
 run_remote_command() {
     local HOST=$1 SSH_USER=$2 SSH_PASS=$3 VMESS_PORT=$4 HY2_PORT=$5 SOCKS_PORT=$6 SOCKS_USER=$7 SOCKS_PASS=$8 ARGO_DOMAIN=$9 ARGO_AUTH=${10} NEZHA_SERVER=${11} NEZHA_PORT=${12} NEZHA_KEY=${13}
@@ -178,21 +180,7 @@ process_servers() {
         NEZHA_SERVER=$(echo "$servers" | jq -r '.NEZHA_SERVER')
         NEZHA_PORT=$(echo "$servers" | jq -r '.NEZHA_PORT')
         NEZHA_KEY=$(echo "$servers" | jq -r '.NEZHA_KEY')
-        # 打印输出以验证变量是否正确
-        echo "HOST: $HOST"
-        echo "SSH_USER: $SSH_USER"
-        echo "SSH_PASS: $SSH_PASS"
-        echo "VMESS_PORT: $VMESS_PORT"
-        echo "SOCKS_PORT: $SOCKS_PORT"
-        echo "HY2_PORT: $HY2_PORT"
-        echo "SOCKS_USER: $SOCKS_USER"
-        echo "SOCKS_PASS: $SOCKS_PASS"
-        echo "ARGO_DOMAIN: $ARGO_DOMAIN"
-        echo "ARGO_AUTH: $ARGO_AUTH"
-        echo "NEZHA_SERVER: $NEZHA_SERVER"
-        echo "NEZHA_PORT: $NEZHA_PORT"
-        echo "NEZHA_KEY: $NEZHA_KEY"
-        green "已完成服务器  $(yellow "$HOST")  的配置信息解析 ……"
+        green "已完成服务器  $(yellow "$HOST")  的配置信息解析"
         green "正在检查 Vmess端口、Argo隧道、哪吒探针 是否可访问"
         
         local attempt=0
