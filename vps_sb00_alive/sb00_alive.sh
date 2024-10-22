@@ -17,7 +17,7 @@ yellow() { echo -e "\e[1;33m$1\033[0m"; }
 SCRIPT_PATH="/root/sb00_alive.sh"  # 本脚本路径，不要改变文件名
 SCRIPT_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_alive/sb00-sk5.sh"  # 四合一无交互yutian版，含socks5，无tuic
 #SCRIPT_URL="https://raw.githubusercontent.com/eooce/Sing-box/refs/heads/main/sb_00.sh"  # 四合一无交互老王版，无socks5，含tuic
-VPS_JSON_URL="https://gist.githubusercontent.com/yutian81/1de35b11088eb9601f4a316bcc45ce6e/raw/sb00ssh.json"  # 储存vps登录信息及无交互脚本外部变量的json文件
+VPS_JSON_URL="https://pan.811520.xyz/cdn/sb00ssh.json"  # 储存vps登录信息及无交互脚本外部变量的json文件
 REBOOT_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/reboot.sh"   # 仅支持重启yutian81修改serv00四合一有交互脚本
 NEZHA_URL="https://nezha.yutian81.top"  # 哪吒面板地址，需要 http(s):// 前缀
 NEZHA_APITOKEN=""  # 哪吒面板的 API TOKEN
