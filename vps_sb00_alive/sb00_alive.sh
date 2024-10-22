@@ -122,7 +122,8 @@ check_nezha_status() {
         red "获取到的 agent_list 是空的或无效的: $agent_list"
         exit 1
     fi
-    filtered_agents="[]"   
+    # 确保 filtered_agents 初始为空数组
+    filtered_agents='[]'    
     # 遍历 agent 列表中的每个探针
     echo "$agent_list" | jq -c '.result[]' | while IFS= read -r server; do
         server_name=$(echo "$server" | jq -r '.name')
@@ -130,7 +131,14 @@ check_nezha_status() {
         valid_ip=$(echo "$server" | jq -r '.valid_ip')
         server_id=$(echo "$server" | jq -r '.id')
         # 以探针 ID 进行匹配，筛选符合条件的哪吒探针
-        if [[ " ${NEZHA_SERVER_ID[@]} " =~ " $server_id " ]]; then
+        found=0
+        for id in "${NEZHA_SERVER_ID[@]}"; do
+            if [[ "$id" == "$server_id" ]]; then
+                found=1
+                break
+            fi
+        done   
+        if [[ $found -eq 1 ]]; then
             green "已找到 serv00 服务器 $server_name, ID 为 $server_id"            
             # 将符合条件的探针添加到 filtered_agents 数组中
             filtered_agents=$(echo "$filtered_agents" | jq --arg server_name "$server_name" \
