@@ -218,8 +218,6 @@ process_servers() {
                 red "探针数据为空，无法进行解析。"
                 continue  # 或者 exit 1
             fi
-            # 打印待解析的 JSON 数据
-            echo "待解析的 JSON 数据: $filtered_agents"
             # 解析筛选后符合条件的探针列表内容
             echo "$filtered_agents" | jq -c '.[]?' | while read -r filtered; do
                 server_name=$(echo "$filtered" | jq -r '.server_name')
