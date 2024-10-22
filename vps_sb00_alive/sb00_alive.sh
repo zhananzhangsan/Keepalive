@@ -133,11 +133,7 @@ check_nezha_status() {
         if [[ " ${ids_found[@]} " =~ " $server_id " ]]; then
             green "已找到 serv00 服务器 $server_name, ID 为 $server_id"          
             # 将符合条件的探针添加到 filtered_agents 数组中
-            filtered_agents=$(echo "$filtered_agents" | jq --arg server_name "$server_name" \
-                --argjson last_active "$last_active" \
-                --arg valid_ip "$valid_ip" \
-                --arg server_id "$server_id" \
-                '. += [{ server_name: $server_name, last_active: $last_active, valid_ip: $valid_ip, server_id: $server_id }]')
+            filtered_agents=$(echo "$filtered_agents" | jq --arg server_name "$server_name" --argjson last_active "$last_active" --arg valid_ip "$valid_ip" --arg server_id "$server_id" '. += [{ server_name: $server_name, last_active: $last_active, valid_ip: $valid_ip, server_id: $server_id }]')
         fi
     done
     # 处理找到的探针情况
