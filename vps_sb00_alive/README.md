@@ -14,11 +14,13 @@
 
 - 使用vps每5分钟检查一次serv00服务器（已安装好四合一）上vmess端口、argo隧道、哪吒探针，判断是否可连通
 
-- 如果其中一项不可连通，则间隔30秒重新检查一次
+- 如果其中一项不可连通，则间隔 10 秒重新检查一次
 
 - 连续5次均有某一项不可连通，则远程登录serv00的SSH，并读取 json 文件内的参数，重新安装四合一无交互脚本
 
 -----
+
+## 如何使用
 
 ### 一、将serv00的登录信息和无交互脚本的外部变量保存在json数组中
 
@@ -81,23 +83,25 @@ json 格式如下，注意最后一组`{}`后面没有`,`：
 https://raw.githubusercontent.com/yutian81/serv00/main/alive/sb00ssh.json
 ```
 
-
-### 二、在vps中运行本脚本
-
+### 二、修改脚本的全局变量
 > [!IMPORTANT]  
-> **首先，需要修改`sb00_alive.sh`中20行的 VPS_JSON_URL 变量为上述 json 文件的直链地址**
+> **必须将变量修改为你自己的信息，变量内容中的前后的`""`不要删除**
 > 
-> 如：`VPS_JSON_URL="https://raw.githubusercontent.com/yutian81/Wanju-Nodes/main/serv00/sb00ssh.json"`
-> 
-> **其次，需要修改114行 `ids_found=("13" "14" "17" "23" "24")`中的数字，该数字为你需要检测的哪吒探针的ID，可以在面板管理后台查看**
-> 
+> **以下变量必须修改，未列出的变量不要动**
 
-**然后，运行一键安装命令**
+| 变量 | 举例 | 说明 | 
+| ---- | ---- | ---- | 
+| VPS_JSON_URL | `https://raw.githubusercontent.com/yutian81/serv00/main/alive/sb00ssh.json` | 第一步中的json直链地址 |
+| NEZHA_URL | `https://nezha.yutian.best` | 你的哪吒面板地址，必须带 `http(s)://` 前缀 |
+| NEZHA_APITOKEN | xxxxxxroskZcpdxxxiBxkhxxxxxJevL1 | 你的哪吒面板的 `API TOKEN` |
+| NEZHA_AGENT_ID | ("13" "14" "17" "23" "24" "26" "27") | 你的哪吒探针的`ID`号，只改数字，不要删除`()`和`""` |
+
+### 三、在vps中运行本脚本
 
 ```
 curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_alive/sb00_alive.sh -o sb00_alive.sh && bash sb00_alive.sh
 ```
-再次运行输入：`bash sb.sh`即可
+> 把其中的`https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_alive/sb00_alive.sh`脚本地址改为你自己的`脚本直链地址`
 
 **模拟输出效果**
 
@@ -109,4 +113,4 @@ curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_
 
 - `sb00-sk5.sh`：在老王四合一无交互一键脚本基础上修改而来，去掉了tuic协议，增加了socks5协议
 
-- `_worker.js`：是本脚本`sb00_alive.sh`的`worker版`，尚未完工，当前不可用
+- `sb00-keep.sh`：老王保活脚本初始版本，为本脚本的参考
