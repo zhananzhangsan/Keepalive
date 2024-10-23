@@ -293,7 +293,7 @@ download_with_fallback() {
         wait $CURL_PID
         echo -e "\e[1;32m正在使用 curl 下载 $FILENAME\e[0m"
     fi
-    chmod +x "$FILENAME_DIR"
+    chmod +x "$FILENAME"
 }
 
 for entry in "${FILE_INFO[@]}"; do
