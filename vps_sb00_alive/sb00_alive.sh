@@ -87,6 +87,11 @@ download_json() {
     else
         green "Serv00 配置文件通过 curl 下载成功！"
     fi
+    # 检查文件是否存在和非空
+    if [[ ! -s "sb00ssh.json" ]]; then
+        red "配置文件 sb00ssh.json 不存在或为空"
+        exit 1
+    fi    
 }
 download_json
 
@@ -96,9 +101,11 @@ check_tcp_port() {
     local VMESS_PORT=$2
     # 使用 nc 命令检测端口状态，返回0表示可用
     if nc -zv "$HOST" "$VMESS_PORT" &>/dev/null; then
-        port_status=0  # 端口可用
-    else
         port_status=1  # 端口不可用
+        red "TCP 端口 $(yellow "$VMESS_PORT") 访问失败"
+    else
+        port_status=0  # 端口可用
+        green "TCP 端口 $(yellow "$VMESS_PORT") 访问成功"
     fi
 }
 
@@ -133,13 +140,7 @@ run_remote_command() {
 }
 
 # 处理服务器列表并遍历，TCP端口、Argo、哪吒探针三项检测有一项不通即连接 SSH 执行命令
-process_servers() {
-    if [[ ! -s "sb00ssh.json" ]]; then
-        red "配置文件 sb00ssh.json 不存在或为空"
-        exit 1
-    else
-        green "配置文件 sb00ssh.json 正常，正在解析服务器数据"
-    fi    
+process_servers() { 
     jq -c '.[]' "sb00ssh.json" | while IFS= read -r servers; do
         HOST=$(echo "$servers" | jq -r '.HOST')
         SSH_USER=$(echo "$servers" | jq -r '.SSH_USER')
