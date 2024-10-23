@@ -95,7 +95,7 @@ https://raw.githubusercontent.com/yutian81/serv00/main/alive/sb00ssh.json
 **然后，运行一键安装命令**
 
 ```
-curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_alive/sb00_alive.sh -o sb.sh && bash sb.sh
+curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_alive/sb00_alive.sh -o sb00_alive.sh && bash sb00_alive.sh
 ```
 再次运行输入：`bash sb.sh`即可
 
