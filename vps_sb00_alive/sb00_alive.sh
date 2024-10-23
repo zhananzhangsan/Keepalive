@@ -113,7 +113,8 @@ check_argo_status() {
 check_nezha_list() {
     agent_list=$(curl -s -H "Authorization: $NEZHA_APITOKEN" "$NEZHA_API")
     if [ $? -ne 0 ]; then
-        echo "null"
+        red "获取哪吒探针列表失败，请检查 NEZHA_APITOKEN 和 NEZHA_URL 设置"
+        exit 1
     else
         echo "$agent_list"
     fi
@@ -162,6 +163,7 @@ process_servers() {
         local time=$(TZ="Asia/Hong_Kong" date +"%Y-%m-%d %H:%M")
         while [ $attempt -lt $max_attempts ]; do
             all_checks=true            
+
             # 检查 TCP 端口是否通畅，不通则 10 秒后重试
             if ! check_tcp_port "$HOST" "$VMESS_PORT"; then
                 red "TCP 端口 $(yellow "$VMESS_PORT") 不可用！休眠 10 秒后重试"
@@ -196,8 +198,7 @@ process_servers() {
                 server_id=$(echo "$server" | jq -r '.id')
                 # 筛选 ID 相符的探针
                 if [[ " ${NEZHA_SERVER_ID[@]} " =~ " $server_id " ]]; then
-                    green "已找到指定的服务器 $server_name, ID 为 $server_id"                    
-                    # 检查状态并将结果写入 nezha_status 变量
+                    green "已找到指定的服务器 $server_name, ID 为 $server_id"
                     if [ $((current_time - last_active)) -gt 30 ]; then
                         nezha_status="offline"
                         red "$server_name 已离线"
@@ -206,11 +207,11 @@ process_servers() {
                         attempt=$((attempt + 1))
                         continue
                     else
-                        nezha_status="online"
+                        nezha_status="online" 
                         green "$server_name 在线"
+                        break
                     fi
-                    echo "$nezha_status"
-                fi           
+                fi
             done
             
             # 如果所有检查都通过，则打印通畅信息并退出循环
