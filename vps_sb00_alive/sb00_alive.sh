@@ -44,7 +44,7 @@ install_packages() {
         packages="sshpass curl netcat-openbsd cron jq"
     elif [ -f /etc/alpine-release ]; then
         package_manager="apk add"
-        packages="sshpass curl netcat-openbsd cronie jq"
+        packages="openssh curl openbsd-netcat cronie jq"
     else
         red "不支持的系统架构！"
         exit 1
