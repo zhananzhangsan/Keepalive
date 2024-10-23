@@ -28,8 +28,8 @@ NEZHA_SERVER_ID=("13" "14" "17" "23" "24" "26" "27")
 # 外部传入参数
 export TERM=xterm
 export DEBIAN_FRONTEND=noninteractive
-export CFIP=${CFIP:-'www.visa.com.tw'}  # 优选域名或优选ip
-export CFPORT=${CFPORT:-'443'}     # 优选域名或优选ip对应端口
+# export CFIP=${CFIP:-'www.visa.com.tw'}  # 优选域名或优选ip
+# export CFPORT=${CFPORT:-'443'}     # 优选域名或优选ip对应端口
 
 # 根据对应系统安装依赖
 install_packages() {
@@ -96,9 +96,9 @@ check_tcp_port() {
     local VMESS_PORT=$2
     # 使用 nc 命令检测端口状态，返回0表示可用
     if nc -zv "$HOST" "$VMESS_PORT" &>/dev/null; then
-        return 0  # 端口可用
+        port_status=0  # 端口可用
     else
-        return 1  # 端口不可用
+        port_status=1  # 端口不可用
     fi
 }
 
@@ -112,12 +112,11 @@ check_argo_status() {
 # 获取哪吒探针列表
 check_nezha_list() {
     agent_list=$(curl -s -H "Authorization: $NEZHA_APITOKEN" "$NEZHA_API")
-    if [ $? -ne 0 ]; then
+    if [ $? -ne 0 ] || [[ -z "$agent_list" || "$agent_list" == "null" ]]; then
         red "获取哪吒探针列表失败，请检查 NEZHA_APITOKEN 和 NEZHA_URL 设置"
         exit 1
-    else
-        echo "$agent_list"
     fi
+    echo "$agent_list"
 }
 
 # 连接并执行远程命令的函数
@@ -126,7 +125,7 @@ run_remote_command() {
     sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "$SSH_USER@$HOST" \
     "ps aux | grep \"$(whoami)\" | grep -v 'sshd\|bash\|grep' | awk '{print \$2}' | xargs -r kill -9 > /dev/null 2>&1 && \
     VMESS_PORT=$VMESS_PORT HY2_PORT=$HY2_PORT SOCKS_PORT=$SOCKS_PORT \
-    SOCKS_USER=$SOCKS_USER SOCKS_PASS=\"$SOCKS_PASS\" \
+    SOCKS_USER=\"$SOCKS_USER\" SOCKS_PASS=\"$SOCKS_PASS\" \
     ARGO_DOMAIN=$ARGO_DOMAIN ARGO_AUTH=\"$ARGO_AUTH\" \
     NEZHA_SERVER=$NEZHA_SERVER NEZHA_PORT=$NEZHA_PORT NEZHA_KEY=$NEZHA_KEY \
     bash <(curl -Ls ${SCRIPT_URL})"
@@ -165,7 +164,8 @@ process_servers() {
             all_checks=true            
 
             # 检查 TCP 端口是否通畅，不通则 10 秒后重试
-            if ! check_tcp_port "$HOST" "$VMESS_PORT"; then
+            check_tcp_port "$HOST" "$VMESS_PORT"
+            if [ "$port_status" -eq 1 ]; then
                 red "TCP 端口 $(yellow "$VMESS_PORT") 不可用！休眠 10 秒后重试"
                 all_checks=false
                 sleep 10
@@ -184,14 +184,9 @@ process_servers() {
             fi
             
             # 检查 nezha 探针是否在线，不在线则 10 秒后重试
-            nezha_agent_list=$(check_nezha_list) 
-            if [[ -z "$nezha_agent_list" || "$nezha_agent_list" == "null" ]]; then
-                red "获取到的哪吒探针列表是空的或无效的"
-                exit 1
-            fi
-            # 检查每个探针的状态
+            check_nezha_list
             current_time=$(date +%s)
-            echo "$nezha_agent_list" | jq -c '.result[]' | while IFS= read -r server; do
+            echo "$agent_list" | jq -c '.result[]' | while IFS= read -r server; do
                 server_name=$(echo "$server" | jq -r '.name')
                 last_active=$(echo "$server" | jq -r '.last_active')
                 valid_ip=$(echo "$server" | jq -r '.valid_ip')
@@ -231,7 +226,7 @@ process_servers() {
                 cmd_status=$?
                 sleep 3
                 if [ $cmd_status -eq 0 ]; then
-                    if [ $port_status -eq 0 ] && [ "$argo_status" != "530" ] && [ $active_time -lt 30 ]; then
+                    if [ $port_status -eq 0 ] && [ $argo_status != "530" ] && [ $nezha_status == "online" ]; then
                         green "远程命令执行成功，结果如下："
                         green "服务器 $(yellow "$HOST") 端口 $(yellow "$VMESS_PORT") 恢复正常; Argo $(yellow "$ARGO_DOMAIN") 恢复正常; 哪吒 $(yellow "$server_name") 恢复正常"
                     else
