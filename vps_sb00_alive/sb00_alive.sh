@@ -109,48 +109,13 @@ check_argo_status() {
     echo "$argo_status"
 }
 
-# 获取哪吒探针的服务器列表并筛选出 serv00 & ct8 的服务器
-check_nezha_status() {
-    # 获取哪吒 agent 列表
+# 获取哪吒探针列表
+check_nezha_list() {
     agent_list=$(curl -s -H "Authorization: $NEZHA_APITOKEN" "$NEZHA_API")
     if [ $? -ne 0 ]; then
-        red "哪吒面板访问失败，请检查面板地址和 API TOKEN 是否正确"
-        exit 1
-    fi    
-    # 检查 agent_list 是否有效
-    if [[ -z "$agent_list" || "$agent_list" == "null" ]]; then
-        red "获取到的 agent_list 是空的或无效的: $agent_list"
-        exit 1
-    fi
-    # 确保 filtered_agents 初始为空数组
-    filtered_agents='[]'    
-    # 遍历 agent 列表中的每个探针
-    echo "$agent_list" | jq -c '.result[]' | while IFS= read -r server; do
-        server_name=$(echo "$server" | jq -r '.name')
-        last_active=$(echo "$server" | jq -r '.last_active')
-        valid_ip=$(echo "$server" | jq -r '.valid_ip')
-        server_id=$(echo "$server" | jq -r '.id')
-        # 以探针 ID 进行匹配，筛选符合条件的哪吒探针
-        found=0
-        for id in "${NEZHA_SERVER_ID[@]}"; do
-            if [[ "$id" == "$server_id" ]]; then
-                found=1
-                break
-            fi
-        done   
-        if [[ $found -eq 1 ]]; then
-            green "已找到 serv00 服务器 $server_name, ID 为 $server_id"            
-            # 将符合条件的探针添加到 filtered_agents 数组中
-            filtered_agents=$(echo "$filtered_agents" | jq --arg server_name "$server_name" \
-                --argjson last_active "$last_active" --arg valid_ip "$valid_ip" --argjson server_id "$server_id" \
-                '. += [{ "server_name": $server_name, "last_active": $last_active, "valid_ip": $valid_ip, "server_id": $server_id }]')
-        fi
-    done
-    # 处理找到的探针情况
-    if [[ "$filtered_agents" == "[]" ]]; then
-        red "没有找到 serv00 服务器探针，请检查 NEZHA_SERVER_ID 变量填写是否正确"
+        echo "null"
     else
-        echo "$filtered_agents"
+        echo "$agent_list"
     fi
 }
 
@@ -169,8 +134,6 @@ run_remote_command() {
 
 # 处理服务器列表并遍历，TCP端口、Argo、哪吒探针三项检测有一项不通即连接 SSH 执行命令
 process_servers() {
-    local max_attempts=5  # 最大尝试检测次数
-    local time=$(TZ="Asia/Hong_Kong" date +"%Y-%m-%d %H:%M")
     if [[ ! -s "sb00ssh.json" ]]; then
         red "配置文件 sb00ssh.json 不存在或为空"
         exit 1
@@ -193,50 +156,61 @@ process_servers() {
         NEZHA_KEY=$(echo "$servers" | jq -r '.NEZHA_KEY')
         green "已完成服务器  $(yellow "$HOST")  的配置信息解析"
         green "正在检查 Vmess端口、Argo隧道、哪吒探针 是否可访问"
-        
+
         local attempt=0
+        local max_attempts=5  # 最大尝试检测次数
+        local time=$(TZ="Asia/Hong_Kong" date +"%Y-%m-%d %H:%M")
         while [ $attempt -lt $max_attempts ]; do
-            all_checks=true
-            
-            # 检查 TCP 端口是否通畅，不通则 30 秒后重试
+            all_checks=true            
+            # 检查 TCP 端口是否通畅，不通则 10 秒后重试
             if ! check_tcp_port "$HOST" "$VMESS_PORT"; then
-                red "TCP 端口 $(yellow "$VMESS_PORT") 不可用！休眠 30 秒后重试"
+                red "TCP 端口 $(yellow "$VMESS_PORT") 不可用！休眠 10 秒后重试"
                 all_checks=false
-                sleep 30
+                sleep 10
                 attempt=$((attempt + 1))
                 continue
             fi
             
-            # 检查 Argo 连接是否通畅，不通则 30 秒后重试
+            # 检查 Argo 连接是否通畅，不通则 10 秒后重试
             argo_status=$(check_argo_status "$ARGO_DOMAIN")
             if [ "$argo_status" == "530" ]; then
-                red "Argo $(yellow "$ARGO_DOMAIN") 不可用！状态码：$(yellow "$argo_status")，休眠 30 秒后重试"
+                red "Argo $(yellow "$ARGO_DOMAIN") 不可用！状态码：$(yellow "$argo_status")，休眠 10 秒后重试"
                 all_checks=false
-                sleep 30
+                sleep 10
                 attempt=$((attempt + 1))
                 continue
             fi
             
-            # 检查指定的serv00服务器的哪吒探针是否在线
-            filtered_agents=$(check_nezha_status)
-            # 解析筛选后符合条件的探针列表内容
-            echo "$filtered_agents" | jq -c '.[]?' | while read -r filtered; do
-                server_name=$(echo "$filtered" | jq -r '.server_name')
-                last_active=$(echo "$filtered" | jq -r '.last_active')
-                valid_ip=$(echo "$filtered" | jq -r '.valid_ip')
-                server_id=$(echo "$filtered" | jq -r '.server_id')
-                if ! [[ "$last_active" =~ ^[0-9]+$ ]]; then
-                    red "探针 $(yellow "$server_name") 的最后活动时间 $(yellow "$last_active") 不是有效的时间戳"
-                    continue
-                fi
-                current_time=$(date +%s)
-                active_time=$((current_time - last_active))
-                if [ "$active_time" -gt 30 ]; then
-                    red "哪吒探针 $(yellow "$server_name") - $(yellow "$valid_ip") 已离线，开始重新检查"
-                    all_checks=false
-                    attempt=$((attempt + 1))
-                    continue
-                fi
+            # 检查 nezha 探针是否在线，不在线则 10 秒后重试
+            nezha_agent_list=$(check_nezha_list) 
+            if [[ -z "$nezha_agent_list" || "$nezha_agent_list" == "null" ]]; then
+                red "获取到的哪吒探针列表是空的或无效的"
+                exit 1
+            fi
+            # 检查每个探针的状态
+            current_time=$(date +%s)
+            echo "$nezha_agent_list" | jq -c '.result[]' | while IFS= read -r server; do
+                server_name=$(echo "$server" | jq -r '.name')
+                last_active=$(echo "$server" | jq -r '.last_active')
+                valid_ip=$(echo "$server" | jq -r '.valid_ip')
+                server_id=$(echo "$server" | jq -r '.id')
+                # 筛选 ID 相符的探针
+                if [[ " ${NEZHA_SERVER_ID[@]} " =~ " $server_id " ]]; then
+                    green "已找到指定的服务器 $server_name, ID 为 $server_id"                    
+                    # 检查状态并将结果写入 nezha_status 变量
+                    if [ $((current_time - last_active)) -gt 30 ]; then
+                        nezha_status="offline"
+                        red "$server_name 已离线"
+                        all_checks=false
+                        sleep 10
+                        attempt=$((attempt + 1))
+                        continue
+                    else
+                        nezha_status="online"
+                        green "$server_name 在线"
+                    fi
+                    echo "$nezha_status"
+                fi           
             done
             
             # 如果所有检查都通过，则打印通畅信息并退出循环
