@@ -23,7 +23,7 @@ REBOOT_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/reboo
 NEZHA_URL=""  # 哪吒面板地址，需要 http(s):// 前缀
 NEZHA_APITOKEN=""  # 哪吒面板的 API TOKEN
 NEZHA_API="$NEZHA_URL/api/v1/server/list"  # 获取哪吒探针列表的api接口，请勿修改
-NEZHA_SERVER_ID=("13" "14" "17" "23" "24" "26" "27")
+NEZHA_AGENT_ID=("13" "14" "17" "23" "24" "26" "27")
 
 # 外部传入参数
 export TERM=xterm
@@ -193,7 +193,7 @@ process_servers() {
                 valid_ip=$(echo "$server" | jq -r '.valid_ip')
                 server_id=$(echo "$server" | jq -r '.id')
                 # 筛选 ID 相符的探针
-                if [[ " ${NEZHA_SERVER_ID[@]} " =~ " $server_id " ]]; then
+                if [[ " ${NEZHA_AGENT_ID[@]} " =~ " $server_id " ]]; then
                     green "已找到指定的服务器 $server_name, ID 为 $server_id"
                     if [ $((current_time - last_active)) -gt 30 ]; then
                         nezha_status="offline"
