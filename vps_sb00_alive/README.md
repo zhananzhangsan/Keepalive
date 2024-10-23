@@ -103,9 +103,9 @@ curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_
 ```
 > 把其中的`https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_alive/sb00_alive.sh`脚本地址改为你自己的`脚本直链地址`
 
-**模拟输出效果**
+**运行截图**
 
-![17264015029571726401502712.png](https://fastly.jsdelivr.net/gh/yutian81/yutian81.github.io@master/assets/images/17264015029571726401502712.png)
+![运行截图](https://github.com/user-attachments/assets/94668e6c-30de-41e4-aae1-928bd585615c)
 
 ----
 
