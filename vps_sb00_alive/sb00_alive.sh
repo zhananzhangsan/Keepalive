@@ -5,7 +5,7 @@
 #老王原始serv00四合一无交互脚本：https://github.com/eooce/Sing-box/blob/main/sb_00.sh
 #yutian81修改serv00四合一无交互脚本：https://github.com/yutian81/serv00-ct8-ssh/blob/main/vps_sb00_alive/sb00-sk5.sh
 #yutian81修改serv00四合一有交互脚本：https://github.com/yutian81/serv00-ct8-ssh/blob/main/sb_serv00_socks.sh
-#yutian81无交互脚本执行命令的变量为 SCRIPT_URL；有交互脚本执行命令的变量为 REBOOT_URL
+#yutian81无交互脚本执行命令的变量为 SCRIPT_URL；直接重启服务器原有进程的变量为 REBOOT_URL
 #yutian81-vps保活serv00项目说明：https://github.com/yutian81/serv00-ct8-ssh/blob/main/vps_sb00_alive/README.md
 #修改说明：yutian81的版本在老王原始四合一脚本基础上，去掉了 TUIC 协议，增加了 SOCKS5 协议
 
@@ -14,22 +14,20 @@ red() { echo -e "\e[1;91m$1\033[0m"; }
 green() { echo -e "\e[1;32m$1\033[0m"; }
 yellow() { echo -e "\e[1;33m$1\033[0m"; }
 
-# 定义变量
+# 定义全局变量
 SCRIPT_PATH="/root/sb00_alive.sh"  # 本脚本路径，不要改变文件名
-SCRIPT_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_alive/sb00-sk5.sh"  # 四合一无交互yutian版，含socks5，无tuic
+#SCRIPT_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_alive/sb00-sk5.sh"  # 四合一无交互yutian版，含socks5，无tuic
 #SCRIPT_URL="https://raw.githubusercontent.com/eooce/Sing-box/refs/heads/main/sb_00.sh"  # 四合一无交互老王版，无socks5，含tuic
 VPS_JSON_URL=""  # 储存vps登录信息及无交互脚本外部变量的json文件
 REBOOT_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/reboot.sh"   # 仅支持重启yutian81修改serv00四合一有交互脚本
 NEZHA_URL=""  # 哪吒面板地址，需要 http(s):// 前缀
 NEZHA_APITOKEN=""  # 哪吒面板的 API TOKEN
 NEZHA_API="$NEZHA_URL/api/v1/server/list"  # 获取哪吒探针列表的api接口，请勿修改
-NEZHA_AGENT_ID=("13" "14" "17" "23" "24" "26" "27")
+NEZHA_AGENT_ID=("13" "14" "17" "23" "24" "26" "27")  # 从哪吒管理后台获取探针ID填入到此
 
 # 外部传入参数
 export TERM=xterm
 export DEBIAN_FRONTEND=noninteractive
-# export CFIP=${CFIP:-'www.visa.com.tw'}  # 优选域名或优选ip
-# export CFPORT=${CFPORT:-'443'}     # 优选域名或优选ip对应端口
 
 # 根据对应系统安装依赖
 install_packages() {
@@ -44,7 +42,7 @@ install_packages() {
         packages="sshpass curl netcat-openbsd cron jq"
     elif [ -f /etc/alpine-release ]; then
         package_manager="apk add"
-        packages="openssh curl openbsd-netcat cronie jq"
+        packages="openssh curl netcat-openbsd cronie jq"
     else
         red "不支持的系统架构！"
         exit 1
@@ -101,11 +99,9 @@ check_tcp_port() {
     local VMESS_PORT=$2
     # 使用 nc 命令检测端口状态，返回0表示可用
     if nc -zv "$HOST" "$VMESS_PORT" &>/dev/null; then
-        port_status=1  # 端口不可用
-        red "TCP 端口 $(yellow "$VMESS_PORT") 访问失败"
-    else
         port_status=0  # 端口可用
-        green "TCP 端口 $(yellow "$VMESS_PORT") 访问成功"
+    else
+        port_status=1  # 端口不可用
     fi
 }
 
@@ -123,7 +119,6 @@ check_nezha_list() {
         red "获取哪吒探针列表失败，请检查 NEZHA_APITOKEN 和 NEZHA_URL 设置"
         exit 1
     fi
-    echo "$agent_list"
 }
 
 # 连接并执行远程命令的函数
@@ -135,8 +130,8 @@ run_remote_command() {
     SOCKS_USER=\"$SOCKS_USER\" SOCKS_PASS=\"$SOCKS_PASS\" \
     ARGO_DOMAIN=$ARGO_DOMAIN ARGO_AUTH=\"$ARGO_AUTH\" \
     NEZHA_SERVER=$NEZHA_SERVER NEZHA_PORT=$NEZHA_PORT NEZHA_KEY=$NEZHA_KEY \
-    bash <(curl -Ls ${SCRIPT_URL})"
-    #bash <(curl -Ls ${REBOOT_URL})  #使用此脚本无需重装节点，它将直接启动原本存储在服务器中进程和配置文件，实现节点重启，仅适用于yutian81修改serv00四合一有交互脚本
+    bash <(curl -Ls ${REBOOT_URL})"
+    # bash <(curl -Ls ${SCRIPT_URL})  #使用此脚本无需重装节点，它将直接启动原本存储在服务器中进程和配置文件，实现节点重启，仅适用于yutian81修改serv00四合一有交互脚本
 }
 
 # 处理服务器列表并遍历，TCP端口、Argo、哪吒探针三项检测有一项不通即连接 SSH 执行命令
@@ -155,8 +150,7 @@ process_servers() {
         NEZHA_SERVER=$(echo "$servers" | jq -r '.NEZHA_SERVER')
         NEZHA_PORT=$(echo "$servers" | jq -r '.NEZHA_PORT')
         NEZHA_KEY=$(echo "$servers" | jq -r '.NEZHA_KEY')
-        green "已完成服务器  $(yellow "$HOST")  的配置信息解析"
-        green "正在检查 Vmess端口、Argo隧道、哪吒探针 是否可访问"
+        yellow "正在检查服务器 $HOST 的 [Vmess端口]、[Argo隧道]、[哪吒探针] 是否可访问"
 
         local attempt=0
         local max_attempts=5  # 最大尝试检测次数
@@ -166,7 +160,7 @@ process_servers() {
 
             # 检查 TCP 端口是否通畅，不通则 10 秒后重试
             check_tcp_port "$HOST" "$VMESS_PORT"
-            if [ "$port_status" -eq 1 ]; then
+            if [ "$port_status" -ne 0 ]; then
                 red "TCP 端口 $(yellow "$VMESS_PORT") 不可用！休眠 10 秒后重试"
                 all_checks=false
                 sleep 10
@@ -194,17 +188,15 @@ process_servers() {
                 server_id=$(echo "$server" | jq -r '.id')
                 # 筛选 ID 相符的探针
                 if [[ " ${NEZHA_AGENT_ID[@]} " =~ " $server_id " ]]; then
-                    green "已找到指定的服务器 $server_name, ID 为 $server_id"
                     if [ $((current_time - last_active)) -gt 30 ]; then
                         nezha_status="offline"
-                        red "$server_name 已离线"
+                        red 服务器 "$server_name 的哪吒探针已离线，探针 ID 为 $server_id"
                         all_checks=false
                         sleep 10
                         attempt=$((attempt + 1))
                         continue
                     else
                         nezha_status="online" 
-                        green "$server_name 在线"
                         break
                     fi
                 fi
@@ -212,8 +204,8 @@ process_servers() {
             
             # 如果所有检查都通过，则打印通畅信息并退出循环
             if [ "$all_checks" == true ]; then
-                green "TCP 端口 $(yellow "$VMESS_PORT") 通畅; Argo $(yellow "$ARGO_DOMAIN") 正常; 哪吒探针 $(yellow "$server_name") 正常"
-                green "服务器 $(yellow "$HOST") 一切正常！ 账户：$(yellow "$SSH_USER")  [$time]"
+                green "TCP 端口 $(yellow "$VMESS_PORT") $(green "通畅"); $(green "Argo") $(yellow "$ARGO_DOMAIN") $(green "正常") ; $(yellow "哪吒探针") $(green "正常")"
+                green "服务器 $(yellow "$HOST") $(green "一切正常！账户：") $(yellow "$SSH_USER")  [$time]"
                 break
             fi
         done
