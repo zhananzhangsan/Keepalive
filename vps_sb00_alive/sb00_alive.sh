@@ -20,8 +20,8 @@ SCRIPT_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_s
 #SCRIPT_URL="https://raw.githubusercontent.com/eooce/Sing-box/refs/heads/main/sb_00.sh"  # 四合一无交互老王版，无socks5，含tuic
 VPS_JSON_URL=""  # 储存vps登录信息及无交互脚本外部变量的json文件
 REBOOT_URL="https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/reboot.sh"   # 仅支持重启yutian81修改serv00四合一有交互脚本
-NEZHA_URL="https://nezha.yutian81.top"  # 哪吒面板地址，需要 http(s):// 前缀
-NEZHA_APITOKEN="Fi3W8ProskZcpdPtFiBxkh6utZSJevL1"  # 哪吒面板的 API TOKEN
+NEZHA_URL=""  # 哪吒面板地址，需要 http(s):// 前缀
+NEZHA_APITOKEN=""  # 哪吒面板的 API TOKEN
 NEZHA_API="$NEZHA_URL/api/v1/server/list"  # 获取哪吒探针列表的api接口，请勿修改
 NEZHA_SERVER_ID=("13" "14" "17" "23" "24" "26" "27")
 
