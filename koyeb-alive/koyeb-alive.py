@@ -14,8 +14,13 @@ def send_tg_message(message):
         "text": message,
         "parse_mode": "Markdown"
     }
-    response = requests.post(url, data=data)
-    return response.json()
+    try:
+        response = requests.post(url, data=data)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        print(f"发送 Telegram 消息失败: {e}")
+        return None
 
 def login_koyeb(email, password):
     login_url = "https://app.koyeb.com/v1/account/login"
@@ -27,17 +32,12 @@ def login_koyeb(email, password):
         "email": email,
         "password": password
     }
-    
     try:
         response = requests.post(login_url, headers=headers, json=data)
         response.raise_for_status()
-        
-        if response.status_code == 200:
-            return True, "登录成功"
-        else:
-            return False, f"登录失败: HTTP状态码 {response.status_code}"
+        return response.ok, "登录成功" if response.ok else f"登录失败: HTTP状态码 {response.status_code}"
     except requests.RequestException as e:
-        return False, f"登录失败: {str(e)}"
+        return False, f"登录失败: {e}"
 
 # 登录并记录所有账户的结果
 results = []
