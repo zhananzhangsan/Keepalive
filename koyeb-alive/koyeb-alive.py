@@ -1,6 +1,8 @@
 import os
 import requests
 import json
+import time
+import random
 
 # 从环境变量获取 Koyeb 账户信息（以 JSON 字符串格式存储）
 KOYEB_ACCOUNTS = json.loads(os.getenv("KOYEB_ACCOUNTS"))
@@ -14,13 +16,8 @@ def send_tg_message(message):
         "text": message,
         "parse_mode": "Markdown"
     }
-    try:
-        response = requests.post(url, data=data)
-        response.raise_for_status()
-        return response.json()
-    except requests.RequestException as e:
-        print(f"发送 Telegram 消息失败: {e}")
-        return None
+    response = requests.post(url, data=data)
+    return response.json()
 
 def login_koyeb(email, password):
     login_url = "https://app.koyeb.com/v1/account/login"
@@ -32,18 +29,27 @@ def login_koyeb(email, password):
         "email": email,
         "password": password
     }
+    
     try:
         response = requests.post(login_url, headers=headers, json=data)
         response.raise_for_status()
-        return response.ok, "登录成功" if response.ok else f"登录失败: HTTP状态码 {response.status_code}"
+        
+        if response.status_code == 200:
+            return True, "登录成功"
+        else:
+            return False, f"登录失败: HTTP状态码 {response.status_code}"
     except requests.RequestException as e:
-        return False, f"登录失败: {e}"
+        return False, f"登录失败: {str(e)}"
 
 # 登录并记录所有账户的结果
 results = []
 for account in KOYEB_ACCOUNTS:
     email = account['email']
     password = account['password']
+    
+    # 增加 10 到 30 秒的随机延迟
+    time.sleep(random.uniform(10, 30))
+    
     success, message = login_koyeb(email, password)
     results.append(f"账户: {email}\n状态: {'成功' if success else '失败'}\n消息: {message}\n")
 
