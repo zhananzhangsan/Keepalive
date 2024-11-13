@@ -2,7 +2,6 @@ import os
 import requests
 import json
 import time
-import random
 
 # 从环境变量获取 Koyeb 账户信息（以 JSON 字符串格式存储）
 KOYEB_ACCOUNTS = json.loads(os.getenv("KOYEB_ACCOUNTS"))
@@ -47,8 +46,8 @@ for account in KOYEB_ACCOUNTS:
     email = account['email']
     password = account['password']
     
-    # 增加 10 到 30 秒的随机延迟
-    time.sleep(random.uniform(10, 30))
+    # 每次登录后等待 5 秒
+    time.sleep(5)
     
     success, message = login_koyeb(email, password)
     results.append(f"账户: {email}\n状态: {'成功' if success else '失败'}\n消息: {message}\n")
