@@ -3,14 +3,13 @@ const moment = require('moment-timezone');
 // 从环境变量加载 URLs，每行一个地址
 async function handleRequest(request, env) {
   // 获取环境变量
-  const urls = (env['24_URLS'] || '').split('\n').map(url => url.trim()).filter(url => url);  // 从环境变量 24_URLS 获取并按行拆分
-  const websites = (env['NO24_URLS'] || '').split('\n').map(url => url.trim()).filter(url => url);  // 从环境变量 NO24_URLS 获取并按行拆分
+  const urls = (env['24_URLS'] || '').split('\n').map(url => url.trim()).filter(url => url);  // 24小时不间断访问的地址
+  const websites = (env['NO24_URLS'] || '').split('\n').map(url => url.trim()).filter(url => url);  // 01:00至05:00暂停访问的地址
 
   // 访问网站的函数
-  async function visitWebsites() {
+  async function visitWebsites(websites) {
     const currentMoment = moment().tz('Asia/Hong_Kong');
     const formattedTime = currentMoment.format('YYYY-MM-DD HH:mm:ss');
-
     for (let url of websites) {
       try {
         const response = await fetch(url);
@@ -31,30 +30,29 @@ async function handleRequest(request, env) {
     }
   }
 
-  // 定时器函数
+  // 定时器函数，控制在01:00到05:00之间暂停访问指定的网站
   async function checkAndSetTimer() {
     const currentMoment = moment().tz('Asia/Hong_Kong');
     const formattedTime = currentMoment.format('YYYY-MM-DD HH:mm:ss');
-    
     if (currentMoment.hours() >= 1 && currentMoment.hours() < 5) {
       console.log(`Stop visit from 1:00 to 5:00 --- ${formattedTime}`);
-      // 此处可以暂停访问
+      // 仅在 1:00 到 5:00 期间，暂停访问 websites 中的 URL
+      return;  // 直接跳过访问，暂停访问 NO24_URLS 中的 URL
     } else {
       console.log(`Running visit at ${formattedTime}`);
-      visitWebsites();
+      // 在其他时间，执行访问
+      await visitWebsites(websites);
     }
   }
-
   console.log(`Worker activated at ${moment().tz('Asia/Hong_Kong').format('YYYY-MM-DD HH:mm:ss')}`);
 
   // 每2分钟访问一次 24小时不间断的URLs
-  urls.forEach((url) => {
+  for (let url of urls) {
     scrapeAndLog(url);
-  });
-
+  }
   // 处理在01:00至05:00暂停访问的URLs
   await checkAndSetTimer();
-  
+
   return new Response('Request processed by Cloudflare Worker!', {
     status: 200,
     headers: { 'Content-Type': 'text/plain' },
