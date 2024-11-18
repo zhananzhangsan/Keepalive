@@ -34,22 +34,26 @@ async function handleRequest(request, env) {
   async function checkAndSetTimer() {
     const currentMoment = moment().tz('Asia/Hong_Kong');
     const formattedTime = currentMoment.format('YYYY-MM-DD HH:mm:ss');
+    
+    // 判断是否在 1:00 到 5:00 之间
     if (currentMoment.hours() >= 1 && currentMoment.hours() < 5) {
       console.log(`Stop visit from 1:00 to 5:00 --- ${formattedTime}`);
-      // 仅在 1:00 到 5:00 期间，暂停访问 websites 中的 URL
-      return;  // 直接跳过访问，暂停访问 NO24_URLS 中的 URL
+      // 在1:00到5:00之间，不访问NO24_URLS中的网站
+      return;
     } else {
       console.log(`Running visit at ${formattedTime}`);
-      // 在其他时间，执行访问
+      // 在其他时间，执行访问NO24_URLS中的网站
       await visitWebsites(websites);
     }
   }
+
   console.log(`Worker activated at ${moment().tz('Asia/Hong_Kong').format('YYYY-MM-DD HH:mm:ss')}`);
 
-  // 每2分钟访问一次 24小时不间断的URLs
+  // 每次请求访问24小时不间断的URLs
   for (let url of urls) {
-    scrapeAndLog(url);
+    await scrapeAndLog(url);
   }
+
   // 处理在01:00至05:00暂停访问的URLs
   await checkAndSetTimer();
 
