@@ -1,0 +1,52 @@
+name: 更新 Nezha Agent 二进制文件
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 1" # 每周一 UTC 0:00
+
+jobs:
+  update_release:
+    name: Update Nezha Agent in Release
+    runs-on: ubuntu-latest
+
+    env:
+      REPO: nezhahq/agent
+      ZIP_FILE: nezha-agent_freebsd_arm64.zip
+      TARGET_FILE: nezha_agent_arm64
+      RELEASE_TAG: arm64
+      RELEASE_TITLE: freebsd
+      RELEASE_NOTES: nezha_agent_arm64 for freebsd.
+
+    steps:
+      # Step 1: 检出代码
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: 安装 jq（如果需要解析 JSON）
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      # Step 3: 下载最新文件
+      - name: Download Nezha Agent
+        run: |
+          wget -q https://github.com/$REPO/releases/latest/download/$ZIP_FILE
+          unzip -q $ZIP_FILE         
+          # 提取解压后第一个二进制文件并重命名
+          BINARY_FILE=$(find . -type f -executable | head -n 1)
+          mv "$BINARY_FILE" $TARGET_FILE         
+          # 提取版本号
+          VERSION=$(wget -qO- https://github.com/$REPO/releases/latest | grep -oP 'tag/\Kv[0-9.]+')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      # Step 4: 替换 Release 中的文件
+      - name: Update Nezha Agent in Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 删除已有文件，仅替换目标文件
+          gh release delete-asset $RELEASE_TAG --pattern "$TARGET_FILE" || true       
+          # 上传新文件到指定标签，并附加版本号到 notes
+          gh release upload $RELEASE_TAG $TARGET_FILE --clobber \
+            --title "$RELEASE_TITLE" \
+            --notes "$RELEASE_NOTES Version: ${{ env.VERSION }}"
