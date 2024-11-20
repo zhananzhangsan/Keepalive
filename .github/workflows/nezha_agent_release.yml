@@ -35,18 +35,25 @@ jobs:
         run: |
           # 获取解压后的第一个文件名
           FILE_NAME=$(ls ${{ env.TARGET_FOLDER }} | grep -v '/' | head -n 1)
-          # 获取解压后指定的文件名
-          # FILE_NAME=$(ls ${{ env.TARGET_FOLDER }}/*.bin | head -n 1)
           # 重命名文件
           mv ${{ env.TARGET_FOLDER }}/$FILE_NAME ${{ env.TARGET_FOLDER }}/${{ env.RENAMED_FILE }}
 
-      - name: Upload to GitHub Release
-        uses: actions/upload-release-asset@v1
+      - name: Create a new release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ env.TARGET_TAG }}
+          release_name: "Release ${{ env.TARGET_TAG }}"
+          body: "Release for ${{ env.TARGET_TAG }} architecture"
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to GitHub Release
+        uses: actions/upload-release-asset@v1
         with:
-          repo: yutian81/serv00-ct8-ssh
-          tag: ${{ env.TARGET_TAG }}
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./freebsd/${{ env.RENAMED_FILE }}
           asset_name: ${{ env.RENAMED_FILE }}
           asset_content_type: application/octet-stream
