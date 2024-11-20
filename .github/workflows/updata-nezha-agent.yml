@@ -7,7 +7,7 @@ on:
 
 jobs:
   update_release:
-    name: Update Nezha Agent in Release
+    name: 更新 Nezha Agent 在 Release 中的文件
     runs-on: ubuntu-latest
 
     env:
@@ -19,34 +19,39 @@ jobs:
       RELEASE_NOTES: nezha_agent_arm64 for freebsd.
 
     steps:
-      # Step 1: 检出代码
-      - name: Checkout repository
+      - name: 检出代码
         uses: actions/checkout@v3
 
-      # Step 2: 安装 jq（如果需要解析 JSON）
-      - name: Install jq
+      - name: 安装 jq
         run: sudo apt-get install -y jq
 
-      # Step 3: 下载最新文件
-      - name: Download Nezha Agent
+      - name: 下载 Nezha Agent 最新文件
         run: |
           wget -q https://github.com/$REPO/releases/latest/download/$ZIP_FILE
           unzip -q $ZIP_FILE         
           # 提取解压后第一个二进制文件并重命名
           BINARY_FILE=$(find . -type f -executable | head -n 1)
           mv "$BINARY_FILE" $TARGET_FILE         
-          # 提取版本号
-          VERSION=$(wget -qO- https://github.com/$REPO/releases/latest | grep -oP 'tag/\Kv[0-9.]+')
+          # 使用 GitHub API 提取版本号
+          VERSION=$(curl -s https://api.github.com/repos/$REPO/releases/latest | jq -r .tag_name)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      # Step 4: 替换 Release 中的文件
-      - name: Update Nezha Agent in Release
+      - name: 删除旧的发布文件
+        run: |
+          # 获取现有的资产 ID
+          asset_id=$(gh release view $RELEASE_TAG --json assets | jq -r ".assets[] | select(.name == \"$TARGET_FILE\") | .id")
+          if [ "$asset_id" ]; then
+            # 删除指定的资产
+            gh release delete-asset $RELEASE_TAG --asset-id $asset_id
+          else
+            # 如果没有找到有效的 asset_id，则使用模式匹配删除旧文件
+            gh release delete-asset $RELEASE_TAG --pattern "$TARGET_FILE" || true
+          fi
+
+      - name: 更新 Nezha Agent 在 Release 中的文件
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 删除已有文件，仅替换目标文件
-          gh release delete-asset $RELEASE_TAG --pattern "$TARGET_FILE" || true       
-          # 上传新文件到指定标签，并附加版本号到 notes
           gh release upload $RELEASE_TAG $TARGET_FILE --clobber \
             --title "$RELEASE_TITLE" \
             --notes "$RELEASE_NOTES Version: ${{ env.VERSION }}"
