@@ -1,5 +1,10 @@
 name: 更新 nezha agent 二进制文件
 
+on:
+  workflow_dispatch: # 手动触发工作流
+  schedule:
+    - cron: "0 0 * * 0"
+
 jobs:
   update_release:
     name: 下载并上传 release
