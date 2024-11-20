@@ -1,0 +1,52 @@
+name: Update nezha agent release
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # 每周日 UTC 0点运行
+  workflow_dispatch: # 手动触发
+
+jobs:
+  update_release:
+    name: Download and Upload release
+    runs-on: ubuntu-latest
+    env:
+      SOURCE_REPOSITORY: nezhahq/agent # 参数 1：仓库名
+      DOWNLOAD_FILE: nezha-agent_freebsd_arm64.zip # 参数 2：下载和保存的文件名
+      TARGET_FOLDER: freebsd # 参数 3：创建的文件夹名
+      RENAMED_FILE: nezha_agent_arm64 # 参数 4：重命名后的文件名
+      TARGET_TAG: arm64 # 参数 5：标签名
+
+    steps:
+      - name: Checkout this repository
+        uses: actions/checkout@v3
+
+      - name: Set up dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip
+
+      - name: Download release
+        run: |
+          curl -sL https://github.com/${{ env.SOURCE_REPOSITORY }}/releases/latest/download/${{ env.DOWNLOAD_FILE }} -o ${{ env.DOWNLOAD_FILE }}
+          mkdir -p ${{ env.TARGET_FOLDER }}
+          unzip -o ${{ env.DOWNLOAD_FILE }} -d ${{ env.TARGET_FOLDER }}
+
+      - name: Rename extracted file
+        run: |
+          # 获取解压后的第一个文件名
+          FILE_NAME=$(ls ${{ env.TARGET_FOLDER }} | grep -v '/' | head -n 1)
+          # 获取解压后指定的文件名
+          # FILE_NAME=$(ls ${{ env.TARGET_FOLDER }}/*.bin | head -n 1)
+          # 重命名文件
+          mv ${{ env.TARGET_FOLDER }}/$FILE_NAME ${{ env.TARGET_FOLDER }}/{{ env.RENAMED_FILE }}
+
+      - name: Upload to GitHub Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          repo: yutian81/serv00-ct8-ssh
+          tag: ${{ env.TARGET_TAG }}
+          asset_path: ./freebsd/${{ env.RENAMED_FILE }}
+          asset_name: ${{ env.RENAMED_FILE }}
+          asset_content_type: application/octet-stream
