@@ -10,12 +10,12 @@ jobs:
     name: Download and Upload release
     runs-on: ubuntu-latest
     env:
-      SOURCE_REPO: nezhahq/agent # 变量 1：上游 用户名/仓库名
-      DOWNLOAD_FILE: nezha-agent_freebsd_arm64.zip # 变量 2：下载和保存的文件名
-      TARGET_FOLDER: freebsd # 变量 3：创建的 release 文件夹名
-      RENAMED_FILE: nezha_agent_arm64 # 变量 4：重命名后的文件名
-      TARGET_TAG: arm64 # 变量 5：release 标签名
-      UPLOAD_REPO: yutian81/serv00-ct8-ssh # 变量 6：上传到的 用户名/仓库名
+      SOURCE_REPO: nezhahq/agent # 上游 用户名/仓库名
+      DOWNLOAD_FILE: nezha-agent_freebsd_arm64.zip # 下载和保存的文件名
+      TARGET_FOLDER: freebsd # 创建的 release 文件夹名
+      RENAMED_FILE: nezha_agent_arm64 # 重命名后的文件名
+      TARGET_TAG: arm64 # release 标签名
+      UPLOAD_REPO: yutian81/serv00-ct8-ssh # 上传到的 用户名/仓库名
 
     steps:
       - name: Checkout this repository
@@ -87,4 +87,3 @@ jobs:
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
