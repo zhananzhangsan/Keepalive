@@ -55,7 +55,7 @@ jobs:
       # 步骤 7: 如果 release 不存在，则创建新的 release
       - name: 如果 release 不存在，则创建新的 release
         id: create_release
-        if: ${{ steps.check_release.outputs.release_exists == '1' }}
+        if: ${{ env.release_exists == '1' }}
         run: |
           RESPONSE=$(curl -s -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -d '{
@@ -73,7 +73,7 @@ jobs:
       # 步骤 8: 删除现有的资产（如果存在）
       - name: 删除现有资产（如果存在）
         id: delete_existing_asset
-        if: ${{ steps.check_release.outputs.release_exists == '0' }}
+        if: ${{ env.release_exists == '0' }}
         run: |
           ASSET_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             https://api.github.com/repos/${{ env.UPLOAD_REPO }}/releases/tags/${{ env.TARGET_TAG }} | \
