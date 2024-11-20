@@ -51,8 +51,8 @@ jobs:
           RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             https://api.github.com/repos/${{ env.UPLOAD_REPO }}/releases/tags/${{ env.TARGET_TAG }})
           echo "RESPONSE=$RESPONSE" # 输出完整响应内容
-          echo "release_exists=$(echo $RESPONSE | grep -c 'Not Found')" >> $GITHUB_ENV
-          echo "release_exists=${{ env.release_exists }}" # 确保存在此环境变量
+          release_exists=$(echo $RESPONSE | grep -c 'Not Found')
+          echo "release_exists=$release_exists" >> $GITHUB_ENV
 
       - name: Create a new release if not exists
         id: create_release
