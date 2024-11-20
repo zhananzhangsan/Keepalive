@@ -38,7 +38,7 @@ jobs:
           # 获取解压后指定的文件名
           # FILE_NAME=$(ls ${{ env.TARGET_FOLDER }}/*.bin | head -n 1)
           # 重命名文件
-          mv ${{ env.TARGET_FOLDER }}/$FILE_NAME ${{ env.TARGET_FOLDER }}/{{ env.RENAMED_FILE }}
+          mv ${{ env.TARGET_FOLDER }}/$FILE_NAME ${{ env.TARGET_FOLDER }}/${{ env.RENAMED_FILE }}
 
       - name: Upload to GitHub Release
         uses: actions/upload-release-asset@v1
