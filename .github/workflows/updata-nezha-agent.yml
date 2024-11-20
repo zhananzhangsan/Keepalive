@@ -3,7 +3,7 @@ name: 更新 Nezha Agent 二进制文件
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * 1" # 每周一 UTC 0:00
+    - cron: "0 0 * * 1"  # 每周一 UTC 0:00
 
 jobs:
   update_release:
@@ -28,10 +28,10 @@ jobs:
       - name: 下载 Nezha Agent 最新文件
         run: |
           wget -q https://github.com/$REPO/releases/latest/download/$ZIP_FILE
-          unzip -q $ZIP_FILE         
+          unzip -q $ZIP_FILE
           # 提取解压后第一个二进制文件并重命名
           BINARY_FILE=$(find . -type f -executable | head -n 1)
-          mv "$BINARY_FILE" $TARGET_FILE         
+          mv "$BINARY_FILE" $TARGET_FILE
           # 使用 GitHub API 提取版本号
           VERSION=$(curl -s https://api.github.com/repos/$REPO/releases/latest | jq -r .tag_name)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
@@ -52,6 +52,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload $RELEASE_TAG $TARGET_FILE --clobber \
-            --title "$RELEASE_TITLE" \
-            --notes "$RELEASE_NOTES Version: ${{ env.VERSION }}"
+          # 检查是否已经有 Release，若没有则创建新的 Release
+          gh release create $RELEASE_TAG $TARGET_FILE --title "$RELEASE_TITLE" --notes "$RELEASE_NOTES Version: ${{ env.VERSION }}" || \
+          gh release upload $RELEASE_TAG $TARGET_FILE --clobber --notes "$RELEASE_NOTES Version: ${{ env.VERSION }}"
