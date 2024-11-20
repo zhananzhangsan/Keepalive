@@ -13,7 +13,7 @@ jobs:
     env:
       REPO: nezhahq/agent
       ZIP_FILE: nezha-agent_freebsd_arm64.zip
-      TARGET_FILE: nezha_agent_arm64
+      TARGET_FILE: nz_agent_arm64
       RELEASE_TAG: arm64
       RELEASE_TITLE: freebsd
       RELEASE_NOTES: nezha_agent_arm64 for freebsd.
