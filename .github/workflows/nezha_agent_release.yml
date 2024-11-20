@@ -10,12 +10,12 @@ jobs:
     name: Download and Upload release
     runs-on: ubuntu-latest
     env:
-      SOURCE_REPO: nezhahq/agent # 变量 1：上游 用户名/仓库名
-      DOWNLOAD_FILE: nezha-agent_freebsd_arm64.zip # 变量 2：下载和保存的文件名
-      TARGET_FOLDER: freebsd # 变量 3：创建的 release 文件夹名
-      RENAMED_FILE: nezha_agent_arm64 # 变量 4：重命名后的文件名
-      TARGET_TAG: arm64 # 变量 5：release 标签名
-      UPLOAD_REPO: yutian81/serv00-ct8-ssh # 变量 6：上传到的 用户名/仓库名
+      SOURCE_REPO: nezhahq/agent
+      DOWNLOAD_FILE: nezha-agent_freebsd_arm64.zip
+      TARGET_FOLDER: freebsd
+      RENAMED_FILE: nezha_agent_arm64
+      TARGET_TAG: arm64
+      UPLOAD_REPO: yutian81/serv00-ct8-ssh
 
     steps:
       - name: Checkout this repository
@@ -34,9 +34,7 @@ jobs:
 
       - name: Rename extracted file
         run: |
-          # 获取解压后的第一个文件名
           FILE_NAME=$(ls ${{ env.TARGET_FOLDER }} | grep -v '/' | head -n 1)
-          # 重命名文件
           mv ${{ env.TARGET_FOLDER }}/$FILE_NAME ${{ env.TARGET_FOLDER }}/${{ env.RENAMED_FILE }}
 
       - name: Debug file path
@@ -47,11 +45,10 @@ jobs:
       - name: Check if release exists
         id: check_release
         run: |
-          # 检查是否存在指定标签的 release
           RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             https://api.github.com/repos/${{ env.UPLOAD_REPO }}/releases/tags/${{ env.TARGET_TAG }})
-          echo "RESPONSE=$RESPONSE" # 输出完整响应内容
-          release_exists=$(echo $RESPONSE | grep -c 'Not Found')
+          echo "RESPONSE=$RESPONSE"
+          release_exists=$(echo $RESPONSE | jq -r '.message' | grep -c 'Not Found')
           echo "release_exists=$release_exists" >> $GITHUB_ENV
 
       - name: Create a new release if not exists
@@ -71,10 +68,9 @@ jobs:
         id: delete_existing_asset
         if: ${{ env.release_exists == '0' }}
         run: |
-          # 查找并删除已上传的文件
           ASSET_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             https://api.github.com/repos/${{ env.UPLOAD_REPO }}/releases/tags/${{ env.TARGET_TAG }} | \
-            jq -r '.assets[] | select(.name == "${{ env.RENAMED_FILE }}") | .id')
+            jq -r --arg renamed_file "${{ env.RENAMED_FILE }}" '.assets[] | select(.name == $renamed_file) | .id')
           if [ "$ASSET_ID" != "null" ]; then
             curl -s -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             https://api.github.com/repos/${{ env.UPLOAD_REPO }}/releases/assets/$ASSET_ID
