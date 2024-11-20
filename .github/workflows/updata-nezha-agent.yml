@@ -48,10 +48,17 @@ jobs:
             gh release delete-asset $RELEASE_TAG --pattern "$TARGET_FILE" || true
           fi
 
-      - name: 更新 Nezha Agent 在 Release 中的文件
+      - name: 上传 Nezha Agent 文件
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 检查是否已经有 Release，若没有则创建新的 Release
-          gh release create $RELEASE_TAG $TARGET_FILE --title "$RELEASE_TITLE" --notes "$RELEASE_NOTES Version: ${{ env.VERSION }}" || \
-          gh release upload $RELEASE_TAG $TARGET_FILE --clobber --notes "$RELEASE_NOTES Version: ${{ env.VERSION }}"
+          # 检查 Release 是否已存在
+          release_exists=$(gh release view $RELEASE_TAG --json tagName -q ".tagName" || echo "未找到")
+          if [[ "$release_exists" == "$RELEASE_TAG" ]]; then
+            echo "Release $RELEASE_TAG 已存在，正在上传文件并更新备注。"
+            gh release upload $RELEASE_TAG $TARGET_FILE --clobber
+            gh release edit $RELEASE_TAG --notes "$RELEASE_NOTES Version: ${{ env.VERSION }}"
+          else
+            echo "Release $RELEASE_TAG 不存在，正在创建新的 release 并上传文件。"
+            gh release create $RELEASE_TAG $TARGET_FILE --title "$RELEASE_TITLE" --notes "$RELEASE_NOTES Version: ${{ env.VERSION }}"
+          fi
