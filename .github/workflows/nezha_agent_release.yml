@@ -1,13 +1,8 @@
 name: 更新 nezha agent 二进制文件
 
-on:
-  schedule:
-    - cron: '0 0 * * 0' # 每周日 UTC 0点运行
-  workflow_dispatch: # 手动触发
-
 jobs:
   update_release:
-    name: Download and Upload release
+    name: 下载并上传 release
     runs-on: ubuntu-latest
     env:
       SOURCE_REPO: nezhahq/agent
@@ -18,31 +13,37 @@ jobs:
       UPLOAD_REPO: yutian81/serv00-ct8-ssh
 
     steps:
-      - name: Checkout this repository
+      # 步骤 1: 检出当前仓库
+      - name: 检出当前仓库
         uses: actions/checkout@v3
 
-      - name: Set up dependencies
+      # 步骤 2: 安装依赖（安装 unzip）
+      - name: 安装依赖
         run: |
           sudo apt-get update
           sudo apt-get install -y unzip
 
-      - name: Download release
+      # 步骤 3: 下载 release 文件
+      - name: 下载 release 文件
         run: |
           curl -sL https://github.com/${{ env.SOURCE_REPO }}/releases/latest/download/${{ env.DOWNLOAD_FILE }} -o ${{ env.DOWNLOAD_FILE }}
           mkdir -p ${{ env.TARGET_FOLDER }}
           unzip -o ${{ env.DOWNLOAD_FILE }} -d ${{ env.TARGET_FOLDER }}
 
-      - name: Rename extracted file
+      # 步骤 4: 重命名解压出来的文件（如果需要）
+      - name: 重命名解压文件
         run: |
           FILE_NAME=$(ls ${{ env.TARGET_FOLDER }} | grep -v '/' | head -n 1)
           mv ${{ env.TARGET_FOLDER }}/$FILE_NAME ${{ env.TARGET_FOLDER }}/${{ env.RENAMED_FILE }}
 
-      - name: Debug file path
+      # 步骤 5: 调试文件路径
+      - name: 调试文件路径
         run: |
-          echo "Checking the contents of the folder:"
+          echo "检查文件夹内容:"
           ls -la ./freebsd
 
-      - name: Check if release exists
+      # 步骤 6: 检查 release 是否已存在
+      - name: 检查 release 是否已存在
         id: check_release
         run: |
           RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
@@ -51,20 +52,26 @@ jobs:
           release_exists=$(echo $RESPONSE | jq -r '.message' | grep -c 'Not Found')
           echo "release_exists=$release_exists" >> $GITHUB_ENV
 
-      - name: Create a new release if not exists
+      # 步骤 7: 如果 release 不存在，则创建新的 release
+      - name: 如果 release 不存在，则创建新的 release
         id: create_release
         if: ${{ env.release_exists == '1' }}
-        uses: actions/create-release@v1
-        with:
-          tag_name: ${{ env.TARGET_TAG }}
-          release_name: "Release ${{ env.TARGET_TAG }}"
-          body: "Release for ${{ env.TARGET_TAG }} architecture"
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RESPONSE=$(curl -s -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -d '{
+                  "tag_name": "${{ env.TARGET_TAG }}",
+                  "name": "Release ${{ env.TARGET_TAG }}",
+                  "body": "Release for ${{ env.TARGET_TAG }} architecture",
+                  "draft": false,
+                  "prerelease": false
+                }' \
+            https://api.github.com/repos/${{ env.UPLOAD_REPO }}/releases)
+          echo "创建 release: $RESPONSE"
+          upload_url=$(echo $RESPONSE | jq -r '.upload_url')
+          echo "upload_url=$upload_url" >> $GITHUB_ENV
 
-      - name: Delete existing asset if exists
+      # 步骤 8: 删除现有的资产（如果存在）
+      - name: 删除现有资产（如果存在）
         id: delete_existing_asset
         if: ${{ env.release_exists == '0' }}
         run: |
@@ -72,17 +79,16 @@ jobs:
             https://api.github.com/repos/${{ env.UPLOAD_REPO }}/releases/tags/${{ env.TARGET_TAG }} | \
             jq -r --arg renamed_file "${{ env.RENAMED_FILE }}" '.assets[] | select(.name == $renamed_file) | .id')
           if [ "$ASSET_ID" != "null" ]; then
+            echo "删除现有的资产，ID: $ASSET_ID"
             curl -s -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             https://api.github.com/repos/${{ env.UPLOAD_REPO }}/releases/assets/$ASSET_ID
           fi
 
-      - name: Upload to GitHub Release
-        if: ${{ env.release_exists == '1' || steps.create_release.outputs.upload_url != '' }}
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./freebsd/${{ env.RENAMED_FILE }}
-          asset_name: ${{ env.RENAMED_FILE }}
-          asset_content_type: application/octet-stream
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # 步骤 9: 上传新的资产到 release
+      - name: 上传新的资产到 release
+        run: |
+          upload_url="${{ env.upload_url }}"
+          curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @./freebsd/${{ env.RENAMED_FILE }} \
+            "${upload_url}?name=${{ env.RENAMED_FILE }}"
