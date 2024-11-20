@@ -12,42 +12,28 @@ jobs:
     env:
       SOURCE_REPO: nezhahq/agent
       DOWNLOAD_FILE: nezha-agent_freebsd_arm64.zip
-      TARGET_FOLDER: freebsd
       RENAMED_FILE: nezha_agent_arm64
       TARGET_TAG: arm64
       UPLOAD_REPO: yutian81/serv00-ct8-ssh
 
     steps:
-      # 步骤 1: 检出当前仓库
       - name: 检出当前仓库
         uses: actions/checkout@v3
 
-      # 步骤 2: 安装依赖（安装 unzip）
       - name: 安装依赖
         run: |
           sudo apt-get update
           sudo apt-get install -y unzip
 
-      # 步骤 3: 下载 release 文件
       - name: 下载 release 文件
         run: |
           curl -sL https://github.com/${{ env.SOURCE_REPO }}/releases/latest/download/${{ env.DOWNLOAD_FILE }} -o ${{ env.DOWNLOAD_FILE }}
-          mkdir -p ${{ env.TARGET_FOLDER }}
-          unzip -o ${{ env.DOWNLOAD_FILE }} -d ${{ env.TARGET_FOLDER }}
+          unzip -o ${{ env.DOWNLOAD_FILE }}
 
-      # 步骤 4: 重命名解压出来的文件（如果需要）
       - name: 重命名解压文件
         run: |
-          FILE_NAME=$(ls ${{ env.TARGET_FOLDER }} | grep -v '/' | head -n 1)
-          mv ${{ env.TARGET_FOLDER }}/$FILE_NAME ${{ env.TARGET_FOLDER }}/${{ env.RENAMED_FILE }}
+          mv ${{ env.DOWNLOAD_FILE }} ${{ env.RENAMED_FILE }}
 
-      # 步骤 5: 调试文件路径
-      - name: 调试文件路径
-        run: |
-          echo "检查文件夹内容:"
-          ls -la ./freebsd
-
-      # 步骤 6: 检查 release 是否已存在
       - name: 检查 release 是否已存在
         id: check_release
         run: |
@@ -57,7 +43,6 @@ jobs:
           release_exists=$(echo $RESPONSE | jq -r '.message' | grep -c 'Not Found')
           echo "release_exists=$release_exists" >> $GITHUB_ENV
 
-      # 步骤 7: 如果 release 不存在，则创建新的 release
       - name: 如果 release 不存在，则创建新的 release
         id: create_release
         if: ${{ env.release_exists == '1' }}
@@ -75,7 +60,6 @@ jobs:
           upload_url=$(echo $RESPONSE | jq -r '.upload_url' | sed 's/{?name,label}//')
           echo "upload_url=$upload_url" >> $GITHUB_ENV
 
-      # 步骤 8: 删除现有的资产（如果存在）
       - name: 删除现有资产（如果存在）
         id: delete_existing_asset
         if: ${{ env.release_exists == '0' }}
@@ -89,11 +73,10 @@ jobs:
             https://api.github.com/repos/${{ env.UPLOAD_REPO }}/releases/assets/$ASSET_ID
           fi
 
-      # 步骤 9: 上传新的资产到 release
       - name: 上传新的资产到 release
         run: |
           upload_url="${{ env.upload_url }}"
           curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Content-Type: application/octet-stream" \
-            --data-binary @./freebsd/${{ env.RENAMED_FILE }} \
+            --data-binary @./${{ env.RENAMED_FILE }} \
             "${upload_url}?name=${{ env.RENAMED_FILE }}"
