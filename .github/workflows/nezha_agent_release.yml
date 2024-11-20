@@ -72,7 +72,7 @@ jobs:
                 }' \
             https://api.github.com/repos/${{ env.UPLOAD_REPO }}/releases)
           echo "创建 release: $RESPONSE"
-          upload_url=$(echo $RESPONSE | jq -r '.upload_url')
+          upload_url=$(echo $RESPONSE | jq -r '.upload_url' | sed 's/{?name,label}//')
           echo "upload_url=$upload_url" >> $GITHUB_ENV
 
       # 步骤 8: 删除现有的资产（如果存在）
