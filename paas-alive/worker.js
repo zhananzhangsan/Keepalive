@@ -1,7 +1,7 @@
 const moment = require('moment-timezone');
 
 // 从环境变量加载 URLs，每行一个地址
-async function handleRequest(request, env) {
+async function handleRequest(event, env) {
   // 获取环境变量
   const urls = (env['24_URLS'] || '').split('\n').map(url => url.trim()).filter(url => url);  // 24小时不间断访问的地址
   const websites = (env['NO24_URLS'] || '').split('\n').map(url => url.trim()).filter(url => url);  // 01:00至05:00暂停访问的地址
@@ -13,9 +13,9 @@ async function handleRequest(request, env) {
     for (let url of websites) {
       try {
         const response = await fetch(url);
-        console.log(`${formattedTime} Visited web successfully: ${url} - Status code: ${response.status}`);
+        console.log(`${formattedTime} 访问网站成功: ${url} - Status code: ${response.status}`);
       } catch (error) {
-        console.error(`${formattedTime} Error visiting ${url}: ${error.message}`);
+        console.error(`${formattedTime} 访问网站失败 ${url}: ${error.message}`);
       }
     }
   }
@@ -24,9 +24,9 @@ async function handleRequest(request, env) {
   async function scrapeAndLog(url) {
     try {
       const response = await fetch(url);
-      console.log(`${moment().tz('Asia/Hong_Kong').format('YYYY-MM-DD HH:mm:ss')} Web visited Successfully: ${url} - Status code: ${response.status}`);
+      console.log(`${moment().tz('Asia/Hong_Kong').format('YYYY-MM-DD HH:mm:ss')} 访问网站成功: ${url} - Status code: ${response.status}`);
     } catch (error) {
-      console.error(`${moment().tz('Asia/Hong_Kong').format('YYYY-MM-DD HH:mm:ss')} Error visiting: ${url}: ${error.message}`);
+      console.error(`${moment().tz('Asia/Hong_Kong').format('YYYY-MM-DD HH:mm:ss')} 访问网站失败: ${url}: ${error.message}`);
     }
   }
 
@@ -56,14 +56,13 @@ async function handleRequest(request, env) {
 
   // 处理在01:00至05:00暂停访问的URLs
   await checkAndSetTimer();
-
   return new Response('Request processed by Cloudflare Worker!', {
     status: 200,
     headers: { 'Content-Type': 'text/plain' },
   });
 }
 
-// 在此添加Cron触发器配置
-addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request, event));
+// 在此添加 Cron Trigger 事件监听器
+addEventListener('scheduled', event => {
+  event.waitUntil(handleRequest(event, event));
 });
