@@ -1,3 +1,8 @@
+// 你需要在 Cloudflare Worker 中使用环境变量，并且确保没有使用 require。
+// 可以通过 worker 的环境变量传递数据，或者直接引入外部库。
+// 如果你在 Cloudflare Worker 使用 moment-timezone，需要确保该库的兼容性
+// 可以使用 CDN 或者在编译时处理它
+
 const moment = require('moment-timezone');
 
 // 从环境变量加载 URLs，每行一个地址
@@ -37,17 +42,17 @@ async function handleRequest(event, env) {
     
     // 判断是否在 1:00 到 5:00 之间
     if (currentMoment.hours() >= 1 && currentMoment.hours() < 5) {
-      console.log(`Stop visit from 1:00 to 5:00 --- ${formattedTime}`);
+      console.log(`停止访问：1:00 到 5:00 --- ${formattedTime}`);
       // 在1:00到5:00之间，不访问NO24_URLS中的网站
       return;
     } else {
-      console.log(`Running visit at ${formattedTime}`);
+      console.log(`执行访问任务：${formattedTime}`);
       // 在其他时间，执行访问NO24_URLS中的网站
       await visitWebsites(websites);
     }
   }
 
-  console.log(`Worker activated at ${moment().tz('Asia/Hong_Kong').format('YYYY-MM-DD HH:mm:ss')}`);
+  console.log(`Worker 激活时间：${moment().tz('Asia/Hong_Kong').format('YYYY-MM-DD HH:mm:ss')}`);
 
   // 每次请求访问24小时不间断的URLs
   for (let url of urls) {
@@ -64,5 +69,7 @@ async function handleRequest(event, env) {
 
 // 在此添加 Cron Trigger 事件监听器
 addEventListener('scheduled', event => {
-  event.waitUntil(handleRequest(event, event));
+  // 需要通过event对象的env属性获取环境变量
+  const env = event.env;
+  event.waitUntil(handleRequest(event, env));
 });
