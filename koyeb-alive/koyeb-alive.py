@@ -4,7 +4,10 @@ import json
 import time
 
 # 从环境变量获取 Koyeb 账户信息（以 JSON 字符串格式存储）
-KOYEB_ACCOUNTS = json.loads(os.getenv("KOYEB_ACCOUNTS"))
+koyeb_accounts_env = os.getenv("KOYEB_ACCOUNTS")
+if not koyeb_accounts_env:
+    raise ValueError("KOYEB_ACCOUNTS 环境变量未设置或格式错误")
+KOYEB_ACCOUNTS = json.loads(koyeb_accounts_env)
 
 def send_tg_message(message):
     bot_token = os.getenv("TG_BOT_TOKEN")
