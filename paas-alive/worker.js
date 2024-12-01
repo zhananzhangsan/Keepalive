@@ -1,4 +1,3 @@
-// 使用外部 CDN 引入 moment-timezone
 import moment from 'https://cdn.jsdelivr.net/npm/moment-timezone@0.5.34/builds/moment-timezone-with-data.min.js';
 
 // 从环境变量加载 URLs，每行一个地址
@@ -65,7 +64,6 @@ async function handleRequest(event, env) {
 
 // 在此添加 Cron Trigger 事件监听器
 addEventListener('scheduled', event => {
-  // 需要通过event对象的env属性获取环境变量
-  const env = event.env;
+  const env = event.env; // 确保从事件中获取环境变量
   event.waitUntil(handleRequest(event, env));
 });
