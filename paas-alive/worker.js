@@ -1,9 +1,5 @@
-// 你需要在 Cloudflare Worker 中使用环境变量，并且确保没有使用 require。
-// 可以通过 worker 的环境变量传递数据，或者直接引入外部库。
-// 如果你在 Cloudflare Worker 使用 moment-timezone，需要确保该库的兼容性
-// 可以使用 CDN 或者在编译时处理它
-
-const moment = require('moment-timezone');
+// 使用外部 CDN 引入 moment-timezone
+import moment from 'https://cdn.jsdelivr.net/npm/moment-timezone@0.5.34/builds/moment-timezone-with-data.min.js';
 
 // 从环境变量加载 URLs，每行一个地址
 async function handleRequest(event, env) {
