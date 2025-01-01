@@ -981,6 +981,8 @@ fi
 
 # singbox 管理
 manage_singbox() {
+    clear
+    echo ""
     green "1. 启动sing-box服务"
     skyblue "-------------------"
     green "2. 停止sing-box服务"
