@@ -1,26 +1,43 @@
 async function sendTGMessage(message, env) {
   const botToken = env.TG_BOT_TOKEN;
   const chatId = env.TG_CHAT_ID;
-  const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
 
+  if (!botToken || !chatId) {
+    console.log("TG_BOT_TOKEN 或 TG_CHAT_ID 未设置，跳过发送 Telegram 消息");
+    return null;
+  }
+
+  const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
   const payload = {
     chat_id: chatId,
     text: message,
     parse_mode: 'Markdown',
   };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
-
-  return await response.json();
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (e) {
+    console.log(`发送 Telegram 消息失败: ${e.message}`);
+    return null;
+  }
 }
 
-async function loginKoyeb(email, password, env) {
+async function loginKoyeb(email, password) {
+  if (!email || !password) {
+    return [false, "邮箱或密码为空"];
+  }
+
   const loginUrl = 'https://app.koyeb.com/v1/account/login';
   const headers = {
     'Content-Type': 'application/json',
@@ -28,8 +45,8 @@ async function loginKoyeb(email, password, env) {
   };
 
   const data = {
-    email: email,
-    password: password,
+    email: email.trim(),
+    password: password
   };
 
   try {
@@ -40,32 +57,74 @@ async function loginKoyeb(email, password, env) {
     });
 
     if (response.ok) {
-      return [true, `HTTP状态码 ${response.status}`]; 
+      return [true, "登录成功"]; 
     } else {
-      return [false, `HTTP状态码 ${response.status}`];
+      return [false, `登录失败，HTTP状态码 ${response.status}`];
     }
   } catch (e) {
-    return [false, `${e.message}`];
+    return [false, e.message];
   }
 }
 
-// 定时触发器执行的函数
 async function scheduledEventHandler(event, env) {
-  // 从环境变量获取 Koyeb 账户信息（JSON 字符串格式）
-  const koyebAccounts = JSON.parse(env.KOYEB_ACCOUNTS);
-  const results = [];
-  for (let account of koyebAccounts) {
-    const email = account.email;
-    const password = account.password;
-    // 每次登录后等待 3 秒再登录下一个账号
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    const [success, message] = await loginKoyeb(email, password, env);
-    results.push(`账户: ${email}\n状态: ${success ? '登录成功' : '登录失败'}\n消息: ${message}`);
-  }
+  try {
+    // 验证并解析账户信息
+    if (!env.KOYEB_ACCOUNTS) {
+      throw new Error("KOYEB_ACCOUNTS 环境变量未设置");
+    }
 
-  // 构建和发送 Telegram 消息
-  const tgMessage = `Koyeb 登录报告\n\n${results.join('\n')}`;
-  await sendTGMessage(tgMessage, env);
+    const koyebAccounts = JSON.parse(env.KOYEB_ACCOUNTS);
+    if (!koyebAccounts || koyebAccounts.length === 0) {
+      throw new Error("没有找到有效的 Koyeb 账户信息");
+    }
+
+    const results = [];
+    const currentTime = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    let successCount = 0;
+    const totalAccounts = koyebAccounts.length;
+
+    for (let [index, account] of koyebAccounts.entries()) {
+      const email = account.email?.trim();
+      const password = account.password;
+
+      if (!email || !password) {
+        console.log("警告: 账户信息不完整，跳过该账户");
+        continue;
+      }
+
+      try {
+        console.log(`正在处理第 ${index + 1}/${totalAccounts} 个账户: ${email}`);
+        // 每次登录后等待 5 秒
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        const [success, message] = await loginKoyeb(email, password);
+        
+        if (success) {
+          successCount++;
+          results.push(`账户: ${email}\n状态: ✅ ${message}\n`);
+        } else {
+          results.push(`账户: ${email}\n状态: ❌ 登录失败\n原因：${message}\n`);
+        }
+      } catch (e) {
+        results.push(`账户: ${email}\n状态: ❌ 登录失败\n原因：执行异常 - ${e.message}\n`);
+      }
+    }
+
+    if (results.length === 0) {
+      throw new Error("没有任何账户处理结果");
+    }
+
+    // 生成消息内容
+    const summary = `📊 总计: ${totalAccounts} 个账户\n✅ 成功${successCount}个 | ❌ 失败${totalAccounts - successCount}个\n\n`;
+    const tgMessage = `🤖 Koyeb 登录状态报告\n⏰ 检查时间: ${currentTime}\n\n${summary}${results.join('')}`;
+    
+    console.log(tgMessage);
+    await sendTGMessage(tgMessage, env);
+
+  } catch (e) {
+    const errorMessage = `程序执行出错: ${e.message}`;
+    console.error(errorMessage);
+    await sendTGMessage(`❌ ${errorMessage}`, env);
+  }
 }
 
 // Cron Trigger 事件监听器
