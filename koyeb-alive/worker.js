@@ -22,7 +22,9 @@ async function sendTGMessage(message, env) {
       },
       body: JSON.stringify(data),
     });
-    response.ok || throw new Error(`HTTP error! status: ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     return await response.json();
   } catch (e) {
     console.log(`发送 Telegram 消息失败: ${e.message}`);
@@ -59,9 +61,9 @@ async function loginKoyeb(email, password) {
     clearTimeout(timeoutId);
     
     if (response.ok) {
-      return [true, "登录成功"];
+      return [true, `HTTP状态码 ${response.status}`];
     }
-    throw new Error(`HTTP状态码 ${response.status}`);
+    return [false, `HTTP状态码 ${response.status}`];
   } catch (e) {
     if (e.name === 'AbortError') {
       return [false, "请求超时"];
@@ -114,12 +116,12 @@ async function scheduledEventHandler(event, env) {
         const [success, message] = await loginKoyeb(email, password);
         if (success) {
           successCount++;
-          results.push(`账户: ${email}\n状态: ✅ ${message}\n`);
+          results.push(`账户: ${email}\n状态: ✅ 登录成功\n`);
         } else {
-          results.push(`账户: ${email}\n状态: ❌ 登录失败\n原因：${message}\n`);
+          results.push(`账户: ${email}\n状态: ❌ 登录失败\n消息：${message}\n`);
         }
       } catch (e) {
-        results.push(`账户: ${email}\n状态: ❌ 登录失败\n原因：执行异常 - ${e.message}\n`);
+        results.push(`账户: ${email}\n状态: ❌ 登录失败\n消息：执行异常 - ${e.message}\n`);
       }
     }
 
