@@ -36,54 +36,72 @@ def send_tg_message(message):
         return None
 
 def login_koyeb(email, password):
+    if not email or not password:
+        return False, "邮箱或密码为空"
+        
     login_url = "https://app.koyeb.com/v1/account/login"
     headers = {
         "Content-Type": "application/json",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
     data = {
-        "email": email,
+        "email": email.strip(),  # 去除可能的空格
         "password": password
     }
     
     try:
         response = requests.post(login_url, headers=headers, json=data, timeout=30)
         response.raise_for_status()
-        return True, f"登录成功 (状态码: {response.status_code})"
+        return True, "登录成功"
     except requests.Timeout:
         return False, "请求超时"
     except requests.RequestException as e:
-        return False, f"请求失败: {str(e)}"
+        return False, str(e)
 
 def main():
     try:
-        # 验证并获取账户信息
-        KOYEB_ACCOUNTS = validate_env_variables()
+        # 验证账户信息并逐个登录
+        KOYEB_ACCOUNTS = validate_env_variables()  
         
-        # 登录并记录所有账户的结果
+        # 检查账户列表是否为空
+        if not KOYEB_ACCOUNTS:
+            raise ValueError("没有找到有效的 Koyeb 账户信息")
+            
         results = []
         current_time = time.strftime("%Y-%m-%d %H:%M:%S")
+        total_accounts = len(KOYEB_ACCOUNTS)
+        success_count = 0
         
-        for account in KOYEB_ACCOUNTS:
-            email = account.get('email')
-            password = account.get('password')
+        for index, account in enumerate(KOYEB_ACCOUNTS, 1):
+            email = account.get('email', '').strip()  # 去除可能的空格
+            password = account.get('password', '')
             
             if not email or not password:
                 print(f"警告: 账户信息不完整，跳过该账户")
-                continue
+                continue        
                 
-            time.sleep(5)  # 保持原有延迟
+            try:
+                print(f"正在处理第 {index}/{total_accounts} 个账户: {email}")
+                time.sleep(5)  # 登录5秒间隔
+                success, message = login_koyeb(email, password)
+                if success:
+                    status_line = f"状态: ✅ {message}"
+                    success_count += 1
+                else:
+                    status_line = f"状态: ❌ 登录失败\n原因：{message}"
+            except Exception as e:
+                status_line = f"状态: ❌ 登录失败\n原因：执行异常 - {str(e)}"
+                
+            results.append(f"账户: {email}\n{status_line}\n")
+        
+        # 检查是否有处理结果
+        if not results:
+            raise ValueError("没有任何账户处理结果")
             
-            success, message = login_koyeb(email, password)
-            results.append(f"账户: {email}\n状态: {'✅' if success else '❌'}\n消息: {message}\n")
-
-        # 生成报告消息
-        tg_message = f"🤖 Koyeb 登录状态报告\n⏰ 检查时间: {current_time}\n\n" + "\n".join(results)
-        
-        # 打印消息到控制台
+        # 生成TG消息内容模板，添加统计信息
+        summary = f"📊 总计: {total_accounts} 个账户\n✅ 成功: {success_count}\n❌ 失败: {total_accounts - success_count}\n\n"
+        tg_message = f"🤖 Koyeb 登录状态报告\n⏰ 检查时间: {current_time}\n\n{summary}" + "\n".join(results)
         print(tg_message)
-        
-        # 尝试发送到 Telegram
         send_tg_message(tg_message)
         
     except Exception as e:
