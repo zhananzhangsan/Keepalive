@@ -99,7 +99,7 @@ def main():
             raise ValueError("没有任何账户处理结果")
             
         # 生成TG消息内容模板，添加统计信息
-        summary = f"📊 总计: {total_accounts} 个账户\n✅ 成功: {success_count}\n❌ 失败: {total_accounts - success_count}\n\n"
+        summary = f"📊 总计: {total_accounts} 个账户\n✅ 成功{success_count}个 | ❌ 失败{total_accounts - success_count}个\n\n"
         tg_message = f"🤖 Koyeb 登录状态报告\n⏰ 检查时间: {current_time}\n\n{summary}" + "\n".join(results)
         print(tg_message)
         send_tg_message(tg_message)
