@@ -33,26 +33,24 @@ def login_koyeb(email, password):
     }
     
     try:
-        response = requests.post(login_url, headers=headers, json=data)
+        response = requests.post(login_url, headers=headers, json=data, timeout=30)  # 添加超时设置
         response.raise_for_status()
-        
-        if response.status_code == 200:
-            return True, f"HTTP状态码 {response.status_code}"
-        else:
-            return False, f"HTTP状态码 {response.status_code}"
+        return True, f"登录成功 (状态码: {response.status_code})"
+    except requests.Timeout:
+        return False, "请求超时"
     except requests.RequestException as e:
-        return False, str(e)
+        return False, f"请求失败: {str(e)}"
 
 # 登录并记录所有账户的结果
 results = []
+current_time = time.strftime("%Y-%m-%d %H:%M:%S")
 for account in KOYEB_ACCOUNTS:
     email = account['email']
     password = account['password']
-    time.sleep(5)
+    time.sleep(5)  # 保持原有延迟
     
     success, message = login_koyeb(email, password)
-    results.append(f"账户: {email}\n状态: {'登录成功' if success else '登录失败'}\n消息: {message}\n")
+    results.append(f"账户: {email}\n状态: {'✅' if success else '❌'}\n消息: {message}\n")
 
 # 发送 Telegram 消息
-tg_message = "Koyeb 登录报告\n\n" + "\n".join(results)
-send_tg_message(tg_message)
+tg_message = f"🤖 Koyeb 登录状态报告\n⏰ 检查时间: {current_time}\n\n" + "\n".join(results)
