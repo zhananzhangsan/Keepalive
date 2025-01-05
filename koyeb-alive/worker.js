@@ -8,7 +8,7 @@ async function sendTGMessage(message, env) {
   }
 
   const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-  const payload = {
+  const data = {
     chat_id: chatId,
     text: message,
     parse_mode: 'Markdown',
@@ -20,12 +20,9 @@ async function sendTGMessage(message, env) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(data),
     });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    response.ok || throw new Error(`HTTP error! status: ${response.status}`);
     return await response.json();
   } catch (e) {
     console.log(`发送 Telegram 消息失败: ${e.message}`);
@@ -43,47 +40,63 @@ async function loginKoyeb(email, password) {
     'Content-Type': 'application/json',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
   };
-
   const data = {
     email: email.trim(),
     password: password
   };
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
+    
     const response = await fetch(loginUrl, {
       method: 'POST',
       headers: headers,
       body: JSON.stringify(data),
+      signal: controller.signal
     });
-
+    
+    clearTimeout(timeoutId);
+    
     if (response.ok) {
-      return [true, "登录成功"]; 
-    } else {
-      return [false, `登录失败，HTTP状态码 ${response.status}`];
+      return [true, "登录成功"];
     }
+    throw new Error(`HTTP状态码 ${response.status}`);
   } catch (e) {
+    if (e.name === 'AbortError') {
+      return [false, "请求超时"];
+    }
     return [false, e.message];
+  }
+}
+
+async function validateEnvVariables(env) {
+  const koyebAccountsEnv = env.KOYEB_ACCOUNTS;
+  if (!koyebAccountsEnv) {
+    throw new Error("KOYEB_ACCOUNTS 环境变量未设置或格式错误");
+  }
+  try {
+    return JSON.parse(koyebAccountsEnv);
+  } catch {
+    throw new Error("KOYEB_ACCOUNTS JSON 格式无效");
   }
 }
 
 async function scheduledEventHandler(event, env) {
   try {
-    // 验证并解析账户信息
-    if (!env.KOYEB_ACCOUNTS) {
-      throw new Error("KOYEB_ACCOUNTS 环境变量未设置");
-    }
-
-    const koyebAccounts = JSON.parse(env.KOYEB_ACCOUNTS);
-    if (!koyebAccounts || koyebAccounts.length === 0) {
+    const KOYEB_ACCOUNTS = await validateEnvVariables(env);
+    
+    if (!KOYEB_ACCOUNTS || KOYEB_ACCOUNTS.length === 0) {
       throw new Error("没有找到有效的 Koyeb 账户信息");
     }
 
     const results = [];
     const currentTime = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    const totalAccounts = KOYEB_ACCOUNTS.length;
     let successCount = 0;
-    const totalAccounts = koyebAccounts.length;
 
-    for (let [index, account] of koyebAccounts.entries()) {
+    for (let index = 0; index < totalAccounts; index++) {
+      const account = KOYEB_ACCOUNTS[index];
       const email = account.email?.trim();
       const password = account.password;
 
@@ -94,10 +107,11 @@ async function scheduledEventHandler(event, env) {
 
       try {
         console.log(`正在处理第 ${index + 1}/${totalAccounts} 个账户: ${email}`);
-        // 每次登录后等待 5 秒
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        const [success, message] = await loginKoyeb(email, password);
+        if (index > 0) {
+          await new Promise(resolve => setTimeout(resolve, 5000)); // 5秒间隔
+        }
         
+        const [success, message] = await loginKoyeb(email, password);
         if (success) {
           successCount++;
           results.push(`账户: ${email}\n状态: ✅ ${message}\n`);
@@ -113,7 +127,6 @@ async function scheduledEventHandler(event, env) {
       throw new Error("没有任何账户处理结果");
     }
 
-    // 生成消息内容
     const summary = `📊 总计: ${totalAccounts} 个账户\n✅ 成功${successCount}个 | ❌ 失败${totalAccounts - successCount}个\n\n`;
     const tgMessage = `🤖 Koyeb 登录状态报告\n⏰ 检查时间: ${currentTime}\n\n${summary}${results.join('')}`;
     
@@ -127,7 +140,6 @@ async function scheduledEventHandler(event, env) {
   }
 }
 
-// Cron Trigger 事件监听器
 addEventListener('scheduled', event => {
   event.waitUntil(scheduledEventHandler(event, event.environment));
 });
