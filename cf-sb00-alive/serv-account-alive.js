@@ -1,10 +1,8 @@
 // 配置常量
 const CONFIG = {
   RETRY_ATTEMPTS: 3,      // 重试次数
-  RETRY_DELAY: 1000,      // 重试延迟（毫秒）
-  MIN_RANDOM_DELAY: 1000, // 最小随机延迟（毫秒）
-  MAX_RANDOM_DELAY: 9000, // 最大随机延迟（毫秒）
-  RATE_LIMIT: { MAX_REQUESTS: 100, WINDOW: 3600000 }, // 限流：每小时最多100请求
+  RETRY_DELAY: { MIN: 1000, MAX: 9000 }, // 延迟时间（单位：毫秒）
+  RATE_LIMIT: { MAX: 100, WINDOW: 3600000 }, // 限流：每小时最多100请求
   COOKIE_MAX_AGE: 86400   // Cookie 过期时间（24小时，单位：秒）
 };
 
@@ -54,7 +52,7 @@ const rateLimit = {
     const userRequests = this.requests.get(ip) || [];
     const recentRequests = userRequests.filter(time => now - time < CONFIG.RATE_LIMIT.WINDOW);
     this.requests.set(ip, [...recentRequests, now]);
-    return recentRequests.length >= CONFIG.RATE_LIMIT.MAX_REQUESTS;
+    return recentRequests.length >= CONFIG.RATE_LIMIT.MAX;
   }
 };
 
@@ -107,7 +105,7 @@ async function handleRequest(request, env) {
         });
     }
   } catch (error) {
-    await logError(error, 'Request Handler', env);
+    await logError(error, `请求处理错误 (路径: ${request.url})`, env);
     return new Response('服务器内部错误', { status: 500 });
   }
 }
@@ -206,8 +204,8 @@ async function handleRun(request, env) {
 
         await delay(
           Math.floor(Math.random() * 
-          (CONFIG.MAX_RANDOM_DELAY - CONFIG.MIN_RANDOM_DELAY)) + 
-          CONFIG.MIN_RANDOM_DELAY
+          (CONFIG.RETRY_DELAY.MAX - CONFIG.RETRY_DELAY.MIN)) + 
+          CONFIG.RETRY_DELAY.MIN
         );
       }
 
@@ -284,8 +282,8 @@ async function handleScheduled(scheduledTime, env) {
       results.push(result);
       await delay(
         Math.floor(Math.random() * 
-        (CONFIG.MAX_RANDOM_DELAY - CONFIG.MIN_RANDOM_DELAY)) + 
-        CONFIG.MIN_RANDOM_DELAY
+        (CONFIG.RETRY_DELAY.MAX - CONFIG.RETRY_DELAY.MIN)) + 
+        CONFIG.RETRY_DELAY.MIN
       );
     }
 
@@ -369,7 +367,7 @@ async function loginAccount(account, env) {
 
     return handleLoginResponse(loginResponse, username, type, panelnum, env);
   } catch (error) {
-    await logError(error, `登录账户: ${username}`, env);
+    await logError(error, `服务器: ${type}-${panelnum}, 用户名: ${username}`, env);
     return createResult(username, type, panelnum, false, error.message);
   }
 }
@@ -382,13 +380,12 @@ async function loginWithRetry(account, env, attempts = CONFIG.RETRY_ATTEMPTS) {
       if (result.cronResults[0].success) {
         return result;
       }
-      await delay(CONFIG.RETRY_DELAY * (i + 1));
     } catch (error) {
       if (i === attempts - 1) {
         throw error;
-      }
-      await delay(CONFIG.RETRY_DELAY * (i + 1));
+      } 
     }
+    await delay(CONFIG.RETRY_DELAY.MIN * (i + 1));
   }
   return createResult(
     account.username, 
@@ -438,8 +435,7 @@ async function sendTelegramMessage(message, env, results = null) {
         
         if (!success && result.cronResults[0].message) {
           lines.push(`失败原因：\`${result.cronResults[0].message}\``);
-        }
-        
+        }       
         return lines.join('\n');
       })
     ].join('\n');
@@ -468,7 +464,7 @@ function getHtmlContent() {
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Serv00 账户批量登录</title>
+    <title>Serv00账户批量登录</title>
     <style>
       body {
         font-family: Arial, sans-serif;
