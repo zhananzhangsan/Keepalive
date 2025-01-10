@@ -13,22 +13,12 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// 创建成功结果对象
-function createSuccessResult(username, type, message) {
+// 创建结果对象
+function createResult(username, type, success, message, retryCount = 0) {
   return {
     username,
     type,
-    cronResults: [{ success: true, message }],
-    lastRun: new Date().toISOString()
-  };
-}
-
-// 创建错误结果对象
-function createErrorResult(username, type, message, retryCount = 0) {
-  return {
-    username,
-    type,
-    cronResults: [{ success: false, message, retryCount }],
+    cronResults: [{ success, message, ...(retryCount ? { retryCount } : {}) }],
     lastRun: new Date().toISOString()
   };
 }
@@ -327,13 +317,11 @@ function extractCsrfToken(pageContent) {
 // 处理登录响应
 function handleLoginResponse(response, username, type, env) {
   if (response.status === 302) {
-    const message = '登录成功';
-    // 单个账号不需要发送 TG 通知，避免消息过多
-    return createSuccessResult(username, type, message);
+    return createResult(username, type, true, '登录成功');
   } else {
     const message = '登录失败，未知原因。请检查账号和密码是否正确。';
     console.error(message);
-    return createErrorResult(username, type, message);
+    return createResult(username, type, false, message);
   }
 }
 
@@ -377,8 +365,8 @@ async function loginAccount(account, env) {
 
     return handleLoginResponse(loginResponse, username, type, env);
   } catch (error) {
-    await logError(error, `Login Account: ${username}`, env);
-    return createErrorResult(username, type, error.message);
+    await logError(error, `登录账户: ${username}`, env);
+    return createResult(username, type, false, error.message);
   }
 }
 
@@ -398,77 +386,69 @@ async function loginWithRetry(account, env, attempts = CONFIG.RETRY_ATTEMPTS) {
       await delay(CONFIG.RETRY_DELAY * (i + 1));
     }
   }
-  return createErrorResult(
+  return createResult(
     account.username, 
     account.type, 
-    `登录失败，已重试 ${attempts} 次`
+    false,
+    `登录失败，已重试 ${attempts} 次`,
+    attempts
   );
-}
-
-// 用于发送简单消息的辅助函数
-async function sendSimpleTelegramMessage(message, env) {
-  const url = `https://api.telegram.org/bot${env.TG_TOKEN}/sendMessage`;
-  try {
-    await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: env.TG_ID,
-        text: message
-      })
-    });
-  } catch (error) {
-    console.error('Error sending Telegram message:', error);
-  }
 }
 
 // 发送 Telegram 通知
 async function sendTelegramMessage(message, env, results = null) {
-  if (!results) {
-    return await sendSimpleTelegramMessage(message, env);
-  }
-
-  const now = new Date().toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  }).replace(/\//g, '-');
-
-  const successCount = results.filter(r => r.cronResults[0].success).length;
-  const failureCount = results.length - successCount;
-
-  let messageText = `🤖 Serv00 登录状态报告\n`;
-  messageText += `⏰ 时间: ${now}\n`;
-  messageText += `📊 总计: ${results.length} 个账户\n`;
-  messageText += `✅ 成功: ${successCount} | ❌ 失败: ${failureCount}\n\n`;
-
-  // 修改每个账户的状态显示格式
-  for (const result of results) {
-    const success = result.cronResults[0].success;
-    messageText += `${result.username}\n`;
-    messageText += `状态: ${success ? '✅ 登录成功' : '❌ 登录失败'}`;
-    
-    if (!success && result.cronResults[0].message) {
-      messageText += `\n失败原因：${result.cronResults[0].message}`;
-    }
-    messageText += '\n\n';
-  }
-
   const url = `https://api.telegram.org/bot${env.TG_TOKEN}/sendMessage`;
+  let messageText;
+
+  if (!results) {
+    messageText = message;
+  } else {
+    const now = new Date().toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    }).replace(/\//g, '-');
+
+    const successCount = results.filter(r => r.cronResults[0].success).length;
+    const failureCount = results.length - successCount;
+
+    messageText = [
+      `*🤖 Serv00 登录状态报告*`,
+      `⏰ 时间: \`${now}\``,
+      `📊 总计: \`${results.length}\` 个账户`,
+      `✅ 成功: \`${successCount}\` | ❌ 失败: \`${failureCount}\``,
+      '',
+      ...results.map(result => {
+        const success = result.cronResults[0].success;
+        const lines = [
+          `*${result.username}*`,
+          `状态: ${success ? '✅ 登录成功' : '❌ 登录失败'}`
+        ];
+        
+        if (!success && result.cronResults[0].message) {
+          lines.push(`失败原因：\`${result.cronResults[0].message}\``);
+        }
+        
+        return lines.join('\n');
+      })
+    ].join('\n');
+  }
+
   try {
     await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: env.TG_ID,
-        text: messageText
+        text: messageText,
+        parse_mode: 'Markdown'
       })
     });
   } catch (error) {
-    console.error('Error sending Telegram message:', error);
+    console.error('发送TG消息时发生错误:', error);
   }
 }
 
