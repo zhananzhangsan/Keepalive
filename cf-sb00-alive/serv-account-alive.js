@@ -72,9 +72,11 @@ const userAgentCache = {
 };
 
 export default {
+  // 处理 HTTP 请求
   async fetch(request, env, ctx) {
     return handleRequest(request, env);
   },
+  // 处理定时任务
   async scheduled(event, env, ctx) {
     return handleScheduled(event.scheduledTime, env);
   }
@@ -271,6 +273,7 @@ async function handleResults(request, env) {
 // 定时任务处理函数
 async function handleScheduled(scheduledTime, env) {
   try {
+    console.log(`定时任务开始执行，计划时间：${new Date(scheduledTime).toISOString()}`);
     const response = await fetch(env.ACCOUNTS_URL);
     const accountsData = await response.json();
     const accounts = accountsData.accounts;
@@ -289,7 +292,7 @@ async function handleScheduled(scheduledTime, env) {
     await env.SERV_LOGIN.put('lastResults', JSON.stringify(results));
     await sendTelegramMessage(`定时任务完成`, env, results);
   } catch (error) {
-    await logError(error, 'Scheduled Handler', env);
+    await logError(error, `定时任务处理程序 (计划时间: ${new Date(scheduledTime).toISOString()})`, env);
   }
 }
 
