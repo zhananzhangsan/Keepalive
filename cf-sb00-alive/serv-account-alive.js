@@ -750,9 +750,10 @@ function getHtmlContent() {
 
       function addOrUpdateResultRow(result) {
         const serverinfo = result.type === 'ct8' ? result.type : result.type + "-" + result.panelnum;
-        const success = result.cronResults[0]?.success ?? false;  // 添加 success 判断
-        const statusText = success ? '✅ 成功' : '❌ 失败';
-        const message = success ? '' : ' | 失败原因：' + result.cronResults[0].message;
+        const success = result.cronResults[0]?.success ?? false;
+        const message = success 
+          ? '已登录' // 如果 success 为 true，设置消息为“已登录”
+          : '失败原因: ' + (result.cronResults[0]?.message || '未知错误'); // 如果失败，显示失败原因或默认消息
         
         const tbody = document.querySelector('#resultsTable tbody');
         const existingRow = Array.from(tbody.rows).find(row => 
@@ -761,8 +762,9 @@ function getHtmlContent() {
         );
         
         if (existingRow) {
-          existingRow.cells[0].textContent = serverinfo;  // 更新为新的 serverinfo 格式
+          existingRow.cells[0].textContent = serverinfo;
           existingRow.cells[1].textContent = result.username;
+          existingRow.cells[2].textContent = success ? '✅ 成功' : '❌ 失败';
           existingRow.cells[2].className = success ? 'success' : 'error';
           existingRow.cells[3].textContent = message;
           existingRow.cells[4].textContent = new Date(result.lastRun).toLocaleString('zh-CN');
@@ -771,7 +773,7 @@ function getHtmlContent() {
           row.insertCell(0).textContent = serverinfo;
           row.insertCell(1).textContent = result.username;
           const statusCell = row.insertCell(2);
-          statusCell.textContent = statusText;
+          statusCell.textContent = success ? '✅ 成功' : '❌ 失败';
           statusCell.className = success ? 'success' : 'error';
           row.insertCell(3).textContent = message;
           row.insertCell(4).textContent = new Date(result.lastRun).toLocaleString('zh-CN');
