@@ -45,6 +45,7 @@ https://linux.do/t/topic/181957
     {
       "username": "用户名3",
       "password": "密码3",
+      "panelnum": "",
       "type": "ct8"
     }
   ]
