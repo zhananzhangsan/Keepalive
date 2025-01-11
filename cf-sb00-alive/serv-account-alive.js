@@ -82,6 +82,10 @@ export default {
 
 // 处理 HTTP 请求的主函数
 async function handleRequest(request, env) {
+  if (!env.PASSWORD || env.PASSWORD.trim() === "") {
+    throw new Error("未设置有效的 PASSWORD 环境变量");
+  }
+
   try {
     const url = new URL(request.url);
     const clientIP = request.headers.get('CF-Connecting-IP');
@@ -399,6 +403,11 @@ async function loginWithRetry(account, env, attempts = CONFIG.RETRY_ATTEMPTS) {
 
 // 发送 Telegram 通知
 async function sendTelegramMessage(message, env, results = null) {
+  if (!env.TG_ID || !env.TG_TOKEN) {
+    console.warn("未设置 TG_ID 或 TG_TOKEN，跳过发送 Telegram 消息");
+    return;
+  }
+
   const url = `https://api.telegram.org/bot${env.TG_TOKEN}/sendMessage`;
   let messageText;
 
