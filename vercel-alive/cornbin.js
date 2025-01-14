@@ -1,12 +1,11 @@
-// 设置环境变量 APIKEY，使用 https://域名/?key=你的APIKEY值 访问
+// 设置前端访问密码，使用 https://域名/?key=密码 访问
+const APIKEY = "root";
+
 export default {
-    async fetch(request, env) {
-      try {
-        // 从环境变量获取 APIKEY
-        const apiKey = env.APIKEY || "root";
-        const responseArray = await handleRequest(request, env, apiKey);
-        const contentType = responseArray[1] || "application/json";
-      
+  async fetch(request, env) {
+    try {
+      const responseArray = await handleRequest(request, env, APIKEY);
+      const contentType = responseArray[1] || "application/json";     
       if (contentType === "redirect") {
         const response = new Response(`重定向到 ${responseArray[0]}`, {
           status: 302,
@@ -98,16 +97,16 @@ export const cronSchedule = (() => {
     if (!member.has(obj)) throw TypeError("Cannot " + msg);
   };
   var __privateGet = (obj, member, getter) => {
-    __accessCheck(obj, member, "读取私有字段");
+    __accessCheck(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
   var __privateAdd = (obj, member, value) => {
     if (member.has(obj))
-      throw TypeError("不能多次添加相同的私有成员");
+      throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet = (obj, member, value, setter) => {
-    __accessCheck(obj, member, "写入私有字段");
+    __accessCheck(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -248,7 +247,7 @@ export const cronSchedule = (() => {
       const taskIndex = __privateGet(this, _tasks).findIndex(
         (task) => task.id === id
       );
-      if (taskIndex === -1) throw new Error("未找到任务。");
+      if (taskIndex === -1) throw new Error("Task not found.");
       __privateGet(this, _tasks).splice(taskIndex, 1);
     }
     sortTasks() {
@@ -332,15 +331,15 @@ export const cronSchedule = (() => {
   var Cron = class {
     constructor({ seconds, minutes, hours, days, months, weekdays }) {
       if (!seconds || seconds.size === 0)
-        throw new Error("必须至少允许一个秒值。");
+        throw new Error("There must be at least one allowed second.");
       if (!minutes || minutes.size === 0)
-        throw new Error("必须至少允许一个分钟值。");
+        throw new Error("There must be at least one allowed minute.");
       if (!hours || hours.size === 0)
-        throw new Error("必须至少允许一个小时值。");
+        throw new Error("There must be at least one allowed hour.");
       if (!months || months.size === 0)
-        throw new Error("必须至少允许一个月份值。");
+        throw new Error("There must be at least one allowed month.");
       if ((!weekdays || weekdays.size === 0) && (!days || days.size === 0))
-        throw new Error("必须至少允许一个日期或星期值。");
+        throw new Error("There must be at least one allowed day or weekday.");
       this.seconds = Array.from(seconds).sort((a, b) => a - b);
       this.minutes = Array.from(minutes).sort((a, b) => a - b);
       this.hours = Array.from(hours).sort((a, b) => a - b);
@@ -358,7 +357,7 @@ export const cronSchedule = (() => {
           )
         ) {
           throw new Error(
-            `${name} 必须仅由范围在 ${constraint.min} 和 ${constraint.max} 之间的整数组成。`
+            `${name} must only consist of integers which are within the range of ${constraint.min} and ${constraint.max}`
           );
         }
       };
@@ -452,7 +451,7 @@ export const cronSchedule = (() => {
     }
     findAllowedDayInMonth(dir, year, month, startDay) {
       var _a, _b;
-      if (startDay < 1) throw new Error("开始日期不能小于1。");
+      if (startDay < 1) throw new Error("startDay must not be smaller than 1.");
       const daysInMonth = getDaysInMonth(year, month);
       const daysRestricted = this.days.length !== 31;
       const weekdaysRestricted = this.weekdays.length !== 7;
@@ -561,7 +560,7 @@ export const cronSchedule = (() => {
           );
         }
       }
-      throw new Error("未找到有效的下一个日期。");
+      throw new Error("No valid next date was found.");
     }
     getNextDates(amount, startDate) {
       const dates = [];
@@ -639,7 +638,7 @@ export const cronSchedule = (() => {
           );
         }
       }
-      throw new Error("未找到有效的上一个日期。");
+      throw new Error("No valid previous date was found.");
     }
     getPrevDates(amount, startDate) {
       const dates = [];
@@ -768,11 +767,11 @@ export const cronSchedule = (() => {
           : singleElement;
       const parsedElement = parseInt(singleElement, 10);
       if (Number.isNaN(parsedElement)) {
-        throw new Error(`解析 ${element} 失败：${singleElement} 不是一个数字。`);
+        throw new Error(`Failed to parse ${element}: ${singleElement} is NaN.`);
       }
       if (parsedElement < constraint.min || parsedElement > constraint.max) {
         throw new Error(
-          `解析 ${element} 失败：${singleElement} 超出了约束范围 ${constraint.min} - ${constraint.max}。`
+          `Failed to parse ${element}: ${singleElement} is outside of constraint range of ${constraint.min} - ${constraint.max}.`
         );
       }
       return parsedElement;
@@ -793,7 +792,7 @@ export const cronSchedule = (() => {
         : parseSingleElement(rangeSegments[4]);
     if (parsedStart > parsedEnd) {
       throw new Error(
-        `解析 ${element} 失败：无效的范围（起始值：${parsedStart}，结束值：${parsedEnd}）。`
+        `Failed to parse ${element}: Invalid range (start: ${parsedStart}, end: ${parsedEnd}).`
       );
     }
     const step = rangeSegments[6];
@@ -801,10 +800,10 @@ export const cronSchedule = (() => {
     if (step !== void 0) {
       parsedStep = parseInt(step, 10);
       if (Number.isNaN(parsedStep)) {
-        throw new Error(`解析步骤失败：${step} 不是一个数字。`);
+        throw new Error(`Failed to parse step: ${step} is NaN.`);
       } else if (parsedStep < 1) {
         throw new Error(
-          `解析步骤失败：期望 ${step} 应该大于 0。`
+          `Failed to parse step: Expected ${step} to be greater than 0.`
         );
       }
     }
@@ -816,7 +815,7 @@ export const cronSchedule = (() => {
   function parseCronExpression(cronExpression) {
     var _a;
     if (typeof cronExpression !== "string") {
-      throw new TypeError("无效的 cron 表达式：必须是字符串类型。");
+      throw new TypeError("Invalid cron expression: must be of type string.");
     }
     cronExpression =
       (_a = timeNicknames[cronExpression.toLowerCase()]) != null
@@ -824,7 +823,7 @@ export const cronSchedule = (() => {
         : cronExpression;
     const elements = cronExpression.split(" ");
     if (elements.length < 5 || elements.length > 6) {
-      throw new Error("无效的 cron 表达式：需要 5 个或 6 个元素。");
+      throw new Error("Invalid cron expression: expected 5 or 6 elements.");
     }
     const rawSeconds = elements.length === 6 ? elements[0] : "0";
     const rawMinutes = elements.length === 6 ? elements[1] : elements[0];
@@ -846,65 +845,51 @@ export const cronSchedule = (() => {
   return __toCommonJS(src_exports);
 })();
 
-async function handleRequest(request, env, apiKey) {
-  const url = new URL(request.url);
-  const key = url.searchParams.get("key");
-  
-  if (key !== apiKey) {
-    return [
-      JSON.stringify({
-        ok: false,
-        错误: "未授权访问",
-        message: "访问密钥无效"
-      }),
-      "application/json"
-    ];
-  }
-
+async function handleRequest(request, env) {
   if (!env.CRONBIN) {
     throw new HTTPError(
-      "KV Store Not Found",
-      "未找到 KV 空间绑定",
+      "kvNotFound",
+      "Not Found KV Database Bind",
       500,
-      "Internal Server Error"
+      "Interval Server Error"
     );
   }
 
-  // 首先检查请求是否被授权
+  // first check if the request is authorized
   const { headers } = request;
   const urlObj = new URL(request.url);
   const { pathname } = urlObj;
 
   const authorization = headers.get("Authorization");
-  const headerAuthorizationValue = `Bearer ${apiKey}`;
+  const headerAuthorizationValue = `Bearer ${APIKEY}`;
   if (authorization) {
     if (authorization !== headerAuthorizationValue) {
-      // 如果没有授权，则返回 401
+      // if not authorized, return 401
       throw new HTTPError(
-        "Unauthorized",
-        "APIKEY密钥无效或未提供",
+        "unauthorized",
+        "Authrorization Bearer abc is required",
         401,
         "Unauthorized"
       );
     }
   } else if (urlObj.searchParams.has("key")) {
     const keyFromQuery = urlObj.searchParams.get("key");
-    if (keyFromQuery !== apiKey) {
+    if (keyFromQuery !== APIKEY) {
       throw new HTTPError(
-        "Unauthorized",
-        "请在请求URL中添加有效的APIKEY密钥：?key=<your-api-key>",
+        "unauthorized",
+        "search query key=abc is required",
         401,
         "Unauthorized"
       );
     }
   } else {
-    // 检查 cookie
+    // check cookie
     const cookie = headers.get("cookie");
-    const cookieApiKey = getCookieValue(cookie, "key"); // 改名为 cookieApiKey 避免命名冲突
-    if (!cookieApiKey || cookieApiKey !== apiKey) {  // 增加空值检查
+    const apiKey = getCookieValue(cookie, "key");
+    if (apiKey !== APIKEY) {
       throw new HTTPError(
-        "Unauthorized",
-        "请在请求URL中添加有效的APIKEY密钥：?key=<your-api-key>",
+        "unauthorized",
+        "Authrorization Bearer abc or search query key=abc is required",
         401,
         "Unauthorized"
       );
@@ -925,50 +910,50 @@ async function handleRequest(request, env, apiKey) {
       "Content-Type": ["text/html"],
     };
 
-    // 若有改变则发送 cookie
-    const cookieApiKey = getCookieValue(cookie, "key");
+    // send cookie if changed
+    const apiKey = getCookieValue(cookie, "key");
     const domain = request.headers.get("host")?.split(":")[0];
-    if (!cookieApiKey || cookieApiKey !== apiKey) {  // 增加空值检查
+    if (apiKey !== APIKEY) {
       responseHeaders["set-cookie"] = [
-        `key=${apiKey}; HttpOnly; Max-Age=31536000; Domain=${domain}; Path=/;`,  // 设置合理的过期时间
+        `key=${APIKEY}; HttpOnly; Max-Age=9999999999999999999999999999; Domain=${domain}; Path=/;`,
       ];
     }
     return [body, responseHeaders];
   } else if (pathname.startsWith("/tasks")) {
     const data = await getData(env);
     if (pathname === "/tasks") {
-      // 添加任务
+      // add task
       const formData = await request.formData();
       const interval = formData.get("interval");
       const url = formData.get("url");
       if (!interval) {
         throw new HTTPError(
           "intervalRequired",
-          "需要提供时间间隔参数",
+          "interval is required",
           400,
-          "请求无效"
+          "Bad Request"
         );
       }
-      // 检查间隔有效性
+      // check interval is valid
       if (!isValidInterval(interval)) {
         throw new HTTPError(
           "invalidInterval",
-          "时间间隔无效",
+          "interval is invalid",
           400,
-          "错误的请求"
+          "Bad Request"
         );
       }
       if (!url) {
-        throw new HTTPError({
-          code: "urlRequired",
-          message: "URL 参数是必需的",
-          status: 400,
-          statusText: "请求错误"
-        });
+        throw new HTTPError(
+          "urlRequired",
+          "url is required",
+          400,
+          "Bad Request"
+        );
       }
 
       if (!isValidUrl(url)) {
-        throw new HTTPError("invalidUrl", "url 无效", 400, "请求错误");
+        throw new HTTPError("invalidUrl", "url is invalid", 400, "Bad Request");
       }
       let note = formData.get("note") || "";
       if (note) {
@@ -998,7 +983,7 @@ async function handleRequest(request, env, apiKey) {
       baseURL: urlObj.origin,
     });
 
-    // 检查 url 是否匹配运行模式
+    // check if url match run pattern
     const match = taskRunPattern.exec(request.url);
     if (
       match &&
@@ -1011,52 +996,53 @@ async function handleRequest(request, env, apiKey) {
       if (!task) {
         throw new HTTPError(
           "taskNotFound",
-          "未找到任务",
+          "Task not found",
           404,
-          "未找到请求的资源"
+          "The requested resource was not found"
         );
       }
-      
-      // 首先我们应该保存它
+      // first we should save it.
+
       const formData = await request.formData();
       const interval = formData.get("interval");
       const url = formData.get("url");
       if (!interval) {
         throw new HTTPError(
           "intervalRequired",
-          "需要设置时间间隔参数",
+          "interval is required",
           400,
-          "请求无效"
+          "Bad Request"
         );
       }
 
-      // 检查间隔有效性
+      // check interval is valid
       if (!isValidInterval(interval)) {
         throw new HTTPError(
-          "无效的时间间隔",
-          "请输入有效的时间间隔",
+          "invalidInterval",
+          "interval is invalid",
           400,
-          "请求参数错误"
+          "Bad Request"
         );
       }
       if (!url) {
         throw new HTTPError(
-          "URL不能为空",
-          "请输入有效的URL地址",
+          "urlRequired",
+          "url is required",
           400,
-          "请求参数错误"
+          "Bad Request"
         );
       }
 
       if (!isValidUrl(url)) {
-        throw new HTTPError("URL 无效", "请输入有效的 URL 地址", 400, "请求参数错误");
+        throw new HTTPError("invalidUrl", "url is invalid", 400, "Bad Request");
       }
       let note = formData.get("note") || "";
       if (note) {
         note = note.slice(0, 150);
       }
 
-      // 检查是否相同
+      // check is same
+      //
       if (
         !(
           data.tasks[id].interval === interval &&
@@ -1064,7 +1050,7 @@ async function handleRequest(request, env, apiKey) {
           data.tasks[id].note === note
         )
       ) {
-        // 找到最大的任务键
+        // find the largest task key
         data.tasks[id] = {
           ...task,
           interval,
@@ -1075,9 +1061,9 @@ async function handleRequest(request, env, apiKey) {
         await setData(env, data);
       }
 
-      // 运行任务
+      // run task
       await runTasks([id], data, env);
-      // 重定向至 /
+      // redirect to /
       return ["/", "redirect"];
     } else {
       const taskEditPattern = new URLPattern({
@@ -1096,9 +1082,9 @@ async function handleRequest(request, env, apiKey) {
         if (!task) {
           throw new HTTPError(
             "taskNotFound",
-            "未找到任务",
+            "Task not found",
             404,
-            "未找到请求的资源"
+            "The requested resource was not found"
           );
         }
 
@@ -1109,36 +1095,36 @@ async function handleRequest(request, env, apiKey) {
         if (!interval) {
           throw new HTTPError(
             "intervalRequired",
-            "需要设置时间间隔参数",
+            "interval is required",
             400,
-            "请求无效"
+            "Bad Request"
           );
         }
 
-        // 检查间隔时间有效性
+        // check interval is valid
         if (!isValidInterval(interval)) {
           throw new HTTPError(
             "invalidInterval",
-            "时间间隔无效",
+            "interval is invalid",
             400,
-            "错误请求"
+            "Bad Request"
           );
         }
         if (!url) {
           throw new HTTPError(
             "urlRequired",
-            "URL 不能为空",
+            "url is required",
             400,
-            "错误请求"
+            "Bad Request"
           );
         }
 
         if (!isValidUrl(url)) {
           throw new HTTPError(
             "invalidUrl",
-            "URL 格式无效",
+            "url is invalid",
             400,
-            "错误请求"
+            "Bad Request"
           );
         }
         let note = formData.get("note") || "";
@@ -1175,12 +1161,12 @@ async function handleRequest(request, env, apiKey) {
         if (!task) {
           throw new HTTPError(
             "taskNotFound",
-            "未找到任务",
+            "Task not found",
             404,
-            "未找到请求的资源"
+            "The requested resource was not found"
           );
         }
-        // 删除任务
+        // delete task
         delete data.tasks[id];
         await setData(env, data);
         return ["/", "redirect"];
@@ -1188,9 +1174,9 @@ async function handleRequest(request, env, apiKey) {
 
       throw new HTTPError(
         "taskRouteNotFound",
-        "未找到任务路由",
+        "Task route not found",
         404,
-        "未找到请求的资源"
+        "The requested resource was not found"
       );
     }
   } else if (pathname === "/notification") {
@@ -1200,9 +1186,9 @@ async function handleRequest(request, env, apiKey) {
     if (notification_curl && !isValidUrl(notification_curl)) {
       throw new HTTPError(
         "invalidNotification_curl",
-        "通知的 curl 格式无效",
+        "notification_curl is invalid",
         400,
-        "请求格式错误"
+        "Bad Request"
       );
     }
     data.notification_curl = notification_curl;
@@ -1223,10 +1209,10 @@ async function handleRequest(request, env, apiKey) {
         json = JSON.stringify(await request.json());
       } catch (e) {
         throw new HTTPError(
-          "Json 解析错误",
-          "请求体 JSON 格式无效： " + e.message,
+          "jsonParseError",
+          "request body JSON is not valid, " + e.message,
           400,
-          "请求失败"
+          "Bad Request"
         );
       }
       await setData(env, json);
@@ -1237,10 +1223,10 @@ async function handleRequest(request, env, apiKey) {
     }
   }
   throw new HTTPError(
-    "Not Found", 
-    "资源未找到", 
+    "notFound",
+    "Not Found",
     404,
-    "请求的资源不存在"
+    "The requested resource was not found"
   );
 }
 
@@ -1416,7 +1402,7 @@ export function getCurrentTaskIds(now, data) {
           finalTasks.push(key);
         }
       } else {
-        throw new Error("时间间隔必须大于1");
+        throw new Error("interval must be greater than 1");
       }
     } else {
       const cron = cronSchedule.parseCronExpression(interval);
@@ -1447,11 +1433,11 @@ async function setData(env, data) {
 function errorToResponse(error) {
   const bodyJson = {
     ok: false,
-    error: "服务器内部错误",
-    message: "服务器内部错误",
+    error: "Internal Server Error",
+    message: "Internal Server Error",
   };
   let status = 500;
-  let statusText = "服务器内部错误";
+  let statusText = "Internal Server Error";
 
   if (error instanceof Error) {
     bodyJson.message = error.message;
@@ -1780,11 +1766,8 @@ function getIndexHtml(data, _clientOffset) {
       ${tasksLists}
     </div>
 
-    <section>
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <h3 style="margin: 0;">失败时通知</h3>
-      <input type="submit" form="notification-form" value="保存">
-    </div>
+    <section style="margin-top: 20px;">
+    <h3 style="margin: 0 0 20px 0;">失败时通知</h3>
     <form id="notification-form" action="/notification" method="POST">
       <textarea
         rows="2"
@@ -1793,7 +1776,10 @@ function getIndexHtml(data, _clientOffset) {
         placeholder="输入Curl命令，{{message}} 为错误信息占位符"
       >${data.notification_curl || ""}</textarea>
     </form>
-    </section>
+    <div style="margin-top: 10px;">
+      <input type="submit" form="notification-form" value="保存">
+    </div>
+  </section>
   </main>
   `;
   const script = `
