@@ -1791,7 +1791,7 @@ function getIndexHtml(data, _clientOffset) {
 
   const body = `<main>
   <h2>网页访问自动化</h2>
-  <p>Made by ❤️ <a href="https://www.owenyoung.com/">Owen</a> (<a href="https://github.com/theowenyoung/blog/tree/main/scripts/cronbin">Source Code</a>) </p>
+  <p>Copyright © 2024 by <a href="https://www.24811213.xyz/">yutian81</a> (<a href="https://github.com/yutian81/serv00-ct8-ssh/tree/main/vercel-alive">Github</a>)</p>
     
     <div class="table">
       <div class="tr">
