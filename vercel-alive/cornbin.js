@@ -19,104 +19,27 @@ const ErrorTypes = {
 // 错误提示函数集合
 const createError = {
   // KV 错误
-  kvNotFound() {
-    return new HTTPError(
-      ErrorTypes.KV_NOT_FOUND,
-      "未找到 KV 数据库绑定",
-      500,
-      "服务器内部错误"
-    );
-  },
+  kvNotFound() { return new HTTPError( ErrorTypes.KV_NOT_FOUND, "未找到 KV 数据库绑定", 500, "服务器内部错误" ); },
   // APIKEY 错误
-  unauthorized() {
-    return new HTTPError(
-      ErrorTypes.UNAUTHORIZED,
-      "需要提供 Authorization Bearer abc 或搜索参数 key=abc",
-      401,
-      "未经授权"
-    );
-  },
+  unauthorized() { return new HTTPError( ErrorTypes.UNAUTHORIZED, "需要提供 Authorization Bearer abc 或搜索参数 key=abc", 401, "未经授权" ); },
   // task 任务错误
-  taskNotFound() {
-    return new HTTPError(
-      ErrorTypes.TASK_NOT_FOUND,
-      "未找到任务",
-      404,
-      "未找到请求的资源"
-    );
-  },
+  taskNotFound() { return new HTTPError( ErrorTypes.TASK_NOT_FOUND, "未找到任务", 404, "未找到请求的资源" ); },
   // 间隔时间错误
-  intervalRequired() {
-    return new HTTPError(
-      ErrorTypes.INTERVAL_REQUIRED,
-      "需要提供间隔时间",
-      400,
-      "请求错误"
-    );
-  },
+  intervalRequired() { return new HTTPError( ErrorTypes.INTERVAL_REQUIRED, "需要提供间隔时间", 400, "请求错误" ); },
   // 间隔格式错误
-  invalidInterval() {
-    return new HTTPError(
-      ErrorTypes.INVALID_INTERVAL,
-      "间隔时间格式无效",
-      400,
-      "请求错误"
-    );
-  },
-  // URL 数据错误
-  urlRequired() {
-    return new HTTPError(
-      ErrorTypes.URL_REQUIRED,
-      "需要提供 URL",
-      400,
-      "请求错误"
-    );
-  },
-  // URL格式错误
-  invalidUrl() {
-    return new HTTPError(
-      ErrorTypes.INVALID_URL,
-      "URL 格式无效",
-      400,
-      "请求错误"
-    );
-  },
+  invalidInterval() { return new HTTPError( ErrorTypes.INVALID_INTERVAL, "间隔时间格式无效", 400, "请求错误" ); },
+  // URL 空值错误
+  urlRequired() { return new HTTPError( ErrorTypes.URL_REQUIRED, "需要提供 URL", 400, "请求错误" ); },
+  // URL 格式错误
+  invalidUrl() { return new HTTPError( ErrorTypes.INVALID_URL, "URL 格式无效", 400, "请求错误" ); },
   // task 任务路由错误
-  taskRouteNotFound() {
-    return new HTTPError(
-      ErrorTypes.TASK_ROUTE_NOT_FOUND,
-      "未找到任务路由",
-      404,
-      "未找到请求的资源"
-    );
-  },
+  taskRouteNotFound() { return new HTTPError( ErrorTypes.TASK_ROUTE_NOT_FOUND, "未找到任务路由", 404, "未找到请求的资源" ); },
   // json 解析错误
-  jsonParseError(message) {
-    return new HTTPError(
-      ErrorTypes.JSON_PARSE_ERROR,
-      `请求体 JSON 格式无效，${message}`,
-      400,
-      "请求错误"
-    );
-  },
+  jsonParseError(message) { return new HTTPError( ErrorTypes.JSON_PARSE_ERROR, `请求体 JSON 格式无效，${message}`, 400, "请求错误" ); },
   // 资源请求错误
-  notFound() {
-    return new HTTPError(
-      ErrorTypes.NOT_FOUND,
-      "未找到",
-      404,
-      "未找到请求的资源"
-    );
-  },
+  notFound() { return new HTTPError( ErrorTypes.NOT_FOUND, "未找到", 404, "未找到请求的资源" ); },
   // curl 通知错误
-  invalidNotification() {
-    return new HTTPError(
-      ErrorTypes.INVALID_NOTIFICATION,
-      "通知 curl 格式无效",
-      400,
-      "请求错误"
-    );
-  }
+  invalidNotification() { return new HTTPError( ErrorTypes.INVALID_NOTIFICATION, "通知 curl 格式无效", 400, "请求错误" ); }
 };
 
 export default {
