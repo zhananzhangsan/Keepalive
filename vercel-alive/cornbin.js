@@ -1489,25 +1489,47 @@ function getIndexHtml(data, _clientOffset) {
           body {
             padding: 10px;
           }
-          
           .table {
-            display: block !important;
+            display: block;
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            white-space: nowrap;
+            max-width: 100%;
           }
-          
           .w-md, .w-lg {
             min-width: 120px;
+            max-width: 100%;
+          }
+          input[type="text"], textarea {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+          }
+          .td {
+            white-space: normal;
+            word-break: break-word;
+          }
+          input[type="text"]::-webkit-scrollbar,
+          textarea::-webkit-scrollbar {
+            display: none;
+          }
+          input[type="text"] {
+            white-space: nowrap !important;  /* 表单输入框不许换行 */
+          }
+          textarea {
+            white-space: pre-wrap !important;  /* 通知输入框允许内容换行 */
           }
         }
-        
-        .w-md, .w-lg { 
+
+        .w-md, .w-lg {
           width: 100%;
           box-sizing: border-box;
         }
-        
+
         .mr { margin-right: 1rem; }
         .mb { margin-bottom: 0.5rem; }
-        
+
         .table {
           display: table;
           border-radius: 8px;
@@ -1516,12 +1538,12 @@ function getIndexHtml(data, _clientOffset) {
           background: white;
           width: 100%;
         }
-        
+
         .tr {
           display: table-row;
           border: 1px solid #e5e7eb;
         }
-        
+
         .td {
           display: table-cell;
           padding: 12px;
@@ -1529,7 +1551,7 @@ function getIndexHtml(data, _clientOffset) {
           vertical-align: middle;
           white-space: nowrap;
         }
-        
+
         /* 设置特定列的宽度 */
         .td:nth-child(1) { width: 40px; }
         .td:nth-child(2) { width: 100px; }
@@ -1537,7 +1559,7 @@ function getIndexHtml(data, _clientOffset) {
         .td:nth-child(4) { width: 250px; }
         .td:nth-child(5) { width: 120px; }
         .td:nth-child(6) { width: auto; }
-        
+
         input[type="text"], textarea {
           padding: 8px;
           border: 1px solid #e5e7eb;
@@ -1546,15 +1568,19 @@ function getIndexHtml(data, _clientOffset) {
           box-sizing: border-box;
           height: 36px;
           font-size: 14px;
+          white-space: nowrap;
+          overflow-x: auto;
         }
-        
+
         textarea {
           resize: none;
-          overflow: hidden;
           line-height: 20px;
           display: block;
+          overflow-y: auto;
+          white-space: pre;
+          min-height: 36px;
         }
-        
+
         button, input[type="submit"] {
           background: #3b82f6;
           color: white;
@@ -1565,31 +1591,31 @@ function getIndexHtml(data, _clientOffset) {
           transition: all 0.2s;
           font-size: 14px;
         }
-        
+
         button:hover, input[type="submit"]:hover {
           background: #2563eb;
           transform: translateY(-1px);
         }
-        
+
         button[formaction*="delete"] {
           background: #ef4444;
         }
-        
+
         button[formaction*="delete"]:hover {
           background: #dc2626;
         }
-        
+
         details summary {
           cursor: pointer;
           color: #4b5563;
           padding: 4px 0;
         }
-        
+
         details p {
           margin: 8px 0;
           color: #666;
         }
-        
+
         /* 通知区域样式 */
         .notification-section {
           margin-top: 20px;
@@ -1598,12 +1624,12 @@ function getIndexHtml(data, _clientOffset) {
           border-radius: 8px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        
+
         .notification-section h3 {
           margin: 0 0 20px 0;
           color: #1f2937;
         }
-        
+
         .notification-section textarea {
           width: 100%;
           height: auto;
@@ -1611,7 +1637,7 @@ function getIndexHtml(data, _clientOffset) {
           min-height: 60px;
           margin-bottom: 10px;
         }
-        
+
         /* Toast 提示样式 */
         .toast {
           position: fixed;
@@ -1626,7 +1652,7 @@ function getIndexHtml(data, _clientOffset) {
           display: none;
           transition: opacity 0.3s;
         }
-        
+
         @keyframes slideIn {
           from {
             transform: translateX(100%);
@@ -1875,23 +1901,22 @@ function getIndexHtml(data, _clientOffset) {
       const toast = document.createElement('div');
       toast.className = 'toast';
       toast.textContent = message;
-      document.body.appendChild(toast);     
+      document.body.appendChild(toast);
       requestAnimationFrame(() => {
         toast.style.display = 'block';
-      });      
+      });
       setTimeout(() => {
         toast.style.display = 'none';
         toast.addEventListener('transitionend', () => toast.remove());
       }, 3000);
     }
-    
+
     // 表单提交处理
     document.querySelectorAll('form').forEach(form => {
       form.onsubmit = (e) => {
         const submitButton = e.submitter; // 获取触发提交的按钮
-        if(!submitButton) return true;        
-        const action = submitButton.formAction || form.action;
-        
+        if(!submitButton) return true;       
+        const action = submitButton.formAction || form.action;       
         // 删除操作需要确认
         if(action.includes('/delete')) {
           if(!confirm('确认要删除该任务吗?')) {
@@ -1908,7 +1933,7 @@ function getIndexHtml(data, _clientOffset) {
         // 添加新任务
         if(action.includes('/tasks') && !action.includes('/edit')) {
           showToast('任务已添加');
-        } 
+        }
         // 保存任务或通知设置
         else if(action.includes('/edit') || action.includes('/notification')) {
           showToast('保存成功');
