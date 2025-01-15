@@ -1962,7 +1962,7 @@ function timeToText(time, clientOffset) {
   const diffInMinutes = Math.floor(diff / 1000 / 60);
   if (diffInMinutes < 1) {
     const seconds = Math.floor(diff / 1000);
-    return `${seconds}s ago`;
+    return `${seconds} 秒前`;
   }
   const diffInHours = Math.floor(diffInMinutes / 60);
 
