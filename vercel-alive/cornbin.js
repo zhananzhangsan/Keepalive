@@ -1,6 +1,124 @@
 // 设置前端访问密码，使用 https://域名/?key=密码 访问
 const APIKEY = "root";
 
+// 定义错误类型常量
+const ErrorTypes = {
+  KV_NOT_FOUND: 'kvNotFound',
+  UNAUTHORIZED: 'unauthorized',
+  TASK_NOT_FOUND: 'taskNotFound',
+  INTERVAL_REQUIRED: 'intervalRequired',
+  INVALID_INTERVAL: 'invalidInterval',
+  URL_REQUIRED: 'urlRequired', 
+  INVALID_URL: 'invalidUrl',
+  TASK_ROUTE_NOT_FOUND: 'taskRouteNotFound',
+  JSON_PARSE_ERROR: 'jsonParseError',
+  NOT_FOUND: 'notFound',
+  INVALID_NOTIFICATION: 'invalidNotification_curl'
+};
+
+// 错误提示函数集合
+const createError = {
+  // KV 错误
+  kvNotFound() {
+    return new HTTPError(
+      ErrorTypes.KV_NOT_FOUND,
+      "未找到 KV 数据库绑定",
+      500,
+      "服务器内部错误"
+    );
+  },
+  // APIKEY 错误
+  unauthorized() {
+    return new HTTPError(
+      ErrorTypes.UNAUTHORIZED,
+      "需要提供 Authorization Bearer abc 或搜索参数 key=abc",
+      401,
+      "未经授权"
+    );
+  },
+  // task 任务错误
+  taskNotFound() {
+    return new HTTPError(
+      ErrorTypes.TASK_NOT_FOUND,
+      "未找到任务",
+      404,
+      "未找到请求的资源"
+    );
+  },
+  // 间隔时间错误
+  intervalRequired() {
+    return new HTTPError(
+      ErrorTypes.INTERVAL_REQUIRED,
+      "需要提供间隔时间",
+      400,
+      "请求错误"
+    );
+  },
+  // 间隔格式错误
+  invalidInterval() {
+    return new HTTPError(
+      ErrorTypes.INVALID_INTERVAL,
+      "间隔时间格式无效",
+      400,
+      "请求错误"
+    );
+  },
+  // URL 数据错误
+  urlRequired() {
+    return new HTTPError(
+      ErrorTypes.URL_REQUIRED,
+      "需要提供 URL",
+      400,
+      "请求错误"
+    );
+  },
+  // URL格式错误
+  invalidUrl() {
+    return new HTTPError(
+      ErrorTypes.INVALID_URL,
+      "URL 格式无效",
+      400,
+      "请求错误"
+    );
+  },
+  // task 任务路由错误
+  taskRouteNotFound() {
+    return new HTTPError(
+      ErrorTypes.TASK_ROUTE_NOT_FOUND,
+      "未找到任务路由",
+      404,
+      "未找到请求的资源"
+    );
+  },
+  // json 解析错误
+  jsonParseError(message) {
+    return new HTTPError(
+      ErrorTypes.JSON_PARSE_ERROR,
+      `请求体 JSON 格式无效，${message}`,
+      400,
+      "请求错误"
+    );
+  },
+  // 资源请求错误
+  notFound() {
+    return new HTTPError(
+      ErrorTypes.NOT_FOUND,
+      "未找到",
+      404,
+      "未找到请求的资源"
+    );
+  },
+  // curl 通知错误
+  invalidNotification() {
+    return new HTTPError(
+      ErrorTypes.INVALID_NOTIFICATION,
+      "通知 curl 格式无效",
+      400,
+      "请求错误"
+    );
+  }
+};
+
 export default {
   async fetch(request, env) {
     try {
@@ -44,6 +162,46 @@ export default {
     ctx.waitUntil(checkAndRunTasks(env));
   },
 };
+
+// HTTPError 错误类
+class HTTPError extends Error {
+  constructor(name, message, status, statusText) {
+    super(message);
+    this.name = name;
+    this.status = status;
+    this.statusText = statusText;
+  }
+}
+
+// Response 返回错误类
+function errorToResponse(error) {
+  const bodyJson = {
+    ok: false,
+    error: "服务器内部错误",
+    message: "服务器内部错误",
+  };
+  let status = 500;
+  let statusText = "服务器内部错误";
+
+  if (error instanceof Error) {
+    bodyJson.message = error.message;
+    bodyJson.error = error.name;
+
+    if (error.status) {
+      status = error.status;
+    }
+    if (error.statusText) {
+      statusText = error.statusText;
+    }
+  }
+  return new Response(JSON.stringify(bodyJson, null, 2), {
+    status: status,
+    statusText: statusText,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+}
 
 // 定时任务调度器
 // https://www.npmjs.com/package/cron-schedule
@@ -94,19 +252,19 @@ export const cronSchedule = (() => {
   var __toCommonJS = (mod) =>
     __copyProps(__defProp({}, "__esModule", { value: true }), mod);
   var __accessCheck = (obj, member, msg) => {
-    if (!member.has(obj)) throw TypeError("Cannot " + msg);
+    if (!member.has(obj)) throw TypeError("无法执行" + msg);
   };
   var __privateGet = (obj, member, getter) => {
-    __accessCheck(obj, member, "read from private field");
+    __accessCheck(obj, member, "读取私有字段");
     return getter ? getter.call(obj) : member.get(obj);
   };
   var __privateAdd = (obj, member, value) => {
     if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
+      throw TypeError("不能重复添加相同的私有成员");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet = (obj, member, value, setter) => {
-    __accessCheck(obj, member, "write to private field");
+    __accessCheck(obj, member, "写入私有字段");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -247,7 +405,7 @@ export const cronSchedule = (() => {
       const taskIndex = __privateGet(this, _tasks).findIndex(
         (task) => task.id === id
       );
-      if (taskIndex === -1) throw new Error("Task not found.");
+      if (taskIndex === -1) throw new Error("未找到任务。");
       __privateGet(this, _tasks).splice(taskIndex, 1);
     }
     sortTasks() {
@@ -331,15 +489,15 @@ export const cronSchedule = (() => {
   var Cron = class {
     constructor({ seconds, minutes, hours, days, months, weekdays }) {
       if (!seconds || seconds.size === 0)
-        throw new Error("There must be at least one allowed second.");
+        throw new Error("必须至少设置一个有效的秒数。");
       if (!minutes || minutes.size === 0)
-        throw new Error("There must be at least one allowed minute.");
+        throw new Error("必须至少设置一个有效的分钟。");
       if (!hours || hours.size === 0)
-        throw new Error("There must be at least one allowed hour.");
+        throw new Error("必须至少设置一个有效的小时。");
       if (!months || months.size === 0)
-        throw new Error("There must be at least one allowed month.");
+        throw new Error("必须至少设置一个有效的月份。");
       if ((!weekdays || weekdays.size === 0) && (!days || days.size === 0))
-        throw new Error("There must be at least one allowed day or weekday.");
+        throw new Error("必须至少设置一个有效的日期或星期。");
       this.seconds = Array.from(seconds).sort((a, b) => a - b);
       this.minutes = Array.from(minutes).sort((a, b) => a - b);
       this.hours = Array.from(hours).sort((a, b) => a - b);
@@ -357,7 +515,7 @@ export const cronSchedule = (() => {
           )
         ) {
           throw new Error(
-            `${name} must only consist of integers which are within the range of ${constraint.min} and ${constraint.max}`
+            `${name} 只能包含 ${constraint.min} 到 ${constraint.max} 之间的整数`
           );
         }
       };
@@ -451,7 +609,7 @@ export const cronSchedule = (() => {
     }
     findAllowedDayInMonth(dir, year, month, startDay) {
       var _a, _b;
-      if (startDay < 1) throw new Error("startDay must not be smaller than 1.");
+      if (startDay < 1) throw new Error("开始日期不能小于1。");
       const daysInMonth = getDaysInMonth(year, month);
       const daysRestricted = this.days.length !== 31;
       const weekdaysRestricted = this.weekdays.length !== 7;
@@ -560,7 +718,7 @@ export const cronSchedule = (() => {
           );
         }
       }
-      throw new Error("No valid next date was found.");
+      throw new Error("未找到有效的下一个日期。");
     }
     getNextDates(amount, startDate) {
       const dates = [];
@@ -638,7 +796,7 @@ export const cronSchedule = (() => {
           );
         }
       }
-      throw new Error("No valid previous date was found.");
+      throw new Error("找到有效的上一个日期");
     }
     getPrevDates(amount, startDate) {
       const dates = [];
@@ -767,11 +925,11 @@ export const cronSchedule = (() => {
           : singleElement;
       const parsedElement = parseInt(singleElement, 10);
       if (Number.isNaN(parsedElement)) {
-        throw new Error(`Failed to parse ${element}: ${singleElement} is NaN.`);
+        throw new Error(`解析 ${element} 失败：${singleElement} 不是一个有效数字。`);
       }
       if (parsedElement < constraint.min || parsedElement > constraint.max) {
         throw new Error(
-          `Failed to parse ${element}: ${singleElement} is outside of constraint range of ${constraint.min} - ${constraint.max}.`
+          `解析 ${element} 失败：${singleElement} 超出了允许范围 ${constraint.min} - ${constraint.max}。`
         );
       }
       return parsedElement;
@@ -792,7 +950,7 @@ export const cronSchedule = (() => {
         : parseSingleElement(rangeSegments[4]);
     if (parsedStart > parsedEnd) {
       throw new Error(
-        `Failed to parse ${element}: Invalid range (start: ${parsedStart}, end: ${parsedEnd}).`
+        `解析 ${element} 失败：无效的范围 (起始值: ${parsedStart}, 结束值: ${parsedEnd}).`
       );
     }
     const step = rangeSegments[6];
@@ -800,10 +958,10 @@ export const cronSchedule = (() => {
     if (step !== void 0) {
       parsedStep = parseInt(step, 10);
       if (Number.isNaN(parsedStep)) {
-        throw new Error(`Failed to parse step: ${step} is NaN.`);
+        `解析步骤失败：期望 ${step} 的值应该大于 0。`
       } else if (parsedStep < 1) {
         throw new Error(
-          `Failed to parse step: Expected ${step} to be greater than 0.`
+          `解析步骤失败：期望 ${step} 的值应该大于 0。`
         );
       }
     }
@@ -815,7 +973,7 @@ export const cronSchedule = (() => {
   function parseCronExpression(cronExpression) {
     var _a;
     if (typeof cronExpression !== "string") {
-      throw new TypeError("Invalid cron expression: must be of type string.");
+      throw new TypeError("无效的 cron 表达式：必须是字符串类型。");
     }
     cronExpression =
       (_a = timeNicknames[cronExpression.toLowerCase()]) != null
@@ -823,7 +981,7 @@ export const cronSchedule = (() => {
         : cronExpression;
     const elements = cronExpression.split(" ");
     if (elements.length < 5 || elements.length > 6) {
-      throw new Error("Invalid cron expression: expected 5 or 6 elements.");
+      throw new TypeError("无效的 cron 表达式：必须是字符串类型。");
     }
     const rawSeconds = elements.length === 6 ? elements[0] : "0";
     const rawMinutes = elements.length === 6 ? elements[1] : elements[0];
@@ -845,629 +1003,557 @@ export const cronSchedule = (() => {
   return __toCommonJS(src_exports);
 })();
 
-async function handleRequest(request, env) {
-  if (!env.CRONBIN) {
-    throw new HTTPError(
-      "kvNotFound",
-      "Not Found KV Database Bind",
-      500,
-      "Interval Server Error"
-    );
-  }
-
-  // first check if the request is authorized
-  const { headers } = request;
-  const urlObj = new URL(request.url);
-  const { pathname } = urlObj;
-
-  const authorization = headers.get("Authorization");
-  const headerAuthorizationValue = `Bearer ${APIKEY}`;
-  if (authorization) {
-    if (authorization !== headerAuthorizationValue) {
-      // if not authorized, return 401
-      throw new HTTPError(
-        "unauthorized",
-        "Authrorization Bearer abc is required",
-        401,
-        "Unauthorized"
-      );
-    }
-  } else if (urlObj.searchParams.has("key")) {
-    const keyFromQuery = urlObj.searchParams.get("key");
-    if (keyFromQuery !== APIKEY) {
-      throw new HTTPError(
-        "unauthorized",
-        "search query key=abc is required",
-        401,
-        "Unauthorized"
-      );
-    }
-  } else {
-    // check cookie
-    const cookie = headers.get("cookie");
-    const apiKey = getCookieValue(cookie, "key");
-    if (apiKey !== APIKEY) {
-      throw new HTTPError(
-        "unauthorized",
-        "Authrorization Bearer abc or search query key=abc is required",
-        401,
-        "Unauthorized"
-      );
+// 工具函数
+function getCookieValue(cookie, key) {
+  let keyValue = null;
+  if (cookie) {
+    const parts = cookie.split(";");
+    for (const part of parts) {
+      const [cookieKey, value] = part.split("=");
+      if (cookieKey && cookieKey.trim() === key) {
+        keyValue = value;
+        break;
+      }
     }
   }
-
-  if (pathname === "/") {
-    const data = await getData(env);
-    const cookie = headers.get("cookie");
-    let clientOffset = getCookieValue(cookie, "_clientOffset");
-    if (!clientOffset) {
-      clientOffset = 0;
-    }
-    clientOffset = Number(clientOffset);
-
-    const body = getIndexHtml(data, clientOffset);
-    const responseHeaders = {
-      "Content-Type": ["text/html"],
-    };
-
-    // send cookie if changed
-    const apiKey = getCookieValue(cookie, "key");
-    const domain = request.headers.get("host")?.split(":")[0];
-    if (apiKey !== APIKEY) {
-      responseHeaders["set-cookie"] = [
-        `key=${APIKEY}; HttpOnly; Max-Age=9999999999999999999999999999; Domain=${domain}; Path=/;`,
-      ];
-    }
-    return [body, responseHeaders];
-  } else if (pathname.startsWith("/tasks")) {
-    const data = await getData(env);
-    if (pathname === "/tasks") {
-      // add task
-      const formData = await request.formData();
-      const interval = formData.get("interval");
-      const url = formData.get("url");
-      if (!interval) {
-        throw new HTTPError(
-          "intervalRequired",
-          "interval is required",
-          400,
-          "Bad Request"
-        );
-      }
-      // check interval is valid
-      if (!isValidInterval(interval)) {
-        throw new HTTPError(
-          "invalidInterval",
-          "interval is invalid",
-          400,
-          "Bad Request"
-        );
-      }
-      if (!url) {
-        throw new HTTPError(
-          "urlRequired",
-          "url is required",
-          400,
-          "Bad Request"
-        );
-      }
-
-      if (!isValidUrl(url)) {
-        throw new HTTPError("invalidUrl", "url is invalid", 400, "Bad Request");
-      }
-      let note = formData.get("note") || "";
-      if (note) {
-        note = note.slice(0, 150);
-      }
-
-      const { tasks } = data;
-      const taskKeys = Object.keys(tasks);
-      const sortedTaskKeys = taskKeys.sort((a, b) => {
-        return tasks[a] - tasks[b];
-      });
-      // find the largest task key
-      const largestTaskKey = sortedTaskKeys[sortedTaskKeys.length - 1];
-      const nextTaskKey = largestTaskKey ? Number(largestTaskKey) + 1 : 1;
-      data.tasks[nextTaskKey] = {
-        interval,
-        url,
-        note,
-        fetch_options: urlToFetchOptions(url),
-      };
-      await setData(env, data);
-      return ["/", "redirect"];
-    }
-
-    const taskRunPattern = new URLPattern({
-      pathname: "/tasks/:id/run",
-      baseURL: urlObj.origin,
-    });
-
-    // check if url match run pattern
-    const match = taskRunPattern.exec(request.url);
-    if (
-      match &&
-      match.pathname &&
-      match.pathname.groups &&
-      match.pathname.groups.id
-    ) {
-      const { id } = match.pathname.groups;
-      const task = data.tasks[id];
-      if (!task) {
-        throw new HTTPError(
-          "taskNotFound",
-          "Task not found",
-          404,
-          "The requested resource was not found"
-        );
-      }
-      // first we should save it.
-
-      const formData = await request.formData();
-      const interval = formData.get("interval");
-      const url = formData.get("url");
-      if (!interval) {
-        throw new HTTPError(
-          "intervalRequired",
-          "interval is required",
-          400,
-          "Bad Request"
-        );
-      }
-
-      // check interval is valid
-      if (!isValidInterval(interval)) {
-        throw new HTTPError(
-          "invalidInterval",
-          "interval is invalid",
-          400,
-          "Bad Request"
-        );
-      }
-      if (!url) {
-        throw new HTTPError(
-          "urlRequired",
-          "url is required",
-          400,
-          "Bad Request"
-        );
-      }
-
-      if (!isValidUrl(url)) {
-        throw new HTTPError("invalidUrl", "url is invalid", 400, "Bad Request");
-      }
-      let note = formData.get("note") || "";
-      if (note) {
-        note = note.slice(0, 150);
-      }
-
-      // check is same
-      //
-      if (
-        !(
-          data.tasks[id].interval === interval &&
-          data.tasks[id].url === url &&
-          data.tasks[id].note === note
-        )
-      ) {
-        // find the largest task key
-        data.tasks[id] = {
-          ...task,
-          interval,
-          url,
-          note,
-          fetch_options: urlToFetchOptions(url),
-        };
-        await setData(env, data);
-      }
-
-      // run task
-      await runTasks([id], data, env);
-      // redirect to /
-      return ["/", "redirect"];
-    } else {
-      const taskEditPattern = new URLPattern({
-        pathname: "/tasks/:id/edit",
-        baseURL: urlObj.origin,
-      });
-      const editMatch = taskEditPattern.exec(request.url);
-      if (
-        editMatch &&
-        editMatch.pathname &&
-        editMatch.pathname.groups &&
-        editMatch.pathname.groups.id
-      ) {
-        const { id } = editMatch.pathname.groups;
-        const task = data.tasks[id];
-        if (!task) {
-          throw new HTTPError(
-            "taskNotFound",
-            "Task not found",
-            404,
-            "The requested resource was not found"
-          );
-        }
-
-        const formData = await request.formData();
-        const interval = formData.get("interval");
-        const url = formData.get("url");
-        const enabled = formData.get("enabled");
-        if (!interval) {
-          throw new HTTPError(
-            "intervalRequired",
-            "interval is required",
-            400,
-            "Bad Request"
-          );
-        }
-
-        // check interval is valid
-        if (!isValidInterval(interval)) {
-          throw new HTTPError(
-            "invalidInterval",
-            "interval is invalid",
-            400,
-            "Bad Request"
-          );
-        }
-        if (!url) {
-          throw new HTTPError(
-            "urlRequired",
-            "url is required",
-            400,
-            "Bad Request"
-          );
-        }
-
-        if (!isValidUrl(url)) {
-          throw new HTTPError(
-            "invalidUrl",
-            "url is invalid",
-            400,
-            "Bad Request"
-          );
-        }
-        let note = formData.get("note") || "";
-        if (note) {
-          note = note.slice(0, 150);
-        }
-
-        // find the largest task key
-        data.tasks[id] = {
-          ...task,
-          interval,
-          url,
-          note,
-          fetch_options: urlToFetchOptions(url),
-          enabled: enabled === "on" ? true : false,
-        };
-        await setData(env, data);
-        return ["/", "redirect"];
-      }
-
-      const taskDeletePattern = new URLPattern({
-        pathname: "/tasks/:id/delete",
-        baseURL: urlObj.origin,
-      });
-      const taskDeletePatternMatch = taskDeletePattern.exec(request.url);
-      if (
-        taskDeletePatternMatch &&
-        taskDeletePatternMatch.pathname &&
-        taskDeletePatternMatch.pathname.groups &&
-        taskDeletePatternMatch.pathname.groups.id
-      ) {
-        const { id } = taskDeletePatternMatch.pathname.groups;
-        const task = data.tasks[id];
-        if (!task) {
-          throw new HTTPError(
-            "taskNotFound",
-            "Task not found",
-            404,
-            "The requested resource was not found"
-          );
-        }
-        // delete task
-        delete data.tasks[id];
-        await setData(env, data);
-        return ["/", "redirect"];
-      }
-
-      throw new HTTPError(
-        "taskRouteNotFound",
-        "Task route not found",
-        404,
-        "The requested resource was not found"
-      );
-    }
-  } else if (pathname === "/notification") {
-    const data = await getData(env);
-    const formData = await request.formData();
-    const notification_curl = formData.get("notification_curl") || "";
-    if (notification_curl && !isValidUrl(notification_curl)) {
-      throw new HTTPError(
-        "invalidNotification_curl",
-        "notification_curl is invalid",
-        400,
-        "Bad Request"
-      );
-    }
-    data.notification_curl = notification_curl;
-    if (notification_curl) {
-      data.notification_fetch_options = urlToFetchOptions(notification_curl);
-    } else {
-      delete data.notification_fetch_options;
-    }
-
-    await setData(env, data);
-    return ["/", "redirect"];
-  } else if (pathname === "/api/data") {
-    // yes authorized, continue
-    if (request.method === "POST") {
-      // add task
-      let json = "";
-      try {
-        json = JSON.stringify(await request.json());
-      } catch (e) {
-        throw new HTTPError(
-          "jsonParseError",
-          "request body JSON is not valid, " + e.message,
-          400,
-          "Bad Request"
-        );
-      }
-      await setData(env, json);
-      return ['{"ok":true}'];
-    } else {
-      const data = await getData(env);
-      return [JSON.stringify(data, null, 2)];
-    }
-  }
-  throw new HTTPError(
-    "notFound",
-    "Not Found",
-    404,
-    "The requested resource was not found"
-  );
+  return keyValue;
 }
 
-export async function checkAndRunTasks(env) {
-  const now = new Date();
-  const data = await getData(env);
-  const taksIds = getCurrentTaskIds(now.toISOString(), data);
-  if (!taksIds || taksIds.length === 0) {
-    return;
-  }
-  await runTasks(taksIds, data, env);
-}
-
-export async function runTasks(taksIds, data, env) {
-  const fetchOptionsArr = [];
-  for (const taskId of taksIds) {
-    const task = data.tasks[taskId];
-    if (!task) {
-      continue;
-    }
-    const { fetch_options } = task;
-    if (fetch_options) {
-      fetchOptionsArr.push(fetch_options);
-    }
-  }
-  const notification_fetch_options = data.notification_fetch_options;
-
-  // promise settled
-  const results = await Promise.allSettled(
-    fetchOptionsArr.map((options) => {
-      return fetch(options.url, options).then((res) => {
-        return res.text().then((body) => {
-          if (res.ok) {
-            return body;
-          } else {
-            throw new Error(`${res.status}: ${res.statusText}, \n${body}`);
-          }
-        });
-      });
-    })
-  );
-  const now = new Date();
-  let globalError = null;
-  for (let i = 0; i < results.length; i++) {
-    const result = results[i];
-    const taskId = taksIds[i];
-    if (!data.tasks[taskId].logs) {
-      data.tasks[taskId].logs = [];
-    }
-    // check logs is too long, if so, remove the last one
-    if (data.tasks[taskId].logs.length >= 10) {
-      data.tasks[taskId].logs.pop();
-    }
-    if (result.status === "fulfilled") {
-      data.tasks[taskId].logs.unshift({
-        run_at: now.toISOString(),
-        ok: true,
-      });
-    } else {
-      const { reason } = result;
-      let failedMessage = reason.message || "unknownError";
-      failedMessage = failedMessage.slice(0, 150);
-
-      globalError = globalError || failedMessage;
-      console.warn("task failed", reason);
-      data.tasks[taskId].logs.unshift({
-        run_at: now.toISOString(),
-        ok: false,
-        message: failedMessage,
-      });
-    }
-  }
-
-  // if data is changed, update it
-  await setData(env, data);
-  if (globalError && notification_fetch_options) {
-    let { url, method, headers, body } = notification_fetch_options;
-    const finalHeaders = {
-      "User-Agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/110.0",
-      ...headers,
-    };
-    // replace \n  for json
-
-    let finalGlobalMessage = globalError
-      .replace(/\n/g, "\\n")
-      .replace(/"/g, '\\"');
-    finalGlobalMessage = finalGlobalMessage + " -- cronbin";
-    const finalBody = body.replace(/{{message}}/g, finalGlobalMessage);
-    if (url.includes("{{message}}")) {
-      url = url.replace(/{{message}}/g, encodeURIComponent(finalGlobalMessage));
-    }
-
-    const res = await fetch(url, {
-      method,
-      headers: finalHeaders,
-      body: finalBody,
-    });
-    await res.text();
-    if (!res.ok) {
-      const notificationError = new Error(
-        `notification failed: ${res.status}: ${
-          res.statusText
-        }, ${await res.text()}`
-      );
-      console.warn("notification error", notificationError);
-    }
-  }
-}
-
-export function urlToFetchOptions(url) {
-  let finalUrl = "";
-  const finalOptions = {};
-  // check url is valid url or curl
-  try {
-    new URL(url);
-    finalUrl = url;
-  } catch (_e) {
-    // not valid url, try to parse it as curl
-    const curlOptions = parseCurl(url);
-    finalUrl = curlOptions.url;
-    if (curlOptions.method) {
-      finalOptions.method = curlOptions.method;
-    }
-
-    if (curlOptions.headers) {
-      finalOptions.headers = curlOptions.headers;
-    }
-    if (curlOptions.body) {
-      finalOptions.body = curlOptions.body;
-    }
-  }
-  if (!finalOptions.headers) {
-    finalOptions.headers = {};
-  }
-  if (!finalOptions.headers["User-Agent"]) {
-    finalOptions.headers["User-Agent"] =
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/110.0";
-  }
-  finalOptions.url = finalUrl;
-  return finalOptions;
-}
-
-export function getCurrentTaskIds(now, data) {
-  if (!data || !data.tasks) {
-    return;
-  }
-  const nowDate = new Date(now);
-  const { tasks } = data;
-  const taskKeys = Object.keys(tasks);
-  const finalTasks = [];
-  for (const key of taskKeys) {
-    const task = tasks[key];
-    if (!task) {
-      continue;
-    }
-    let lastRunAt = new Date(0);
-    let { interval, logs } = task;
-
-    if (logs && logs.length > 0) {
-      lastRunAt = new Date(logs[0].run_at);
-    }
-
-    const diff = nowDate.getTime() - lastRunAt.getTime();
-
-    const num = Number(interval);
-
-    if (!isNaN(num)) {
-      if (num >= 1) {
-        // yes valid
-
-        if (diff >= interval * 60 * 1000) {
-          finalTasks.push(key);
-        }
-      } else {
-        throw new Error("interval must be greater than 1");
-      }
-    } else {
-      const cron = cronSchedule.parseCronExpression(interval);
-      const prevDate = cron.getPrevDate(nowDate);
-      if (prevDate.getTime() > lastRunAt.getTime()) {
-        // yes please run
-        finalTasks.push(key);
-      }
-    }
-  }
-  return finalTasks;
-}
-
-async function getData(env) {
-  const value = await env.CRONBIN.get("data");
-  if (value === null) {
-    return {
-      tasks: {},
-    };
-  }
-  return JSON.parse(value);
-}
-
-async function setData(env, data) {
-  await env.CRONBIN.put("data", JSON.stringify(data, null, 2));
-}
-
-function errorToResponse(error) {
-  const bodyJson = {
-    ok: false,
-    error: "Internal Server Error",
-    message: "Internal Server Error",
-  };
-  let status = 500;
-  let statusText = "Internal Server Error";
-
-  if (error instanceof Error) {
-    bodyJson.message = error.message;
-    bodyJson.error = error.name;
-
-    if (error.status) {
-      status = error.status;
-    }
-    if (error.statusText) {
-      statusText = error.statusText;
-    }
-  }
-  return new Response(JSON.stringify(bodyJson, null, 2), {
-    status: status,
-    statusText: statusText,
-    headers: {
-      "Content-Type": "application/json",
-    },
+function encodeHTML(str) {
+  return str.replace(/[\u00A0-\u9999<>\&]/g, function (i) {
+    return "&#" + i.charCodeAt(0) + ";";
   });
 }
 
-class HTTPError extends Error {
-  constructor(name, message, status, statusText) {
-    super(message);
-    this.name = name;
-    this.status = status;
-    this.statusText = statusText;
+function isValidInterval(value) {
+  const num = Number(value);
+
+  if (!isNaN(num)) {
+    if (num >= 1) {
+      // yes valid
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    // try parse cron expression
+    try {
+      cronSchedule.parseCronExpression(value);
+      return true;
+    } catch (_e) {
+      console.warn("定时任务解析错误", _e);
+      return false;
+    }
   }
 }
 
+function isValidUrl(url) {
+  try {
+    new URL(url);
+    return true;
+  } catch (err) {
+    try {
+      parseCurl(url);
+      return true;
+    } catch (e) {
+      console.warn("curl 命令解析错误", e);
+      return false;
+    }
+  }
+}
+
+function addZero(num) {
+  return num < 10 ? "0" + num : num;
+}
+
+// 解析 curl 命令
+export function parseCurl(curl_request) {
+  const argvsArr = stringToArgv(curl_request, {
+    removequotes: "always",
+  }).map((item) => {
+    let value = item.trim();
+    if (value.startsWith("\\")) {
+      value = value.slice(1).trim();
+    }
+    return value;
+  });
+
+  const argvs = parseArgv(argvsArr);
+  const json = {
+    headers: {},
+  };
+
+  const removeQuotes = (str) => str.replace(/['"]+/g, "");
+
+  const stringIsUrl = (url) => {
+    return /^(ftp|http|https):\/\/[^ "]+$/.test(url);
+  };
+
+  const parseField = (string) => {
+    return string.split(/: (.+)/);
+  };
+
+  const parseHeader = (header) => {
+    let parsedHeader = {};
+    if (Array.isArray(header)) {
+      header.forEach((item, index) => {
+        const field = parseField(item);
+        parsedHeader[field[0]] = field[1];
+      });
+    } else {
+      const field = parseField(header);
+      parsedHeader[field[0]] = field[1];
+    }
+
+    return parsedHeader;
+  };
+
+  for (const argv in argvs) {
+    switch (argv) {
+      case "_":
+        {
+          const _ = argvs[argv];
+          _.forEach((item) => {
+            item = removeQuotes(item);
+
+            if (stringIsUrl(item)) {
+              json.url = item;
+            }
+          });
+        }
+        break;
+
+      case "X":
+      case "request":
+        json.method = argvs[argv];
+        break;
+
+      case "H":
+      case "header":
+        {
+          const parsedHeader = parseHeader(argvs[argv]);
+          json.headers = {
+            ...json.header,
+            ...parsedHeader,
+          };
+        }
+        break;
+
+      case "u":
+      case "user":
+        json.header["Authorization"] = argvs[argv];
+        break;
+
+      case "A":
+      case "user-agent":
+        json.header["user-agent"] = argvs[argv];
+        break;
+
+      case "I":
+      case "head":
+        json.method = "HEAD";
+        break;
+
+      case "L":
+      case "location":
+        json.redirect = "follow";
+        const value = argvs[argv];
+        if (typeof value === "string") {
+          json.url = value;
+        }
+        break;
+
+      case "b":
+      case "cookie":
+        json.header["Set-Cookie"] = argvs[argv];
+        break;
+
+      case "d":
+      case "data":
+      case "data-raw":
+      case "data-ascii":
+        const dataValue = argvs[argv];
+        if (typeof dataValue === "string") {
+          json.body = argvs[argv];
+        } else {
+          throw new TypeError("无效的 cron 表达式：必须是字符串类型。");
+        }
+        break;
+
+      case "data-urlencode":
+        json.body = argvs[argv];
+        break;
+
+      case "compressed":
+        if (!json.header["Accept-Encoding"]) {
+          json.header["Accept-Encoding"] = argvs[argv] || "deflate, gzip";
+        }
+        break;
+
+      default:
+        break;
+    }
+  }
+  if (!json.url) {
+    throw new TypeError("无效的 cron 表达式：必须是字符串类型。");
+  }
+
+  if (!json.method) {
+    if (json.body) {
+      json.method = "POST";
+    } else {
+      json.method = "GET";
+    }
+  }
+
+  return json;
+}
+
+// 字符串转命令行
+function stringToArgv(args, opts) {
+  opts = opts || {};
+  args = args || "";
+  var arr = [];
+
+  var current = null;
+  var quoted = null;
+  var quoteType = null;
+
+  function addcurrent() {
+    if (current) {
+      // 去除当前参数上的多余空格
+      arr.push(current.trim());
+      current = null;
+    }
+  }
+
+  // 删除转义的换行符
+  args = args.replace(/\\\n/g, "");
+
+  for (var i = 0; i < args.length; i++) {
+    var c = args.charAt(i);
+
+    if (c == " ") {
+      if (quoted) {
+        quoted += c;
+      } else {
+        addcurrent();
+      }
+    } else if (c == "'" || c == '"') {
+      if (quoted) {
+        quoted += c;
+        // 仅当结束引号与开始引号类型相同时才结束此参数
+        if (quoteType === c) {
+          // 确保引号没有被转义
+          if (quoted.charAt(quoted.length - 2) !== "\\") {
+            arr.push(quoted);
+            quoted = null;
+            quoteType = null;
+          }
+        }
+      } else {
+        addcurrent();
+        quoted = c;
+        quoteType = c;
+      }
+    } else {
+      if (quoted) {
+        quoted += c;
+      } else {
+        if (current) {
+          current += c;
+        } else {
+          current = c;
+        }
+      }
+    }
+  }
+
+  addcurrent();
+
+  if (opts.removequotes) {
+    arr = arr.map(function (arg) {
+      if (opts.removequotes === "always") {
+        return arg.replace(/^["']|["']$/g, "");
+      } else {
+        if (arg.match(/\s/)) return arg;
+        return arg.replace(/^"|"$/g, "");
+      }
+    });
+  }
+
+  return arr;
+}
+
+function parseArgv(args, opts) {
+  if (!opts) {
+    opts = {};
+  }
+
+  var flags = {
+    bools: {},
+    strings: {},
+    unknownFn: null,
+  };
+
+  if (typeof opts.unknown === "function") {
+    flags.unknownFn = opts.unknown;
+  }
+
+  if (typeof opts.boolean === "boolean" && opts.boolean) {
+    flags.allBools = true;
+  } else {
+    []
+      .concat(opts.boolean)
+      .filter(Boolean)
+      .forEach(function (key) {
+        flags.bools[key] = true;
+      });
+  }
+
+  var aliases = {};
+
+  function aliasIsBoolean(key) {
+    return aliases[key].some(function (x) {
+      return flags.bools[x];
+    });
+  }
+
+  Object.keys(opts.alias || {}).forEach(function (key) {
+    aliases[key] = [].concat(opts.alias[key]);
+    aliases[key].forEach(function (x) {
+      aliases[x] = [key].concat(
+        aliases[key].filter(function (y) {
+          return x !== y;
+        })
+      );
+    });
+  });
+
+  []
+    .concat(opts.string)
+    .filter(Boolean)
+    .forEach(function (key) {
+      flags.strings[key] = true;
+      if (aliases[key]) {
+        [].concat(aliases[key]).forEach(function (k) {
+          flags.strings[k] = true;
+        });
+      }
+    });
+
+  var defaults = opts.default || {};
+
+  var argv = { _: [] };
+
+  function argDefined(key, arg) {
+    return (
+      (flags.allBools && /^--[^=]+$/.test(arg)) ||
+      flags.strings[key] ||
+      flags.bools[key] ||
+      aliases[key]
+    );
+  }
+
+  function setKey(obj, keys, value) {
+    var o = obj;
+    for (var i = 0; i < keys.length - 1; i++) {
+      var key = keys[i];
+      if (isConstructorOrProto(o, key)) {
+        return;
+      }
+      if (o[key] === undefined) {
+        o[key] = {};
+      }
+      if (
+        o[key] === Object.prototype ||
+        o[key] === Number.prototype ||
+        o[key] === String.prototype
+      ) {
+        o[key] = {};
+      }
+      if (o[key] === Array.prototype) {
+        o[key] = [];
+      }
+      o = o[key];
+    }
+
+    var lastKey = keys[keys.length - 1];
+    if (isConstructorOrProto(o, lastKey)) {
+      return;
+    }
+    if (
+      o === Object.prototype ||
+      o === Number.prototype ||
+      o === String.prototype
+    ) {
+      o = {};
+    }
+    if (o === Array.prototype) {
+      o = [];
+    }
+    if (
+      o[lastKey] === undefined ||
+      flags.bools[lastKey] ||
+      typeof o[lastKey] === "boolean"
+    ) {
+      o[lastKey] = value;
+    } else if (Array.isArray(o[lastKey])) {
+      o[lastKey].push(value);
+    } else {
+      o[lastKey] = [o[lastKey], value];
+    }
+  }
+
+  function setArg(key, val, arg) {
+    if (arg && flags.unknownFn && !argDefined(key, arg)) {
+      if (flags.unknownFn(arg) === false) {
+        return;
+      }
+    }
+
+    var value = !flags.strings[key] && isNumber(val) ? Number(val) : val;
+    setKey(argv, key.split("."), value);
+
+    (aliases[key] || []).forEach(function (x) {
+      setKey(argv, x.split("."), value);
+    });
+  }
+
+  Object.keys(flags.bools).forEach(function (key) {
+    setArg(key, defaults[key] === undefined ? false : defaults[key]);
+  });
+
+  var notFlags = [];
+
+  if (args.indexOf("--") !== -1) {
+    notFlags = args.slice(args.indexOf("--") + 1);
+    args = args.slice(0, args.indexOf("--"));
+  }
+
+  for (var i = 0; i < args.length; i++) {
+    var arg = args[i];
+    var key;
+    var next;
+
+    if (/^--.+=/.test(arg)) {
+      // 使用 [\s\S] 代替，因为 js 不支持
+      //  'dotall' 正则表达式修饰符。参见：
+      // http://stackoverflow.com/a/1068308/13216
+      var m = arg.match(/^--([^=]+)=([\s\S]*)$/);
+      key = m[1];
+      var value = m[2];
+      if (flags.bools[key]) {
+        value = value !== "false";
+      }
+      setArg(key, value, arg);
+    } else if (/^--no-.+/.test(arg)) {
+      key = arg.match(/^--no-(.+)/)[1];
+      setArg(key, false, arg);
+    } else if (/^--.+/.test(arg)) {
+      key = arg.match(/^--(.+)/)[1];
+      next = args[i + 1];
+      if (
+        next !== undefined &&
+        !/^(-|--)[^-]/.test(next) &&
+        !flags.bools[key] &&
+        !flags.allBools &&
+        (aliases[key] ? !aliasIsBoolean(key) : true)
+      ) {
+        setArg(key, next, arg);
+        i += 1;
+      } else if (/^(true|false)$/.test(next)) {
+        setArg(key, next === "true", arg);
+        i += 1;
+      } else {
+        setArg(key, flags.strings[key] ? "" : true, arg);
+      }
+    } else if (/^-[^-]+/.test(arg)) {
+      var letters = arg.slice(1, -1).split("");
+
+      var broken = false;
+      for (var j = 0; j < letters.length; j++) {
+        next = arg.slice(j + 2);
+
+        if (next === "-") {
+          setArg(letters[j], next, arg);
+          continue;
+        }
+
+        if (/[A-Za-z]/.test(letters[j]) && next[0] === "=") {
+          setArg(letters[j], next.slice(1), arg);
+          broken = true;
+          break;
+        }
+
+        if (
+          /[A-Za-z]/.test(letters[j]) &&
+          /-?\d+(\.\d*)?(e-?\d+)?$/.test(next)
+        ) {
+          setArg(letters[j], next, arg);
+          broken = true;
+          break;
+        }
+
+        if (letters[j + 1] && letters[j + 1].match(/\W/)) {
+          setArg(letters[j], arg.slice(j + 2), arg);
+          broken = true;
+          break;
+        } else {
+          setArg(letters[j], flags.strings[letters[j]] ? "" : true, arg);
+        }
+      }
+
+      key = arg.slice(-1)[0];
+      if (!broken && key !== "-") {
+        if (
+          args[i + 1] &&
+          !/^(-|--)[^-]/.test(args[i + 1]) &&
+          !flags.bools[key] &&
+          (aliases[key] ? !aliasIsBoolean(key) : true)
+        ) {
+          setArg(key, args[i + 1], arg);
+          i += 1;
+        } else if (args[i + 1] && /^(true|false)$/.test(args[i + 1])) {
+          setArg(key, args[i + 1] === "true", arg);
+          i += 1;
+        } else {
+          setArg(key, flags.strings[key] ? "" : true, arg);
+        }
+      }
+    } else {
+      if (!flags.unknownFn || flags.unknownFn(arg) !== false) {
+        argv._.push(flags.strings._ || !isNumber(arg) ? arg : Number(arg));
+      }
+      if (opts.stopEarly) {
+        argv._.push.apply(argv._, args.slice(i + 1));
+        break;
+      }
+    }
+  }
+
+  Object.keys(defaults).forEach(function (k) {
+    if (!hasKey(argv, k.split("."))) {
+      setKey(argv, k.split("."), defaults[k]);
+
+      (aliases[k] || []).forEach(function (x) {
+        setKey(argv, x.split("."), defaults[k]);
+      });
+    }
+  });
+
+  if (opts["--"]) {
+    argv["--"] = notFlags.slice();
+  } else {
+    notFlags.forEach(function (k) {
+      argv._.push(k);
+    });
+  }
+
+  return argv;
+}
+
+// 生成 HTML
 function getIndexHtml(data, _clientOffset) {
   let html = `<!DOCTYPE html>
     <html lang="zh">
@@ -1558,7 +1644,10 @@ function getIndexHtml(data, _clientOffset) {
         .td:nth-child(3) { width: 360px; }
         .td:nth-child(4) { width: 250px; }
         .td:nth-child(5) { width: 120px; }
-        .td:nth-child(6) { width: auto; }
+        .td:nth-child(6) { 
+          max-width: 150px;
+          white-space: normal;    /* 允许自动换行 */
+        }
 
         input[type="text"], textarea {
           padding: 8px;
@@ -1956,7 +2045,6 @@ function logToText(log, _clientOffset) {
 }
 
 function timeToText(time, clientOffset) {
-  // get xx ago
   const now = new Date();
   const diff = now.getTime() - time.getTime();
   const diffInMinutes = Math.floor(diff / 1000 / 60);
@@ -1970,7 +2058,6 @@ function timeToText(time, clientOffset) {
   const clientDate = new Date(clientTimezoneDateTime);
 
   if (diffInHours < 24) {
-    // get hour, minutes, second
     const hour = clientDate.getUTCHours();
     const minutes = clientDate.getUTCMinutes();
     return `${addZero(hour)}:${addZero(minutes)}`;
@@ -1979,216 +2066,412 @@ function timeToText(time, clientOffset) {
   if (diffInDays < 7) {
     return `${diffInDays} 天前`;
   }
-
-  // return clientDate.toISOString();
-  // return clientDate.toISOString().slice(0, 18);
 }
 
-function getCookieValue(cookie, key) {
-  let keyValue = null;
-  if (cookie) {
-    const parts = cookie.split(";");
-    for (const part of parts) {
-      const [cookieKey, value] = part.split("=");
-      if (cookieKey && cookieKey.trim() === key) {
-        keyValue = value;
-        break;
+// 数据处理——获取收据
+async function getData(env) {
+  if (!env.CRONBIN) { throw createError.kvNotFound(); }
+  const value = await env.CRONBIN.get("data");
+  if (value === null) {
+    return {
+      tasks: {},
+    };
+  }
+  return JSON.parse(value);
+}
+
+// 数据处理——保存数据
+async function setData(env, data) {
+  await env.CRONBIN.put("data", JSON.stringify(data, null, 2));
+}
+
+async function handleRequest(request, env) {
+  if (!env.CRONBIN) { throw createError.kvNotFound(); }
+  // 首先检查请求是否被授权
+  const { headers } = request;
+  const urlObj = new URL(request.url);
+  const { pathname } = urlObj;
+  const authorization = headers.get("Authorization");
+  const headerAuthorizationValue = `Bearer ${APIKEY}`;
+
+  if (authorization) {
+    if (authorization !== headerAuthorizationValue) { throw createError.unauthorized(); }
+  } else if (urlObj.searchParams.has("key")) {
+    const keyFromQuery = urlObj.searchParams.get("key");
+    if (keyFromQuery !== APIKEY) { throw createError.unauthorized(); }
+  } else {
+    const cookie = headers.get("cookie");
+    const apiKey = getCookieValue(cookie, "key");
+    if (apiKey !== APIKEY) { throw createError.unauthorized(); }
+  }
+
+  if (pathname === "/") {
+    const data = await getData(env);
+    const cookie = headers.get("cookie");
+    let clientOffset = getCookieValue(cookie, "_clientOffset");
+    if (!clientOffset) {
+      clientOffset = 0;
+    }
+    clientOffset = Number(clientOffset);
+
+    const body = getIndexHtml(data, clientOffset);
+    const responseHeaders = {
+      "Content-Type": ["text/html"],
+    };
+
+    // send cookie if changed
+    const apiKey = getCookieValue(cookie, "key");
+    const domain = request.headers.get("host")?.split(":")[0];
+    if (apiKey !== APIKEY) {
+      responseHeaders["set-cookie"] = [
+        `key=${APIKEY}; HttpOnly; Max-Age=9999999999999999999999999999; Domain=${domain}; Path=/;`,
+      ];
+    }
+    return [body, responseHeaders];
+  } else if (pathname.startsWith("/tasks")) {
+    const data = await getData(env);
+    if (pathname === "/tasks") {
+      const formData = await request.formData();
+      const interval = formData.get("interval");
+      const url = formData.get("url");
+
+      if (!interval) { throw createError.intervalRequired(); }     
+      if (!isValidInterval(interval)) { throw createError.invalidInterval(); }      
+      if (!url) { throw createError.urlRequired(); }
+      if (!isValidUrl(url)) { throw createError.invalidUrl(); }
+
+      let note = formData.get("note") || "";
+      if (note) { note = note.slice(0, 150); }
+
+      const { tasks } = data;
+      const taskKeys = Object.keys(tasks);
+      const sortedTaskKeys = taskKeys.sort((a, b) => {
+        return tasks[a] - tasks[b];
+      });
+
+      const largestTaskKey = sortedTaskKeys[sortedTaskKeys.length - 1];
+      const nextTaskKey = largestTaskKey ? Number(largestTaskKey) + 1 : 1;
+      data.tasks[nextTaskKey] = {
+        interval,
+        url,
+        note,
+        fetch_options: urlToFetchOptions(url),
+      };
+      await setData(env, data);
+      return ["/", "redirect"];
+    }
+
+    const taskRunPattern = new URLPattern({
+      pathname: "/tasks/:id/run",
+      baseURL: urlObj.origin,
+    });
+
+    const match = taskRunPattern.exec(request.url);
+    if (
+      match &&
+      match.pathname &&
+      match.pathname.groups &&
+      match.pathname.groups.id
+    ) {
+      const { id } = match.pathname.groups;
+      const task = data.tasks[id];
+      if (!task) { throw createError.taskNotFound(); }
+
+      const formData = await request.formData();
+      const interval = formData.get("interval");
+      const url = formData.get("url");
+      if (!interval) { throw createError.intervalRequired(); }
+      if (!isValidInterval(interval)) { throw createError.invalidInterval(); }
+      if (!url) { throw createError.urlRequired(); }
+      if (!isValidUrl(url)) { throw createError.invalidUrl(); }
+      let note = formData.get("note") || "";
+      if (note) { note = note.slice(0, 150); }
+      if (
+        !(
+          data.tasks[id].interval === interval &&
+          data.tasks[id].url === url &&
+          data.tasks[id].note === note
+        )
+      ) {
+        // find the largest task key
+        data.tasks[id] = {
+          ...task,
+          interval,
+          url,
+          note,
+          fetch_options: urlToFetchOptions(url),
+        };
+        await setData(env, data);
+      }
+
+      await runTasks([id], data, env);
+      return ["/", "redirect"];
+    } else {
+      const taskEditPattern = new URLPattern({
+        pathname: "/tasks/:id/edit",
+        baseURL: urlObj.origin,
+      });
+      const editMatch = taskEditPattern.exec(request.url);
+      if (
+        editMatch &&
+        editMatch.pathname &&
+        editMatch.pathname.groups &&
+        editMatch.pathname.groups.id
+      ) {
+        const { id } = editMatch.pathname.groups;
+        const task = data.tasks[id];
+        if (!task) { throw createError.taskNotFound(); }
+
+        const formData = await request.formData();
+        const interval = formData.get("interval");
+        const url = formData.get("url");
+        const enabled = formData.get("enabled");
+        if (!interval) { throw createError.intervalRequired(); }
+        if (!isValidInterval(interval)) { throw createError.invalidInterval(); }
+        if (!url) { throw createError.urlRequired(); }
+        if (!isValidUrl(url)) { throw createError.invalidUrl(); }
+        let note = formData.get("note") || "";
+        if (note) { note = note.slice(0, 150); }
+
+        data.tasks[id] = {
+          ...task,
+          interval,
+          url,
+          note,
+          fetch_options: urlToFetchOptions(url),
+          enabled: enabled === "on" ? true : false,
+        };
+        await setData(env, data);
+        return ["/", "redirect"];
+      }
+
+      const taskDeletePattern = new URLPattern({
+        pathname: "/tasks/:id/delete",
+        baseURL: urlObj.origin,
+      });
+      const taskDeletePatternMatch = taskDeletePattern.exec(request.url);
+      if (
+        taskDeletePatternMatch &&
+        taskDeletePatternMatch.pathname &&
+        taskDeletePatternMatch.pathname.groups &&
+        taskDeletePatternMatch.pathname.groups.id
+      ) {
+        const { id } = taskDeletePatternMatch.pathname.groups;
+        const task = data.tasks[id];
+        if (!task) { throw createError.taskNotFound(); }
+        delete data.tasks[id];
+        await setData(env, data);
+        return ["/", "redirect"];
+      }
+      throw createError.taskRouteNotFound();
+    }
+  } else if (pathname === "/notification") {
+    const data = await getData(env);
+    const formData = await request.formData();
+    const notification_curl = formData.get("notification_curl") || "";
+    if (notification_curl && !isValidUrl(notification_curl)) { throw createError.invalidNotification(); }
+    data.notification_curl = notification_curl;
+    if (notification_curl) {
+      data.notification_fetch_options = urlToFetchOptions(notification_curl);
+    } else {
+      delete data.notification_fetch_options;
+    }
+
+    await setData(env, data);
+    return ["/", "redirect"];
+  } else if (pathname === "/api/data") {
+    if (request.method === "POST") {
+      let json = "";
+      try { json = JSON.stringify(await request.json()); } 
+      catch (e) { throw createError.jsonParseError(); }
+      await setData(env, json);
+      return ['{"ok":true}'];
+    } else {
+      const data = await getData(env);
+      return [JSON.stringify(data, null, 2)];
+    }
+  }
+  throw createError.notFound();
+}
+
+export async function checkAndRunTasks(env) {
+  const now = new Date();
+  const data = await getData(env);
+  const taksIds = getCurrentTaskIds(now.toISOString(), data);
+  if (!taksIds || taksIds.length === 0) {
+    return;
+  }
+  await runTasks(taksIds, data, env);
+}
+
+export async function runTasks(taksIds, data, env) {
+  const fetchOptionsArr = [];
+  for (const taskId of taksIds) {
+    const task = data.tasks[taskId];
+    if (!task) {
+      continue;
+    }
+    const { fetch_options } = task;
+    if (fetch_options) {
+      fetchOptionsArr.push(fetch_options);
+    }
+  }
+  const notification_fetch_options = data.notification_fetch_options;
+
+  const results = await Promise.allSettled(
+    fetchOptionsArr.map(async (options) => {
+      const res = await fetch(options.url, options);
+      const body = await res.text();
+      if (res.ok) {
+        return body;
+      } else {
+        throw new Error(`❌ 请求失败 —— \n【状态码】${res.status} \n【状态信息】${res.statusText || '访问失败'} \n【详细信息】${body}`);
+      }
+    })
+  );
+  const now = new Date();
+  let globalError = null;
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    const taskId = taksIds[i];
+    if (!data.tasks[taskId].logs) {
+      data.tasks[taskId].logs = [];
+    }
+    // check logs is too long, if so, remove the last one
+    if (data.tasks[taskId].logs.length >= 10) {
+      data.tasks[taskId].logs.pop();
+    }
+    if (result.status === "fulfilled") {
+      data.tasks[taskId].logs.unshift({
+        run_at: now.toISOString(),
+        ok: true,
+      });
+    } else {
+      const { reason } = result;
+      let failedMessage = reason.message || "unknownError";
+      failedMessage = failedMessage.slice(0, 150);
+
+      globalError = globalError || failedMessage;
+      console.warn("task failed", reason);
+      data.tasks[taskId].logs.unshift({
+        run_at: now.toISOString(),
+        ok: false,
+        message: failedMessage,
+      });
+    }
+  }
+
+  // if data is changed, update it
+  await setData(env, data);
+  if (globalError && notification_fetch_options) {
+    let { url, method, headers, body } = notification_fetch_options;
+    const finalHeaders = {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/110.0",
+      ...headers,
+    };
+    // replace \n  for json
+
+    let finalGlobalMessage = globalError
+      .replace(/\n/g, "\\n")
+      .replace(/"/g, '\\"');
+    finalGlobalMessage = finalGlobalMessage + " -- cronbin";
+    const finalBody = body.replace(/{{message}}/g, finalGlobalMessage);
+    if (url.includes("{{message}}")) {
+      url = url.replace(/{{message}}/g, encodeURIComponent(finalGlobalMessage));
+    }
+
+    const res = await fetch(url, {
+      method,
+      headers: finalHeaders,
+      body: finalBody,
+    });
+    await res.text();
+    if (!res.ok) {
+      const notificationError = new Error(
+        `通知发送失败: 状态码 ${res.status}: ${
+          res.statusText
+        }, ${await res.text()}`
+      );
+      console.warn("通知错误", notificationError);
+    }
+  }
+}
+
+export function urlToFetchOptions(url) {
+  let finalUrl = "";
+  const finalOptions = {};
+  // check url is valid url or curl
+  try {
+    new URL(url);
+    finalUrl = url;
+  } catch (_e) {
+    // not valid url, try to parse it as curl
+    const curlOptions = parseCurl(url);
+    finalUrl = curlOptions.url;
+    if (curlOptions.method) {
+      finalOptions.method = curlOptions.method;
+    }
+
+    if (curlOptions.headers) {
+      finalOptions.headers = curlOptions.headers;
+    }
+    if (curlOptions.body) {
+      finalOptions.body = curlOptions.body;
+    }
+  }
+  if (!finalOptions.headers) {
+    finalOptions.headers = {};
+  }
+  if (!finalOptions.headers["User-Agent"]) {
+    finalOptions.headers["User-Agent"] =
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/110.0";
+  }
+  finalOptions.url = finalUrl;
+  return finalOptions;
+}
+
+export function getCurrentTaskIds(now, data) {
+  if (!data || !data.tasks) {
+    return;
+  }
+  const nowDate = new Date(now);
+  const { tasks } = data;
+  const taskKeys = Object.keys(tasks);
+  const finalTasks = [];
+  for (const key of taskKeys) {
+    const task = tasks[key];
+    if (!task) {
+      continue;
+    }
+    let lastRunAt = new Date(0);
+    let { interval, logs } = task;
+
+    if (logs && logs.length > 0) {
+      lastRunAt = new Date(logs[0].run_at);
+    }
+
+    const diff = nowDate.getTime() - lastRunAt.getTime();
+
+    const num = Number(interval);
+
+    if (!isNaN(num)) {
+      if (num >= 1) {
+        if (diff >= interval * 60 * 1000) {
+          finalTasks.push(key);
+        }
+      } else {
+        throw new Error("时间间隔必须大于1");
+      }
+    } else {
+      const cron = cronSchedule.parseCronExpression(interval);
+      const prevDate = cron.getPrevDate(nowDate);
+      if (prevDate.getTime() > lastRunAt.getTime()) {
+        finalTasks.push(key);
       }
     }
   }
-  return keyValue;
-}
-function encodeHTML(str) {
-  return str.replace(/[\u00A0-\u9999<>\&]/g, function (i) {
-    return "&#" + i.charCodeAt(0) + ";";
-  });
-}
-
-function isValidInterval(value) {
-  // try parse number
-  const num = Number(value);
-
-  if (!isNaN(num)) {
-    if (num >= 1) {
-      // yes valid
-      return true;
-    } else {
-      return false;
-    }
-  } else {
-    // try parse cron expression
-    try {
-      cronSchedule.parseCronExpression(value);
-      return true;
-    } catch (_e) {
-      console.warn("定时任务解析错误", _e);
-      return false;
-    }
-  }
-}
-
-function isValidUrl(url) {
-  try {
-    new URL(url);
-    return true;
-  } catch (err) {
-    // 尝试解析 curl 命令
-    try {
-      parseCurl(url);
-      return true;
-    } catch (e) {
-      console.warn("curl 命令解析错误", e);
-      return false;
-    }
-    //return false;
-  }
-}
-
-function addZero(num) {
-  return num < 10 ? "0" + num : num;
-}
-
-// 解析 curl 命令
-export function parseCurl(curl_request) {
-  const argvsArr = stringToArgv(curl_request, {
-    removequotes: "always",
-  }).map((item) => {
-    let value = item.trim();
-    if (value.startsWith("\\")) {
-      value = value.slice(1).trim();
-    }
-    return value;
-  });
-
-  const argvs = parseArgv(argvsArr);
-  const json = {
-    headers: {},
-  };
-
-  const removeQuotes = (str) => str.replace(/['"]+/g, "");
-
-  const stringIsUrl = (url) => {
-    return /^(ftp|http|https):\/\/[^ "]+$/.test(url);
-  };
-
-  const parseField = (string) => {
-    return string.split(/: (.+)/);
-  };
-
-  const parseHeader = (header) => {
-    let parsedHeader = {};
-    if (Array.isArray(header)) {
-      header.forEach((item, index) => {
-        const field = parseField(item);
-        parsedHeader[field[0]] = field[1];
-      });
-    } else {
-      const field = parseField(header);
-      parsedHeader[field[0]] = field[1];
-    }
-
-    return parsedHeader;
-  };
-
-  for (const argv in argvs) {
-    switch (argv) {
-      case "_":
-        {
-          const _ = argvs[argv];
-          _.forEach((item) => {
-            item = removeQuotes(item);
-
-            if (stringIsUrl(item)) {
-              json.url = item;
-            }
-          });
-        }
-        break;
-
-      case "X":
-      case "request":
-        json.method = argvs[argv];
-        break;
-
-      case "H":
-      case "header":
-        {
-          const parsedHeader = parseHeader(argvs[argv]);
-          json.headers = {
-            ...json.header,
-            ...parsedHeader,
-          };
-        }
-        break;
-
-      case "u":
-      case "user":
-        json.header["Authorization"] = argvs[argv];
-        break;
-
-      case "A":
-      case "user-agent":
-        json.header["user-agent"] = argvs[argv];
-        break;
-
-      case "I":
-      case "head":
-        json.method = "HEAD";
-        break;
-
-      case "L":
-      case "location":
-        json.redirect = "follow";
-        const value = argvs[argv];
-        if (typeof value === "string") {
-          json.url = value;
-        }
-        break;
-
-      case "b":
-      case "cookie":
-        json.header["Set-Cookie"] = argvs[argv];
-        break;
-
-      case "d":
-      case "data":
-      case "data-raw":
-      case "data-ascii":
-        const dataValue = argvs[argv];
-        if (typeof dataValue === "string") {
-          json.body = argvs[argv];
-        } else {
-          throw new Error("Invalid curl command, data value is not string");
-        }
-        break;
-
-      case "data-urlencode":
-        json.body = argvs[argv];
-        break;
-
-      case "compressed":
-        if (!json.header["Accept-Encoding"]) {
-          json.header["Accept-Encoding"] = argvs[argv] || "deflate, gzip";
-        }
-        break;
-
-      default:
-        break;
-    }
-  }
-  if (!json.url) {
-    throw new Error("Invalid curl command, no url detected");
-  }
-
-  if (!json.method) {
-    if (json.body) {
-      json.method = "POST";
-    } else {
-      json.method = "GET";
-    }
-  }
-
-  return json;
+  return finalTasks;
 }
 
 // https://github.com/minimistjs/minimist/blob/main/index.js
@@ -2217,349 +2500,4 @@ function isConstructorOrProto(obj, key) {
     (key === "constructor" && typeof obj[key] === "function") ||
     key === "__proto__"
   );
-}
-
-function parseArgv(args, opts) {
-  if (!opts) {
-    opts = {};
-  }
-
-  var flags = {
-    bools: {},
-    strings: {},
-    unknownFn: null,
-  };
-
-  if (typeof opts.unknown === "function") {
-    flags.unknownFn = opts.unknown;
-  }
-
-  if (typeof opts.boolean === "boolean" && opts.boolean) {
-    flags.allBools = true;
-  } else {
-    []
-      .concat(opts.boolean)
-      .filter(Boolean)
-      .forEach(function (key) {
-        flags.bools[key] = true;
-      });
-  }
-
-  var aliases = {};
-
-  function aliasIsBoolean(key) {
-    return aliases[key].some(function (x) {
-      return flags.bools[x];
-    });
-  }
-
-  Object.keys(opts.alias || {}).forEach(function (key) {
-    aliases[key] = [].concat(opts.alias[key]);
-    aliases[key].forEach(function (x) {
-      aliases[x] = [key].concat(
-        aliases[key].filter(function (y) {
-          return x !== y;
-        })
-      );
-    });
-  });
-
-  []
-    .concat(opts.string)
-    .filter(Boolean)
-    .forEach(function (key) {
-      flags.strings[key] = true;
-      if (aliases[key]) {
-        [].concat(aliases[key]).forEach(function (k) {
-          flags.strings[k] = true;
-        });
-      }
-    });
-
-  var defaults = opts.default || {};
-
-  var argv = { _: [] };
-
-  function argDefined(key, arg) {
-    return (
-      (flags.allBools && /^--[^=]+$/.test(arg)) ||
-      flags.strings[key] ||
-      flags.bools[key] ||
-      aliases[key]
-    );
-  }
-
-  function setKey(obj, keys, value) {
-    var o = obj;
-    for (var i = 0; i < keys.length - 1; i++) {
-      var key = keys[i];
-      if (isConstructorOrProto(o, key)) {
-        return;
-      }
-      if (o[key] === undefined) {
-        o[key] = {};
-      }
-      if (
-        o[key] === Object.prototype ||
-        o[key] === Number.prototype ||
-        o[key] === String.prototype
-      ) {
-        o[key] = {};
-      }
-      if (o[key] === Array.prototype) {
-        o[key] = [];
-      }
-      o = o[key];
-    }
-
-    var lastKey = keys[keys.length - 1];
-    if (isConstructorOrProto(o, lastKey)) {
-      return;
-    }
-    if (
-      o === Object.prototype ||
-      o === Number.prototype ||
-      o === String.prototype
-    ) {
-      o = {};
-    }
-    if (o === Array.prototype) {
-      o = [];
-    }
-    if (
-      o[lastKey] === undefined ||
-      flags.bools[lastKey] ||
-      typeof o[lastKey] === "boolean"
-    ) {
-      o[lastKey] = value;
-    } else if (Array.isArray(o[lastKey])) {
-      o[lastKey].push(value);
-    } else {
-      o[lastKey] = [o[lastKey], value];
-    }
-  }
-
-  function setArg(key, val, arg) {
-    if (arg && flags.unknownFn && !argDefined(key, arg)) {
-      if (flags.unknownFn(arg) === false) {
-        return;
-      }
-    }
-
-    var value = !flags.strings[key] && isNumber(val) ? Number(val) : val;
-    setKey(argv, key.split("."), value);
-
-    (aliases[key] || []).forEach(function (x) {
-      setKey(argv, x.split("."), value);
-    });
-  }
-
-  Object.keys(flags.bools).forEach(function (key) {
-    setArg(key, defaults[key] === undefined ? false : defaults[key]);
-  });
-
-  var notFlags = [];
-
-  if (args.indexOf("--") !== -1) {
-    notFlags = args.slice(args.indexOf("--") + 1);
-    args = args.slice(0, args.indexOf("--"));
-  }
-
-  for (var i = 0; i < args.length; i++) {
-    var arg = args[i];
-    var key;
-    var next;
-
-    if (/^--.+=/.test(arg)) {
-      // 使用 [\s\S] 代替，因为 js 不支持
-      //  'dotall' 正则表达式修饰符。参见：
-      // http://stackoverflow.com/a/1068308/13216
-      var m = arg.match(/^--([^=]+)=([\s\S]*)$/);
-      key = m[1];
-      var value = m[2];
-      if (flags.bools[key]) {
-        value = value !== "false";
-      }
-      setArg(key, value, arg);
-    } else if (/^--no-.+/.test(arg)) {
-      key = arg.match(/^--no-(.+)/)[1];
-      setArg(key, false, arg);
-    } else if (/^--.+/.test(arg)) {
-      key = arg.match(/^--(.+)/)[1];
-      next = args[i + 1];
-      if (
-        next !== undefined &&
-        !/^(-|--)[^-]/.test(next) &&
-        !flags.bools[key] &&
-        !flags.allBools &&
-        (aliases[key] ? !aliasIsBoolean(key) : true)
-      ) {
-        setArg(key, next, arg);
-        i += 1;
-      } else if (/^(true|false)$/.test(next)) {
-        setArg(key, next === "true", arg);
-        i += 1;
-      } else {
-        setArg(key, flags.strings[key] ? "" : true, arg);
-      }
-    } else if (/^-[^-]+/.test(arg)) {
-      var letters = arg.slice(1, -1).split("");
-
-      var broken = false;
-      for (var j = 0; j < letters.length; j++) {
-        next = arg.slice(j + 2);
-
-        if (next === "-") {
-          setArg(letters[j], next, arg);
-          continue;
-        }
-
-        if (/[A-Za-z]/.test(letters[j]) && next[0] === "=") {
-          setArg(letters[j], next.slice(1), arg);
-          broken = true;
-          break;
-        }
-
-        if (
-          /[A-Za-z]/.test(letters[j]) &&
-          /-?\d+(\.\d*)?(e-?\d+)?$/.test(next)
-        ) {
-          setArg(letters[j], next, arg);
-          broken = true;
-          break;
-        }
-
-        if (letters[j + 1] && letters[j + 1].match(/\W/)) {
-          setArg(letters[j], arg.slice(j + 2), arg);
-          broken = true;
-          break;
-        } else {
-          setArg(letters[j], flags.strings[letters[j]] ? "" : true, arg);
-        }
-      }
-
-      key = arg.slice(-1)[0];
-      if (!broken && key !== "-") {
-        if (
-          args[i + 1] &&
-          !/^(-|--)[^-]/.test(args[i + 1]) &&
-          !flags.bools[key] &&
-          (aliases[key] ? !aliasIsBoolean(key) : true)
-        ) {
-          setArg(key, args[i + 1], arg);
-          i += 1;
-        } else if (args[i + 1] && /^(true|false)$/.test(args[i + 1])) {
-          setArg(key, args[i + 1] === "true", arg);
-          i += 1;
-        } else {
-          setArg(key, flags.strings[key] ? "" : true, arg);
-        }
-      }
-    } else {
-      if (!flags.unknownFn || flags.unknownFn(arg) !== false) {
-        argv._.push(flags.strings._ || !isNumber(arg) ? arg : Number(arg));
-      }
-      if (opts.stopEarly) {
-        argv._.push.apply(argv._, args.slice(i + 1));
-        break;
-      }
-    }
-  }
-
-  Object.keys(defaults).forEach(function (k) {
-    if (!hasKey(argv, k.split("."))) {
-      setKey(argv, k.split("."), defaults[k]);
-
-      (aliases[k] || []).forEach(function (x) {
-        setKey(argv, x.split("."), defaults[k]);
-      });
-    }
-  });
-
-  if (opts["--"]) {
-    argv["--"] = notFlags.slice();
-  } else {
-    notFlags.forEach(function (k) {
-      argv._.push(k);
-    });
-  }
-
-  return argv;
-}
-
-// 字符串转命令行参数数组
-// https://raw.githubusercontent.com/binocarlos/spawn-args/master/index.js
-function stringToArgv(args, opts) {
-  opts = opts || {};
-  args = args || "";
-  var arr = [];
-
-  var current = null;
-  var quoted = null;
-  var quoteType = null;
-
-  function addcurrent() {
-    if (current) {
-      // 去除当前参数上的多余空格
-      arr.push(current.trim());
-      current = null;
-    }
-  }
-
-  // 删除转义的换行符
-  args = args.replace(/\\\n/g, "");
-
-  for (var i = 0; i < args.length; i++) {
-    var c = args.charAt(i);
-
-    if (c == " ") {
-      if (quoted) {
-        quoted += c;
-      } else {
-        addcurrent();
-      }
-    } else if (c == "'" || c == '"') {
-      if (quoted) {
-        quoted += c;
-        // 仅当结束引号与开始引号类型相同时才结束此参数
-        if (quoteType === c) {
-          // 确保引号没有被转义
-          if (quoted.charAt(quoted.length - 2) !== "\\") {
-            arr.push(quoted);
-            quoted = null;
-            quoteType = null;
-          }
-        }
-      } else {
-        addcurrent();
-        quoted = c;
-        quoteType = c;
-      }
-    } else {
-      if (quoted) {
-        quoted += c;
-      } else {
-        if (current) {
-          current += c;
-        } else {
-          current = c;
-        }
-      }
-    }
-  }
-
-  addcurrent();
-
-  if (opts.removequotes) {
-    arr = arr.map(function (arg) {
-      if (opts.removequotes === "always") {
-        return arg.replace(/^["']|["']$/g, "");
-      } else {
-        if (arg.match(/\s/)) return arg;
-        return arg.replace(/^"|"$/g, "");
-      }
-    });
-  }
-
-  return arr;
 }
