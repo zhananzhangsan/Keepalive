@@ -25,7 +25,7 @@ curl -s -H "Authorization: 哪吒面板的APITOKEN" "https://哪吒面板域名(
 
 - 访问 argo 隧道
 ```bash
-curl -o /dev/null -s -w "%{http_code}" https://example.trycloudflare.com | grep -qE "^(404)$" && echo "隧道正常" || echo "隧道异常"
+curl -o /dev/null -s -w "%{http_code}" https://替换为你的argo域名 | grep -qE "^(404)$"
 ```
 
 - 更多用法请自行搜索
