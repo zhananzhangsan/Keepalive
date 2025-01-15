@@ -1474,7 +1474,7 @@ function getIndexHtml(data, _clientOffset) {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
+      <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon"> 
       <title>网页访问自动化</title>
       <style>
         body {
@@ -1484,21 +1484,31 @@ function getIndexHtml(data, _clientOffset) {
           margin: 0 auto;
           background: #f5f5f5;
         }
-        
-        .w-md { 
-          width: 100% !important;
-          box-sizing: border-box;
+
+        @media (max-width: 768px) {
+          body {
+            padding: 10px;
+          }
+          
+          .table {
+            display: block !important;
+            overflow-x: auto;
+          }
+          
+          .w-md, .w-lg {
+            min-width: 120px;
+          }
         }
         
-        .w-lg { 
-          width: 100% !important;
+        .w-md, .w-lg { 
+          width: 100%;
           box-sizing: border-box;
         }
         
         .mr { margin-right: 1rem; }
         .mb { margin-bottom: 0.5rem; }
         
-        div.table {
+        .table {
           display: table;
           border-radius: 8px;
           overflow: hidden;
@@ -1507,43 +1517,39 @@ function getIndexHtml(data, _clientOffset) {
           width: 100%;
         }
         
-        form.tr, div.tr {
+        .tr {
           display: table-row;
           border: 1px solid #e5e7eb;
         }
         
-        span.td {
+        .td {
           display: table-cell;
           padding: 12px;
           border: 1px solid #e5e7eb;
           vertical-align: middle;
+          white-space: nowrap;
         }
         
         /* 设置特定列的宽度 */
-        span.td:nth-child(1) { width: 40px; }  /* ID列 */
-        span.td:nth-child(2) { width: 100px; } /* 定时/分钟列 */
-        span.td:nth-child(3) { width: 360px; } /* 链接/命令列 */
-        span.td:nth-child(4) { width: 250px; } /* 操作列 */
-        span.td:nth-child(5) { width: 120px; } /* 备注列 */
-        span.td:nth-child(6) { width: auto; }  /* 日志列 */
+        .td:nth-child(1) { width: 40px; }
+        .td:nth-child(2) { width: 100px; }
+        .td:nth-child(3) { width: 360px; }
+        .td:nth-child(4) { width: 250px; }
+        .td:nth-child(5) { width: 120px; }
+        .td:nth-child(6) { width: auto; }
         
-        input[type="text"] {
+        input[type="text"], textarea {
           padding: 8px;
           border: 1px solid #e5e7eb;
           border-radius: 4px;
           width: 100%;
           box-sizing: border-box;
           height: 36px;
+          font-size: 14px;
         }
         
         textarea {
-          padding: 8px;
-          border: 1px solid #e5e7eb;
-          border-radius: 4px;
-          width: 100%;
-          box-sizing: border-box;
           resize: none;
-          height: 36px;
           overflow: hidden;
           line-height: 20px;
           display: block;
@@ -1556,11 +1562,13 @@ function getIndexHtml(data, _clientOffset) {
           padding: 8px 16px;
           border-radius: 4px;
           cursor: pointer;
-          transition: background-color 0.2s;
+          transition: all 0.2s;
+          font-size: 14px;
         }
         
         button:hover, input[type="submit"]:hover {
           background: #2563eb;
+          transform: translateY(-1px);
         }
         
         button[formaction*="delete"] {
@@ -1574,19 +1582,65 @@ function getIndexHtml(data, _clientOffset) {
         details summary {
           cursor: pointer;
           color: #4b5563;
+          padding: 4px 0;
         }
-
-        /* 通知区域的文本框样式 */
-        section textarea {
+        
+        details p {
+          margin: 8px 0;
+          color: #666;
+        }
+        
+        /* 通知区域样式 */
+        .notification-section {
+          margin-top: 20px;
+          background: white;
+          padding: 20px;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .notification-section h3 {
+          margin: 0 0 20px 0;
+          color: #1f2937;
+        }
+        
+        .notification-section textarea {
           width: 100%;
           height: auto;
           resize: vertical;
           min-height: 60px;
+          margin-bottom: 10px;
+        }
+        
+        /* Toast 提示样式 */
+        .toast {
+          position: fixed;
+          top: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(3, 206, 3, 0.65);
+          color: white;
+          padding: 10px 20px;
+          border-radius: 4px;
+          z-index: 1000;
+          display: none;
+          transition: opacity 0.3s;
+        }
+        
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
         }
       </style>
     </head>
-    <body>
-  `;
+    <body>`;
+
   const taskKeys = Object.keys(data.tasks);
   // sort it
   taskKeys.sort((a, b) => {
@@ -1766,55 +1820,101 @@ function getIndexHtml(data, _clientOffset) {
       ${tasksLists}
     </div>
 
-    <section style="margin-top: 20px;">
-    <h3 style="margin: 0 0 20px 0;">失败时通知</h3>
-    <form id="notification-form" action="/notification" method="POST">
-      <textarea
-        rows="2"
-        cols="80"
-        name="notification_curl"
-        placeholder="输入Curl命令，{{message}} 为错误信息占位符"
-      >${data.notification_curl || ""}</textarea>
-    </form>
-    <div style="margin-top: 10px;">
-      <input type="submit" form="notification-form" value="保存">
-    </div>
-  </section>
+    <section class="notification-section">
+      <h3>失败时通知</h3>
+      <form id="notification-form" action="/notification" method="POST">
+        <textarea
+          rows="2"
+          name="notification_curl"
+          placeholder="输入Curl命令，{{message}} 为错误信息占位符"
+        >${data.notification_curl || ""}</textarea>
+      </form>
+      <div class="mb">
+        <input type="submit" form="notification-form" value="保存">
+      </div>
+    </section>
   </main>
   `;
+
   const script = `
-var clientOffset = getCookie("_clientOffset");
-var currentOffset = new Date().getTimezoneOffset() * -1;
-var reloadForCookieRefresh = false;
+    var clientOffset = getCookie("_clientOffset");
+    var currentOffset = new Date().getTimezoneOffset() * -1;
+    var reloadForCookieRefresh = false;
 
-if (clientOffset  == undefined || clientOffset == null || clientOffset != currentOffset) {
-    setCookie("_clientOffset", currentOffset, 30);
-    reloadForCookieRefresh = true;
-}
-
-if (reloadForCookieRefresh)
-    window.location.reload();
-
-function setCookie(name, value, days) {
-    var expires = "";
-    if (days) {
-        var date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        expires = "; expires=" + date.toUTCString();
+    if (clientOffset  == undefined || clientOffset == null || clientOffset != currentOffset) {
+        setCookie("_clientOffset", currentOffset, 30);
+        reloadForCookieRefresh = true;
     }
-    document.cookie = name + "=" + (value || "") + expires + "; path=/";
-}
 
-function getCookie(name) {
-    var nameEQ = name + "=";
-    var ca = document.cookie.split(';');
-    for (var i = 0; i < ca.length; i++) {
-        var c = ca[i];
-        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+    if (reloadForCookieRefresh)
+        window.location.reload();
+
+    function setCookie(name, value, days) {
+        var expires = "";
+        if (days) {
+            var date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "") + expires + "; path=/";
     }
-    return null;
-}
+
+    function getCookie(name) {
+        var nameEQ = name + "=";
+        var ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+    
+    // Toast 提示
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      document.body.appendChild(toast);     
+      requestAnimationFrame(() => {
+        toast.style.display = 'block';
+      });      
+      setTimeout(() => {
+        toast.style.display = 'none';
+        toast.addEventListener('transitionend', () => toast.remove());
+      }, 3000);
+    }
+    
+    // 表单提交处理
+    document.querySelectorAll('form').forEach(form => {
+      form.onsubmit = (e) => {
+        const submitButton = e.submitter; // 获取触发提交的按钮
+        if(!submitButton) return true;        
+        const action = submitButton.formAction || form.action;
+        
+        // 删除操作需要确认
+        if(action.includes('/delete')) {
+          if(!confirm('确认要删除该任务吗?')) {
+            e.preventDefault();
+            return false;
+          }
+          return true;
+        }       
+        // 运行操作显示正在运行
+        if(action.includes('/run')) {
+          showToast('正在运行');
+          return true;
+        }       
+        // 添加新任务
+        if(action.includes('/tasks') && !action.includes('/edit')) {
+          showToast('任务已添加');
+        } 
+        // 保存任务或通知设置
+        else if(action.includes('/edit') || action.includes('/notification')) {
+          showToast('保存成功');
+        }
+      }
+    });
   `;
 
   return html + body + `<script>${script}</script></body></html>`;
