@@ -1056,7 +1056,7 @@ export function parseCurl(curl_request) {
         {
           const parsedHeader = parseHeader(argvs[argv]);
           json.headers = {
-            ...json.header,
+            ...json.headers,
             ...parsedHeader,
           };
         }
@@ -1064,12 +1064,12 @@ export function parseCurl(curl_request) {
 
       case "u":
       case "user":
-        json.header["Authorization"] = argvs[argv];
+        json.headers["Authorization"] = argvs[argv];
         break;
 
       case "A":
       case "user-agent":
-        json.header["user-agent"] = argvs[argv];
+        json.headers["user-agent"] = argvs[argv];
         break;
 
       case "I":
@@ -1088,7 +1088,7 @@ export function parseCurl(curl_request) {
 
       case "b":
       case "cookie":
-        json.header["Set-Cookie"] = argvs[argv];
+        json.headers["Set-Cookie"] = argvs[argv];
         break;
 
       case "d":
@@ -1099,7 +1099,7 @@ export function parseCurl(curl_request) {
         if (typeof dataValue === "string") {
           json.body = argvs[argv];
         } else {
-          throw new TypeError("无效的 cron 表达式：必须是字符串类型。");
+          throw new TypeError("无效的数据格式：必须是字符串类型");
         }
         break;
 
@@ -1118,7 +1118,7 @@ export function parseCurl(curl_request) {
     }
   }
   if (!json.url) {
-    throw new TypeError("无效的 cron 表达式：必须是字符串类型。");
+    throw new TypeError("无效的 URL：URL 不能为空");
   }
 
   if (!json.method) {
