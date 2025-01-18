@@ -975,6 +975,7 @@ function isValidUrl(url) {
     new URL(url);
     return true;
   } catch (err) {
+    // 如果是 curl 命令
     try {
       parseCurl(url);
       return true;
@@ -982,6 +983,7 @@ function isValidUrl(url) {
       console.warn("curl 命令解析错误", e);
       return false;
     }
+    return false;
   }
 }
 
@@ -1056,7 +1058,7 @@ export function parseCurl(curl_request) {
         {
           const parsedHeader = parseHeader(argvs[argv]);
           json.headers = {
-            ...json.headers,
+            ...json.header,
             ...parsedHeader,
           };
         }
@@ -1064,12 +1066,12 @@ export function parseCurl(curl_request) {
 
       case "u":
       case "user":
-        json.headers["Authorization"] = argvs[argv];
+        json.header["Authorization"] = argvs[argv];
         break;
 
       case "A":
       case "user-agent":
-        json.headers["user-agent"] = argvs[argv];
+        json.header["user-agent"] = argvs[argv];
         break;
 
       case "I":
@@ -1088,7 +1090,7 @@ export function parseCurl(curl_request) {
 
       case "b":
       case "cookie":
-        json.headers["Set-Cookie"] = argvs[argv];
+        json.header["Set-Cookie"] = argvs[argv];
         break;
 
       case "d":
@@ -1099,7 +1101,7 @@ export function parseCurl(curl_request) {
         if (typeof dataValue === "string") {
           json.body = argvs[argv];
         } else {
-          throw new TypeError("无效的数据格式：必须是字符串类型");
+          throw new Error("无效的curl命令，必须是字符串类型");
         }
         break;
 
@@ -1118,7 +1120,7 @@ export function parseCurl(curl_request) {
     }
   }
   if (!json.url) {
-    throw new TypeError("无效的 URL：URL 不能为空");
+    throw new Error("无效的curl命令，url不能为空");
   }
 
   if (!json.method) {
@@ -1144,13 +1146,13 @@ function stringToArgv(args, opts) {
 
   function addcurrent() {
     if (current) {
-      // 去除当前参数上的多余空格
+      // trim extra whitespace on the current arg
       arr.push(current.trim());
       current = null;
     }
   }
 
-  // 删除转义的换行符
+  // remove escaped newlines
   args = args.replace(/\\\n/g, "");
 
   for (var i = 0; i < args.length; i++) {
@@ -1165,9 +1167,9 @@ function stringToArgv(args, opts) {
     } else if (c == "'" || c == '"') {
       if (quoted) {
         quoted += c;
-        // 仅当结束引号与开始引号类型相同时才结束此参数
+        // only end this arg if the end quote is the same type as start quote
         if (quoteType === c) {
-          // 确保引号没有被转义
+          // make sure the quote is not escaped
           if (quoted.charAt(quoted.length - 2) !== "\\") {
             arr.push(quoted);
             quoted = null;
@@ -1248,7 +1250,7 @@ function parseArgv(args, opts) {
       aliases[x] = [key].concat(
         aliases[key].filter(function (y) {
           return x !== y;
-        })
+        }),
       );
     });
   });
@@ -1360,8 +1362,8 @@ function parseArgv(args, opts) {
     var next;
 
     if (/^--.+=/.test(arg)) {
-      // 使用 [\s\S] 代替，因为 js 不支持
-      //  'dotall' 正则表达式修饰符。参见：
+      // Using [\s\S] instead of . because js doesn't support the
+      // 'dotall' regex modifier. See:
       // http://stackoverflow.com/a/1068308/13216
       var m = arg.match(/^--([^=]+)=([\s\S]*)$/);
       key = m[1];
