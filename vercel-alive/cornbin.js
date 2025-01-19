@@ -3,17 +3,17 @@ const APIKEY = "root";
 
 // 定义错误类型常量
 const ErrorTypes = {
-  KV_NOT_FOUND: 'kvNotFound',
-  UNAUTHORIZED: 'unauthorized',
-  TASK_NOT_FOUND: 'taskNotFound',
-  INTERVAL_REQUIRED: 'intervalRequired',
-  INVALID_INTERVAL: 'invalidInterval',
-  URL_REQUIRED: 'urlRequired', 
-  INVALID_URL: 'invalidUrl',
-  TASK_ROUTE_NOT_FOUND: 'taskRouteNotFound',
-  JSON_PARSE_ERROR: 'jsonParseError',
-  NOT_FOUND: 'notFound',
-  INVALID_NOTIFICATION: 'invalidNotification_curl'
+  KV_NOT_FOUND: '未找到 KV 数据库绑定',
+  UNAUTHORIZED: '未授权',
+  TASK_NOT_FOUND: '未找到任务',
+  INTERVAL_REQUIRED: '间隔时间不能为空',
+  INVALID_INTERVAL: '间隔时间格式无效',
+  URL_REQUIRED: 'URL 不能为空', 
+  INVALID_URL: 'URL 格式无效',
+  TASK_ROUTE_NOT_FOUND: '未找到任务路由',
+  JSON_PARSE_ERROR: 'JSON 解析错误',
+  NOT_FOUND: '未找到',
+  INVALID_NOTIFICATION: '通知 curl 格式无效'
 };
 
 // 错误提示函数集合
@@ -21,15 +21,15 @@ const createError = {
   // KV 错误
   kvNotFound() { return new HTTPError( ErrorTypes.KV_NOT_FOUND, "未找到 KV 数据库绑定", 500, "服务器内部错误" ); },
   // APIKEY 错误
-  unauthorized() { return new HTTPError( ErrorTypes.UNAUTHORIZED, "需要提供 Authorization Bearer abc 或搜索参数 key=abc", 401, "未经授权" ); },
+  unauthorized() { return new HTTPError( ErrorTypes.UNAUTHORIZED, "需要提供 Authorization Bearer 或搜索参数 APIKEY", 401, "未授权" ); },
   // task 任务错误
   taskNotFound() { return new HTTPError( ErrorTypes.TASK_NOT_FOUND, "未找到任务", 404, "未找到请求的资源" ); },
   // 间隔时间错误
-  intervalRequired() { return new HTTPError( ErrorTypes.INTERVAL_REQUIRED, "需要提供间隔时间", 400, "请求错误" ); },
+  intervalRequired() { return new HTTPError( ErrorTypes.INTERVAL_REQUIRED, "间隔时间不能为空", 400, "请求错误" ); },
   // 间隔格式错误
   invalidInterval() { return new HTTPError( ErrorTypes.INVALID_INTERVAL, "间隔时间格式无效", 400, "请求错误" ); },
   // URL 空值错误
-  urlRequired() { return new HTTPError( ErrorTypes.URL_REQUIRED, "需要提供 URL", 400, "请求错误" ); },
+  urlRequired() { return new HTTPError( ErrorTypes.URL_REQUIRED, "URL 不能为空", 400, "请求错误" ); },
   // URL 格式错误
   invalidUrl() { return new HTTPError( ErrorTypes.INVALID_URL, "URL 格式无效", 400, "请求错误" ); },
   // task 任务路由错误
@@ -983,7 +983,7 @@ function isValidUrl(url) {
       console.warn("curl 命令解析错误", e);
       return false;
     }
-    return false;
+    // return false; 这是一行无用代码
   }
 }
 
@@ -1007,21 +1007,17 @@ export function parseCurl(curl_request) {
   const json = {
     headers: {},
   };
-
   const removeQuotes = (str) => str.replace(/['"]+/g, "");
-
   const stringIsUrl = (url) => {
     return /^(ftp|http|https):\/\/[^ "]+$/.test(url);
   };
-
   const parseField = (string) => {
     return string.split(/: (.+)/);
   };
-
   const parseHeader = (header) => {
     let parsedHeader = {};
     if (Array.isArray(header)) {
-      header.forEach((item, index) => {
+      header.forEach((item, _index) => {
         const field = parseField(item);
         parsedHeader[field[0]] = field[1];
       });
@@ -1029,7 +1025,6 @@ export function parseCurl(curl_request) {
       const field = parseField(header);
       parsedHeader[field[0]] = field[1];
     }
-
     return parsedHeader;
   };
 
@@ -1040,7 +1035,6 @@ export function parseCurl(curl_request) {
           const _ = argvs[argv];
           _.forEach((item) => {
             item = removeQuotes(item);
-
             if (stringIsUrl(item)) {
               json.url = item;
             }
@@ -1146,15 +1140,14 @@ function stringToArgv(args, opts) {
 
   function addcurrent() {
     if (current) {
-      // trim extra whitespace on the current arg
+      // 去除参数上的多余空格
       arr.push(current.trim());
       current = null;
     }
   }
 
-  // remove escaped newlines
+  // 删除转义的换行符
   args = args.replace(/\\\n/g, "");
-
   for (var i = 0; i < args.length; i++) {
     var c = args.charAt(i);
 
@@ -1167,9 +1160,9 @@ function stringToArgv(args, opts) {
     } else if (c == "'" || c == '"') {
       if (quoted) {
         quoted += c;
-        // only end this arg if the end quote is the same type as start quote
+        // 仅当结束引号与开始引号类型相同时才结束此参数
         if (quoteType === c) {
-          // make sure the quote is not escaped
+          // 确保引号没有被转义
           if (quoted.charAt(quoted.length - 2) !== "\\") {
             arr.push(quoted);
             quoted = null;
@@ -2325,19 +2318,17 @@ export async function runTasks(taksIds, data, env) {
 
 export function urlToFetchOptions(url) {
   let finalUrl = "";
-  const finalOptions = {};
-  // check url is valid url or curl
+  const finalOptions = {};l
   try {
-    new URL(url);
+    new URL(url); // 首先尝试作为普通 URL 解析
     finalUrl = url;
   } catch (_e) {
-    // not valid url, try to parse it as curl
+    // 如果不是有效的 URL,则尝试解析为 curl 命令
     const curlOptions = parseCurl(url);
     finalUrl = curlOptions.url;
     if (curlOptions.method) {
       finalOptions.method = curlOptions.method;
     }
-
     if (curlOptions.headers) {
       finalOptions.headers = curlOptions.headers;
     }
