@@ -2037,7 +2037,6 @@ async function handleRequest(request, env) {
       "Content-Type": ["text/html"],
     };
 
-    // send cookie if changed
     const apiKey = getCookieValue(cookie, "key");
     const domain = request.headers.get("host")?.split(":")[0];
     if (apiKey !== APIKEY) {
@@ -2318,7 +2317,7 @@ export async function runTasks(taksIds, data, env) {
 
 export function urlToFetchOptions(url) {
   let finalUrl = "";
-  const finalOptions = {};l
+  const finalOptions = {};
   try {
     new URL(url); // 首先尝试作为普通 URL 解析
     finalUrl = url;
