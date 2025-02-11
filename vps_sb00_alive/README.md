@@ -1,4 +1,5 @@
-## 用vps保活serv00 & ct8
+## 用vps保活 serv00 & ct8
+文件名：sb00_alive.sh
 
 ## 重要说明
 
@@ -106,9 +107,3 @@ curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_
 **运行截图**
 
 ![运行截图](https://github.com/user-attachments/assets/94668e6c-30de-41e4-aae1-928bd585615c)
-
-----
-
-## 文件说明
-
-- `sb00-sk5.sh`：在老王四合一无交互一键脚本基础上修改而来，去掉了tuic协议，增加了socks5协议。需要在curl命令前导入外部变量
