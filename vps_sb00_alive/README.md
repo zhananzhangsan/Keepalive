@@ -6,7 +6,7 @@
 
 - 也可以支持安装老王原版的四合一无交互脚本，但是需要自己修改代码。因为我的代码里没有TUIC协议，而增加了socks5协议
 
-- 本人修改的[四合一无交互脚本地址](https://github.com/yutian81/serv00-ct8-ssh/blob/main/vps_sb00_alive/sb00-sk5.sh)
+- 本人修改的[四合一无交互脚本地址](https://github.com/yutian81/Keepalive/blob/main/vps_sb00_alive/sb00-sk5.sh)
 
 - 必须将你所有的serv00服务器的ssh地址、用户名、密码以及四合一无交互脚本所需的外部变量（如端口等）存入到一个可直链下载的 json 文件，json 内容模板见下文
 
@@ -111,6 +111,4 @@ curl -s https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb00_
 
 ## 文件说明
 
-- `sb00-sk5.sh`：在老王四合一无交互一键脚本基础上修改而来，去掉了tuic协议，增加了socks5协议
-
-- `sb00-keep.sh`：老王保活脚本初始版本，为本脚本的参考
+- `sb00-sk5.sh`：在老王四合一无交互一键脚本基础上修改而来，去掉了tuic协议，增加了socks5协议。需要在curl命令前导入外部变量
