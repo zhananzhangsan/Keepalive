@@ -467,6 +467,8 @@ async function sendTelegramMessage(message, env, results = null) {
 
 // 最后一个函数：HTML 内容生成
 function getHtmlContent() {
+  const siteIcon = 'https://pan.811520.xyz/icon/serv00.png';
+  const bgimgURL = 'https://bing.img.run/1920x1080.php';
   return `
   <!DOCTYPE html>
   <html lang="zh-CN">
@@ -474,24 +476,61 @@ function getHtmlContent() {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Serv00账户批量登录</title>
+    <link rel="icon" href="${siteIcon}" type="image/png">
     <style>
       body {
         font-family: Arial, sans-serif;
         display: flex;
-        justify-content: center;
+        flex-direction: column;
         align-items: center;
+        justify-content: center;
         min-height: 100vh;
         margin: 0;
-        background-color: #f0f0f0;
+        background-image: url('${bgimgURL}');
+        background-size: cover;
       }
       .container {
         text-align: center;
-        padding: 20px;
-        background-color: white;
+        padding: 5px;
+        background-color: rgba(255, 255, 255, 0.6);
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         max-width: 800px;
         width: 100%;
+        margin: 0 0 20px 0;
+        overflow: auto;
+      }
+      footer {
+        background-color: #4CAF50;
+        color: white;
+        text-align: center;
+        font-size: 12px;
+        width: 100%;
+        padding: 10px;
+        position: fixed;
+        bottom: 0;
+      }
+      footer a {
+        color: white;
+        text-decoration: none;
+        margin-left: 10px;
+        transition: color 0.3s ease;
+      }
+      footer a:hover {
+        color: #f1c40f;
+      }
+      table {
+        width: 95%;
+        border-collapse: collapse;
+        margin: 20px auto;
+      }
+      th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: rgba(255, 255, 255, 0.7);
       }
       input, button {
         margin: 10px 0;
@@ -514,7 +553,7 @@ function getHtmlContent() {
         cursor: not-allowed;
       }
       #status {
-        margin-top: 20px;
+        margin-top: 10px;
         font-weight: bold;
       }
       #summary {
@@ -522,24 +561,16 @@ function getHtmlContent() {
         font-weight: bold;
         color: #333;
       }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-      }
-      th, td {
-        border: 1px solid #ddd;
-        padding: 8px;
-        text-align: left;
-      }
-      th {
-        background-color: #f2f2f2;
-      }
       #loginForm {
         display: block;
       }
       #dashboard {
         display: none;
+      }
+      #dashboard button {
+        margin: 0 0 5px 0;
+        padding: 8px 12px;
+        width: auto;
       }
       .error {
         color: #ff0000;
@@ -577,6 +608,13 @@ function getHtmlContent() {
         </table>
       </div>
     </div>
+    <footer>
+      <div>
+        Copyright © 2025 Yutian81&nbsp;&nbsp;&nbsp;| 
+        <a href="https://github.com/yutian81/Keepalive/tree/main/cf-sb00-alive" target="_blank">GitHub Repository</a>&nbsp;&nbsp;&nbsp;| 
+        <a href="https://blog.811520.xyz/" target="_blank">青云志博客</a>
+      </div>
+    </footer>
     <script>
       async function checkAuth() {
         try {
