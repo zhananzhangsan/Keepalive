@@ -498,7 +498,6 @@ function getHtmlContent() {
         max-width: 800px;
         width: 100%;
         margin: 0 0 20px 0;
-        overflow: auto;
       }
       footer {
         background-color: #4CAF50;
