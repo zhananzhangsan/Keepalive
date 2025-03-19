@@ -10,7 +10,7 @@
 ## VPS版一键无交互脚本 5in1
 vless+reality|vmess+argo|hy2|tuic|socks5
 ```
-PORT=34766 bash <(curl -Ls https://raw.githubusercontent.com/yutian81/serv00-ct8-ssh/main/vps_sb5in1.sh)
+PORT=34766 bash <(curl -Ls https://raw.githubusercontent.com/yutian81/Keepalive/main/vps_sb5in1.sh)
 ```
 
 ## 测试socks5是否通畅
