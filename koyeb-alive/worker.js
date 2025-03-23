@@ -110,7 +110,7 @@ async function scheduledEventHandler(event, env) {
       try {
         console.log(`正在处理第 ${index + 1}/${totalAccounts} 个账户: ${email}`);
         if (index > 0) {
-          await new Promise(resolve => setTimeout(resolve, 5000)); // 5秒间隔
+          await new Promise(resolve => setTimeout(resolve, 8000)); // 8秒间隔
         }
         
         const [success, message] = await loginKoyeb(email, password);
