@@ -1,4 +1,4 @@
-# cf worker 保活 serv00
+# cf worker 保活 serv00 节点
   
 ## 文件
 本文件夹内 _worker.js
