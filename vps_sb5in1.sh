@@ -765,7 +765,7 @@ create_shortcut() {
   cat > "$work_dir/sb.sh" << EOF
 #!/usr/bin/env bash
 
-bash <(curl -Ls https://github.com/yutian81/serv00-ct8-ssh/raw/main/vps_sb5in1.sh) \$1
+bash <(curl -Ls https://github.com/yutian81/Keepalive/raw/main/vps_sb5in1.sh) \$1
 EOF
   chmod +x "$work_dir/sb.sh"
   ln -sf "$work_dir/sb.sh" /usr/bin/sb
