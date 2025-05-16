@@ -2,6 +2,7 @@ import os
 import json
 import requests
 import re
+import random
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import time
@@ -131,7 +132,8 @@ def main():
     
     for idx, user in enumerate(USER_CONFIGS, 1):
         start_time = time.time()
-        time.sleep(random.uniform(2, 5))  # 添加随机延迟
+        if idx > 1:  # 首个用户无需延迟
+            time.sleep(random.uniform(2, 5))
         with requests.Session() as session:
             session.headers.update({
                 **HEADERS,
