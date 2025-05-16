@@ -56,7 +56,7 @@ def send_telegram_alert(username: str, is_success: bool, error_msg: str = None) 
     except Exception as e:
         print(f"⚠️ Telegram通知发送失败: {str(e)}")
 
-# 执行用户验证，返回是否成功,及错误信息)
+# 执行用户验证，返回是否成功,及错误信息
 def validate_user(session: requests.Session, user: dict) -> tuple:
     try:
         print(f"\n🔑 开始验证用户: {user['username']}")
@@ -65,34 +65,35 @@ def validate_user(session: requests.Session, user: dict) -> tuple:
         login_page = session.get(LOGIN_URL)
         login_page.raise_for_status()
 
-        # 提取CSRF Token
-        csrf_match = re.search(r"var\s+csrfToken\s*=\s*'([a-f0-9]+)'", login_page.text)
+        # 提取CSRF Token（从<script>中）
+        csrf_match = re.search(r"var\s+csrfToken\s*=\s*'([^']+)'", login_page.text)
         if not csrf_match:
             return (False, "CSRF Token提取失败")
         
+        token_value = csrf_match.group(1)
+
         # 构造登录请求
         login_data = {
             'username': user['username'],
             'password': user['password'],
-            'token': csrf_match.group(1),
+            'token': token_value,
             'rememberme': 'on'
         }
         login_res = session.post(LOGIN_URL, data=login_data)
-        
-        # 验证跳转
-        parsed_url = urlparse(login_res.url)
-        if parsed_url.path != urlparse(DASHBOARD_URL).path:
-            return (False, f"异常跳转至 {login_res.url}")
+        login_res.raise_for_status()
 
-        # 提取用户信息
+        # 登录成功应能访问 dashboard
         dashboard_page = session.get(DASHBOARD_URL)
+        dashboard_page.raise_for_status()
         soup = BeautifulSoup(dashboard_page.text, 'html.parser')
         
         # 定位信息元素
-        if not (panel := soup.find('div', class_='panel-body')):
+        panel = soup.find('div', class_='panel-body')
+        if not panel:
             return (False, "未找到用户信息面板")
             
-        if not (strong_tag := panel.find('strong')):
+        strong_tag = panel.find('strong')
+        if not strong_tag:
             return (False, "未找到信息标签")
         
         # 验证文本内容
@@ -106,6 +107,7 @@ def validate_user(session: requests.Session, user: dict) -> tuple:
         return (False, f"网络请求异常: {str(e)}")
     except Exception as e:
         return (False, f"系统错误: {str(e)}")
+
 
 # 主流程
 def main():
