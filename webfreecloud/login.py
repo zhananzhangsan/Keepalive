@@ -14,9 +14,11 @@ USER_CONFIGS = json.loads(os.getenv("USER_CONFIGS_JSON"))
 LOGIN_URL = 'https://web.freecloud.ltd/index.php?rp=/login'
 DASHBOARD_URL = 'https://web.freecloud.ltd/clientarea.php'
 HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-                  'AppleWebKit/537.36 (KHTML, like Gecko) '
-                  'Chrome/91.0.4472.124 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+    'Referer': LOGIN_URL,
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Language': 'zh-CN,zh;q=0.9',
+    'Connection': 'keep-alive',
 }
 # ---------------------------------------------------------------
 
@@ -60,19 +62,21 @@ def send_telegram_alert(username: str, is_success: bool, error_msg: str = None) 
 def validate_user(session: requests.Session, user: dict) -> tuple:
     try:
         print(f"\n🔑 开始验证用户: {user['username']}")
-        
-        # 获取登录页面
+
+        # 设置默认 headers
+        session.headers.update(HEADERS)
+
+        # 先访问首页或登录页，设置 cookie
         login_page = session.get(LOGIN_URL)
         login_page.raise_for_status()
 
-        # 提取CSRF Token（从<script>中）
+        # 提取 token
         csrf_match = re.search(r"var\s+csrfToken\s*=\s*'([^']+)'", login_page.text)
         if not csrf_match:
             return (False, "CSRF Token提取失败")
-        
         token_value = csrf_match.group(1)
 
-        # 构造登录请求
+        # 构造登录数据
         login_data = {
             'username': user['username'],
             'password': user['password'],
@@ -81,6 +85,8 @@ def validate_user(session: requests.Session, user: dict) -> tuple:
         }
         login_res = session.post(LOGIN_URL, data=login_data)
         login_res.raise_for_status()
+        if "login" in login_res.url:
+            return (False, "登录失败，仍停留在登录页")
 
         # 登录成功应能访问 dashboard
         dashboard_page = session.get(DASHBOARD_URL)
