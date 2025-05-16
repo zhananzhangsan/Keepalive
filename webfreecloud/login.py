@@ -131,8 +131,13 @@ def main():
     
     for idx, user in enumerate(USER_CONFIGS, 1):
         start_time = time.time()
+        time.sleep(random.uniform(2, 5))  # 添加随机延迟
         with requests.Session() as session:
-            session.headers.update(HEADERS)
+            session.headers.update({
+                **HEADERS,
+                'Referer': LOGIN_URL,
+                'Origin': urlparse(LOGIN_URL).scheme + '://' + urlparse(LOGIN_URL).netloc
+            })
             username = user['username']
             
             # 执行验证
