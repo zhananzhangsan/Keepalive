@@ -13,12 +13,13 @@ TG_CHAT_ID = os.getenv("TG_CHAT_ID", "" )
 USER_CONFIGS = json.loads(os.getenv("USER_CONFIGS_JSON"))
 LOGIN_URL = 'https://web.freecloud.ltd/index.php?rp=/login'
 DASHBOARD_URL = 'https://web.freecloud.ltd/clientarea.php'
+
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-    'Referer': LOGIN_URL,
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-    'Accept-Language': 'zh-CN,zh;q=0.9',
-    'Connection': 'keep-alive',
+    'Referer': 'https://web.freecloud.ltd/index.php?rp=/login',
+    'Origin': 'https://web.freecloud.ltd',
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
 }
 # ---------------------------------------------------------------
 
@@ -62,58 +63,54 @@ def send_telegram_alert(username: str, is_success: bool, error_msg: str = None) 
 def validate_user(session: requests.Session, user: dict) -> tuple:
     try:
         print(f"\n🔑 开始验证用户: {user['username']}")
-
-        # 设置默认 headers
-        session.headers.update(HEADERS)
-
-        # 先访问首页或登录页，设置 cookie
+        
+        # 获取登录页面
         login_page = session.get(LOGIN_URL)
         login_page.raise_for_status()
 
-        # 提取 token
-        csrf_match = re.search(r"var\s+csrfToken\s*=\s*'([^']+)'", login_page.text)
+        # 提取CSRF Token
+        csrf_match = re.search(r"var\s+csrfToken\s*=\s*'([a-f0-9]+)'", login_page.text)
         if not csrf_match:
             return (False, "CSRF Token提取失败")
-        token_value = csrf_match.group(1)
-
-        # 构造登录数据
+        
+        # 构造登录请求
         login_data = {
             'username': user['username'],
             'password': user['password'],
-            'token': token_value,
+            'token': csrf_match.group(1),
             'rememberme': 'on'
         }
         login_res = session.post(LOGIN_URL, data=login_data)
         login_res.raise_for_status()
-        if "login" in login_res.url:
-            return (False, "登录失败，仍停留在登录页")
 
-        # 登录成功应能访问 dashboard
+        # 判断是否登录成功：检测是否出现 “Logout” 或用户区域
+        if "Logout" not in login_res.text and "clientarea.php?action=logout" not in login_res.text:
+            return (False, "页面未包含Logout信息，可能登录失败")
+        
+        # 访问用户面板，提取信息确认
         dashboard_page = session.get(DASHBOARD_URL)
         dashboard_page.raise_for_status()
         soup = BeautifulSoup(dashboard_page.text, 'html.parser')
-        
-        # 定位信息元素
+
+        # 定位用户信息
         panel = soup.find('div', class_='panel-body')
         if not panel:
             return (False, "未找到用户信息面板")
-            
+        
         strong_tag = panel.find('strong')
         if not strong_tag:
             return (False, "未找到信息标签")
-        
-        # 验证文本内容
+
         actual_info = strong_tag.get_text(strip=True)
         if user['expected_text'] not in actual_info:
             return (False, f"信息不匹配 | 期望: {user['expected_text']} | 实际: {actual_info}")
-            
+        
         return (True, None)
 
     except requests.exceptions.RequestException as e:
         return (False, f"网络请求异常: {str(e)}")
     except Exception as e:
         return (False, f"系统错误: {str(e)}")
-
 
 # 主流程
 def main():
