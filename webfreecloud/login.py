@@ -14,9 +14,11 @@ USER_CONFIGS = json.loads(os.getenv("USER_CONFIGS_JSON"))
 LOGIN_URL = 'https://web.freecloud.ltd/index.php?rp=/login'
 DASHBOARD_URL = 'https://web.freecloud.ltd/clientarea.php'
 HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-                  'AppleWebKit/537.36 (KHTML, like Gecko) '
-                  'Chrome/91.0.4472.124 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Referer': LOGIN_URL,
+    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+    'Origin': 'https://web.freecloud.ltd',
+    'Connection': 'keep-alive'
 }
 # ---------------------------------------------------------------
 
