@@ -13,13 +13,10 @@ TG_CHAT_ID = os.getenv("TG_CHAT_ID", "" )
 USER_CONFIGS = json.loads(os.getenv("USER_CONFIGS_JSON"))
 LOGIN_URL = 'https://web.freecloud.ltd/index.php?rp=/login'
 DASHBOARD_URL = 'https://web.freecloud.ltd/clientarea.php'
-
 HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-    'Referer': 'https://web.freecloud.ltd/index.php?rp=/login',
-    'Origin': 'https://web.freecloud.ltd',
-    'Content-Type': 'application/x-www-form-urlencoded',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                  'AppleWebKit/537.36 (KHTML, like Gecko) '
+                  'Chrome/91.0.4472.124 Safari/537.36'
 }
 # ---------------------------------------------------------------
 
@@ -59,9 +56,17 @@ def send_telegram_alert(username: str, is_success: bool, error_msg: str = None) 
     except Exception as e:
         print(f"⚠️ Telegram通知发送失败: {str(e)}")
 
-# 执行用户验证，返回是否成功,及错误信息
+# 执行用户验证，返回是否成功,及错误信息)
 def validate_user(session: requests.Session, user: dict) -> tuple:
     try:
+        socks_proxy = os.getenv('SOCKS_PROXY')
+        if socks_proxy:
+            session.proxies = {
+                'http': socks_proxy,
+                'https': socks_proxy
+            }
+            print(f"🔧 使用 SOCKS5 代理: {socks_proxy}")
+            
         print(f"\n🔑 开始验证用户: {user['username']}")
         
         # 获取登录页面
@@ -81,30 +86,28 @@ def validate_user(session: requests.Session, user: dict) -> tuple:
             'rememberme': 'on'
         }
         login_res = session.post(LOGIN_URL, data=login_data)
-        login_res.raise_for_status()
-
-        # 判断是否登录成功：检测是否出现 “Logout” 或用户区域
-        if "Logout" not in login_res.text and "clientarea.php?action=logout" not in login_res.text:
-            return (False, "页面未包含Logout信息，可能登录失败")
         
-        # 访问用户面板，提取信息确认
+        # 验证跳转
+        parsed_url = urlparse(login_res.url)
+        if parsed_url.path != urlparse(DASHBOARD_URL).path:
+            return (False, f"异常跳转至 {login_res.url}")
+
+        # 提取用户信息
         dashboard_page = session.get(DASHBOARD_URL)
-        dashboard_page.raise_for_status()
         soup = BeautifulSoup(dashboard_page.text, 'html.parser')
-
-        # 定位用户信息
-        panel = soup.find('div', class_='panel-body')
-        if not panel:
-            return (False, "未找到用户信息面板")
         
-        strong_tag = panel.find('strong')
-        if not strong_tag:
+        # 定位信息元素
+        if not (panel := soup.find('div', class_='panel-body')):
+            return (False, "未找到用户信息面板")
+            
+        if not (strong_tag := panel.find('strong')):
             return (False, "未找到信息标签")
-
+        
+        # 验证文本内容
         actual_info = strong_tag.get_text(strip=True)
         if user['expected_text'] not in actual_info:
             return (False, f"信息不匹配 | 期望: {user['expected_text']} | 实际: {actual_info}")
-        
+            
         return (True, None)
 
     except requests.exceptions.RequestException as e:
