@@ -1,16 +1,23 @@
 import os
 import json
-import random
-import time
+import requests
+import re
+from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
-from playwright.sync_api import sync_playwright
+import time
+from urllib.parse import urlparse
 
 # ---------------------------- 配置区域 ----------------------------
 TG_BOT_TOKEN = os.getenv("TG_BOT_TOKEN", "")
-TG_CHAT_ID = os.getenv("TG_CHAT_ID", "")
+TG_CHAT_ID = os.getenv("TG_CHAT_ID", "" )
 USER_CONFIGS = json.loads(os.getenv("USER_CONFIGS_JSON"))
 LOGIN_URL = 'https://web.freecloud.ltd/index.php?rp=/login'
 DASHBOARD_URL = 'https://web.freecloud.ltd/clientarea.php'
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                  'AppleWebKit/537.36 (KHTML, like Gecko) '
+                  'Chrome/91.0.4472.124 Safari/537.36'
+}
 # ---------------------------------------------------------------
 
 # 获取北京时间
@@ -49,58 +56,56 @@ def send_telegram_alert(username: str, is_success: bool, error_msg: str = None) 
     except Exception as e:
         print(f"⚠️ Telegram通知发送失败: {str(e)}")
 
-# 执行浏览器自动化验证
-def validate_user(user: dict) -> tuple:
+# 执行用户验证，返回是否成功,及错误信息)
+def validate_user(session: requests.Session, user: dict) -> tuple:
     try:
-        with sync_playwright() as p:
-            # 配置浏览器参数
-            browser = p.chromium.launch(
-                headless=True,
-                args=[
-                    '--disable-blink-features=AutomationControlled',
-                    '--no-sandbox'
-                ]
-            )
-            context = browser.new_context(
-                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                viewport={'width': 1920, 'height': 1080}
-            )
+        print(f"\n🔑 开始验证用户: {user['username']}")
+        
+        # 获取登录页面
+        login_page = session.get(LOGIN_URL)
+        login_page.raise_for_status()
+
+        # 提取CSRF Token
+        csrf_match = re.search(r"var\s+csrfToken\s*=\s*'([a-f0-9]+)'", login_page.text)
+        if not csrf_match:
+            return (False, "CSRF Token提取失败")
+        
+        # 构造登录请求
+        login_data = {
+            'username': user['username'],
+            'password': user['password'],
+            'token': csrf_match.group(1),
+            'rememberme': 'on'
+        }
+        login_res = session.post(LOGIN_URL, data=login_data)
+        
+        # 验证跳转
+        parsed_url = urlparse(login_res.url)
+        if parsed_url.path != urlparse(DASHBOARD_URL).path:
+            return (False, f"异常跳转至 {login_res.url}")
+
+        # 提取用户信息
+        dashboard_page = session.get(DASHBOARD_URL)
+        soup = BeautifulSoup(dashboard_page.text, 'html.parser')
+        
+        # 定位信息元素
+        if not (panel := soup.find('div', class_='panel-body')):
+            return (False, "未找到用户信息面板")
             
-            page = context.new_page()
+        if not (strong_tag := panel.find('strong')):
+            return (False, "未找到信息标签")
+        
+        # 验证文本内容
+        actual_info = strong_tag.get_text(strip=True)
+        if user['expected_text'] not in actual_info:
+            return (False, f"信息不匹配 | 期望: {user['expected_text']} | 实际: {actual_info}")
             
-            try:
-                # 访问登录页面
-                page.goto(LOGIN_URL, timeout=15000)
-                
-                # 等待关键元素加载
-                page.wait_for_selector('input[name="username"]', state="attached", timeout=5000)
-                
-                # 填充登录表单
-                page.fill('input[name="username"]', user['username'])
-                page.fill('input[name="password"]', user['password'])
-                
-                # 提交表单
-                with page.expect_navigation(timeout=15000) as navigation:
-                    page.click('button[type="submit"]')
-                
-                # 验证跳转
-                if not page.url.startswith(DASHBOARD_URL):
-                    return (False, f"异常跳转至 {page.url}")
-                
-                # 提取用户信息
-                content = page.inner_text('.panel-body strong', timeout=5000)
-                if user['expected_text'] not in content:
-                    return (False, f"信息不匹配 | 期望: {user['expected_text']} | 实际: {content}")
-                
-                return (True, None)
-                
-            except Exception as e:
-                return (False, f"浏览器自动化异常: {str(e)}")
-            finally:
-                browser.close()
-                
+        return (True, None)
+
+    except requests.exceptions.RequestException as e:
+        return (False, f"网络请求异常: {str(e)}")
     except Exception as e:
-        return (False, f"浏览器启动失败: {str(e)}")
+        return (False, f"系统错误: {str(e)}")
 
 # 主流程
 def main():
@@ -124,21 +129,20 @@ def main():
     
     for idx, user in enumerate(USER_CONFIGS, 1):
         start_time = time.time()
-        
-        # 添加随机延迟 (首次也延迟)
-        if idx > 1:
-            time.sleep(random.uniform(5, 10))
+        with requests.Session() as session:
+            session.headers.update(HEADERS)
+            username = user['username']
             
-        # 执行验证
-        success, error_msg = validate_user(user)
-        duration = time.time() - start_time
-        
-        # 发送通知
-        send_telegram_alert(user['username'], success, error_msg)
-        
-        # 控制台输出
-        status = "成功" if success else f"失败 ({error_msg})"
-        print(f"🔄 [{idx}/{total_users}] {user['username']} 验证{status} [耗时: {duration:.2f}s]")
+            # 执行验证
+            success, error_msg = validate_user(session, user)
+            duration = time.time() - start_time
+            
+            # 发送通知
+            send_telegram_alert(username, success, error_msg)
+            
+            # 控制台输出
+            status = "成功" if success else f"失败 ({error_msg})"
+            print(f"🔄 [{idx}/{total_users}] {username} 验证{status} [耗时: {duration:.2f}s]")
     
     print("\n🔔 所有用户验证完成")
 
