@@ -9,6 +9,7 @@
 - USER_CONFIGS_JSON  # json格式的虚拟主机登录用户名密码
 
 **USER_CONFIGS_JSON 格式示例**
+
 ```json
 [
   {
@@ -23,3 +24,9 @@
   }
 ]
 ```
+
+**expected_text 内容示例**
+
+`#1683 Yanlin Liu`
+
+即登陆后控制面板主页面显示的 `#订单编号+注册时的姓名`，用于验证登录是否成功
