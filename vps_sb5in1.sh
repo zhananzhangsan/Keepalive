@@ -6,7 +6,7 @@ red="\033[1;91m"
 green="\e[1;32m"
 yellow="\e[1;33m"
 purple="\e[1;35m"
-skybule="\e[1;36m"
+skyblue="\e[1;36m"
 red() { echo -e "\e[1;91m$1\033[0m"; }
 green() { echo -e "\e[1;32m$1\033[0m"; }
 yellow() { echo -e "\e[1;33m$1\033[0m"; }
@@ -524,7 +524,6 @@ EOF
 
     chmod +x /etc/init.d/sing-box
     chmod +x /etc/init.d/argo
-
     rc-update add sing-box default
     rc-update add argo default
 
@@ -560,7 +559,7 @@ hysteria2://${uuid}@${server_ip}:${hy2_port}/?sni=www.bing.com&insecure=1&alpn=h
 tuic://${uuid}:${password}@${server_ip}:${tuic_port}?sni=www.bing.com&congestion_control=bbr&udp_relay_mode=native&alpn=h3&allow_insecure=1#${isp}
 EOF
 echo ""
-while IFS= read -r line; do echo -e "${purple}$line"; done < ${work_dir}/url.txt 
+while IFS= read -r line; do echo -e "${purple}$line"; done < ${work_dir}/url.txt
 yellow "\n温馨提醒：需打开V2rayN或其他软件里的 “跳过证书验证”，或将节点的Insecure或TLS里设置为“true”\n"
 echo ""
 }
@@ -871,7 +870,7 @@ if [ ${check_singbox} -eq 0 ]; then
             while IFS= read -r line; do yellow "$line"; done < ${work_dir}/url.txt
             green "\nUUID已修改为：${purple}${new_uuid}${re} ${green}请手动更改所有节点的UUID${re}\n"
             ;;
-        3)  
+        3) 
             clear
             green "\n1. www.joom.com\n\n2. www.stengg.com\n\n3. www.wedgehr.com\n\n4. www.cerebrium.ai\n\n5. www.nazhumi.com\n"
             reading "\n请输入新的Reality伪装域名(可自定义输入,回车留空将使用默认1): " new_sni
@@ -899,8 +898,8 @@ if [ ${check_singbox} -eq 0 ]; then
                 while IFS= read -r line; do yellow "$line"; done < ${work_dir}/url.txt
                 echo ""
                 green "\nReality sni已修改为：${purple}${new_sni}${re} ${green}请手动更改reality节点的sni域名${re}\n"
-            ;; 
-        4)  
+            ;;
+        4) 
             purple "端口跳跃需确保跳跃区间的端口没有被占用，nat鸡请注意可用端口范围，否则可能造成节点不通\n"
             reading "请输入跳跃起始端口 (回车跳过将使用随机端口): " min_port
             [ -z "$min_port" ] && min_port=$(shuf -i 50000-65000 -n 1)
@@ -940,7 +939,7 @@ EOF
                 systemctl enable ip6tables > /dev/null 2>&1 && systemctl start ip6tables > /dev/null 2>&1
             else
                 red "未知系统,请自行将跳跃端口转发到主端口" && exit 1
-            fi            
+            fi
             restart_singbox
             ip=$(get_realip)
             uuid=$(sed -n 's/.*hysteria2:\/\/\([^@]*\)@.*/\1/p' $client_dir)
@@ -951,11 +950,11 @@ EOF
             while IFS= read -r line; do yellow "$line"; done < ${work_dir}/url.txt
             green "\nhysteria2端口跳跃已开启,跳跃端口为：${purple}$min_port-$max_port${re} ${green}请手动复制以上hysteria2节点${re}\n"
             ;;
-        5)  
+        5) 
             iptables -t nat -F PREROUTING  > /dev/null 2>&1
             command -v ip6tables &> /dev/null && ip6tables -t nat -F PREROUTING  > /dev/null 2>&1
             if [ -f /etc/alpine-release ]; then
-                rc-update del iptables default && rm -rf /etc/init.d/iptables 
+                rc-update del iptables default && rm -rf /etc/init.d/iptables
             elif [ -f /etc/redhat-release ]; then
                 netfilter-persistent save > /dev/null 2>&1
             elif [ -f /etc/redhat-release ]; then
@@ -968,7 +967,7 @@ EOF
             green "\n端口跳跃已删除\n"
             ;;
         6)  menu ;;
-        *)  read "无效的选项！" ;; 
+        *)  read "无效的选项！" ;;
     esac
 else
     yellow "sing-box 尚未安装！"
@@ -991,7 +990,7 @@ manage_singbox() {
     skyblue "------------"
     reading "\n请输入选择: " choice
     case "${choice}" in
-        1) start_singbox ;;  
+        1) start_singbox ;;
         2) stop_singbox ;;
         3) restart_singbox ;;
         4) menu ;;
@@ -1025,14 +1024,14 @@ else
     reading "\n请输入选择: " choice
     case "${choice}" in
         1)  start_argo ;;
-        2)  stop_argo ;; 
+        2)  stop_argo ;;
         3)  clear
             if [ -f /etc/alpine-release ]; then
                 grep -Fq -- '--url http://localhost:8001' /etc/init.d/argo && get_quick_tunnel && change_argo_domain || { green "\n当前使用固定隧道,无需获取临时域名"; sleep 2; menu; }
             else
                 grep -q 'ExecStart=.*--url http://localhost:8001' /etc/systemd/system/argo.service && get_quick_tunnel && change_argo_domain || { green "\n当前使用固定隧道,无需获取临时域名"; sleep 2; menu; }
             fi
-         ;; 
+         ;;
         4)
             clear
             yellow "\n固定隧道可为json或token，固定隧道端口为8001，自行在cf后台设置\n\njson在f佬维护的站点里获取，获取地址：${purple}https://fscarmen.cloudflare.now.cc${re}\n"
@@ -1060,7 +1059,7 @@ EOF
                     sed -i '/^ExecStart=/c ExecStart=/bin/sh -c "/etc/sing-box/argo tunnel --edge-ip-version auto --config /etc/sing-box/tunnel.yml run 2>&1"' /etc/systemd/system/argo.service
                 fi
                 restart_argo
-                sleep 1 
+                sleep 1
                 change_argo_domain
 
             elif [[ $argo_auth =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
@@ -1068,16 +1067,16 @@ EOF
                     sed -i "/^command_args=/c\command_args=\"-c '/etc/sing-box/argo tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token $argo_auth 2>&1'\"" /etc/init.d/argo
                 else
 
-                    sed -i '/^ExecStart=/c ExecStart=/bin/sh -c "/etc/sing-box/argo tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token '$argo_auth' 2>&1"' /etc/systemd/system/argo.service 
+                    sed -i '/^ExecStart=/c ExecStart=/bin/sh -c "/etc/sing-box/argo tunnel --edge-ip-version auto --no-autoupdate --protocol http2 run --token '$argo_auth' 2>&1"' /etc/systemd/system/argo.service
                 fi
                 restart_argo
-                sleep 1 
+                sleep 1
                 change_argo_domain
             else
                 yellow "你输入的argo域名或token不匹配，请重新输入"
-                manage_argo            
+                manage_argo      
             fi
-            ;; 
+            ;;
         5)
             clear
             if [ -f /etc/alpine-release ]; then
@@ -1086,14 +1085,14 @@ EOF
                 main_systemd_services
             fi
             get_quick_tunnel
-            change_argo_domain 
-            ;; 
+            change_argo_domain
+            ;;
 
-        6)  
+        6) 
             if [ -f /etc/alpine-release ]; then
                 if grep -Fq -- '--url http://localhost:8001' /etc/init.d/argo; then
                     get_quick_tunnel
-                    change_argo_domain 
+                    change_argo_domain
                 else
                     yellow "当前使用固定隧道，无法获取临时隧道"
                     sleep 2
@@ -1102,15 +1101,15 @@ EOF
             else
                 if grep -q 'ExecStart=.*--url http://localhost:8001' /etc/systemd/system/argo.service; then
                     get_quick_tunnel
-                    change_argo_domain 
+                    change_argo_domain
                 else
                     yellow "当前使用固定隧道，无法获取临时隧道"
                     sleep 2
                     menu
                 fi
-            fi 
-            ;; 
-        7)  menu ;; 
+            fi
+            ;;
+        7)  menu ;;
         *)  red "无效的选项！" ;;
     esac
 fi
@@ -1131,7 +1130,7 @@ if [ -f /etc/sing-box/argo.log ]; then
 else
   restart_argo
   sleep 6
-  get_argodomain=$(sed -n 's|.*https://\([^/]*trycloudflare\.com\).*|\1|p' /etc/sing-box/argo.log) 
+  get_argodomain=$(sed -n 's|.*https://\([^/]*trycloudflare\.com\).*|\1|p' /etc/sing-box/argo.log)
 fi
 green "ArgoDomain：${purple}$get_argodomain${re}\n"
 ArgoDomain=$get_argodomain
@@ -1148,16 +1147,16 @@ updated_vmess=$(echo "$decoded_vmess" | jq --arg new_domain "$ArgoDomain" '.host
 encoded_updated_vmess=$(echo "$updated_vmess" | base64 | tr -d '\n')
 new_vmess_url="$vmess_prefix$encoded_updated_vmess"
 new_content=$(echo "$content" | sed "s|$vmess_url|$new_vmess_url|")
-echo "$new_content" > "$client_dir" 
+echo "$new_content" > "$client_dir"
 green "vmess节点已更新,请手动复制以下vmess-argo节点\n"
-purple "$new_vmess_url\n" 
+purple "$new_vmess_url\n"
 }
 
 # 查看节点信息
 check_nodes() {
 if [ ${check_singbox} -eq 0 ]; then
     while IFS= read -r line; do purple "${purple}$line"; done < ${work_dir}/url.txt
-else 
+else
     yellow "sing-box 尚未安装或未运行,请先安装或启动sing-box"
     sleep 1
     menu
@@ -1199,7 +1198,7 @@ trap 'red "已取消操作"; exit' INT
 while true; do
    menu
    case "${choice}" in
-        1)  
+        1) 
             if [ ${check_singbox} -eq 0 ]; then
                 yellow "sing-box 已经安装！"
             else
@@ -1216,7 +1215,7 @@ while true; do
                     rc-service argo restart
                 else
                     echo "Unsupported init system"
-                    exit 1 
+                    exit 1
                 fi
 
                 sleep 5
@@ -1234,7 +1233,7 @@ while true; do
            curl -fsSL https://raw.githubusercontent.com/eooce/ssh_tool/main/ssh_tool.sh -o ssh_tool.sh && chmod +x ssh_tool.sh && ./ssh_tool.sh 
            ;;           
         0) exit 0 ;;
-        *) red "无效的选项，请输入 0 到 8" ;; 
+        *) red "无效的选项，请输入 0 到 8" ;;
    esac
    read -n 1 -s -r -p $'\033[1;91m按任意键继续...\033[0m'
 done
