@@ -530,10 +530,9 @@ EOF
 
 }
 
-get_info() {  
+get_info() {
   clear
   server_ip=$(get_realip)
-
   isp=$(curl -s --max-time 2 https://speed.cloudflare.com/meta | awk -F\" '{print $26"-"$18}' | sed -e 's/ /_/g' || echo "vps")
 
   if [ -f "${work_dir}/argo.log" ]; then
@@ -555,13 +554,9 @@ get_info() {
 
   cat > ${work_dir}/url.txt <<EOF
 vless://${uuid}@${server_ip}:${vless_port}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=www.iij.ad.jp&fp=chrome&pbk=${public_key}&type=tcp&headerType=none#${isp}
-
 vmess://$(echo "$VMESS" | base64 -w0)
-
 socks5://$socks_user:$socks_pass@${server_ip}:$socks_port
-
 hysteria2://${uuid}@${server_ip}:${hy2_port}/?sni=www.bing.com&insecure=1&alpn=h3&obfs=none#${isp}
-
 tuic://${uuid}:${password}@${server_ip}:${tuic_port}?sni=www.bing.com&congestion_control=bbr&udp_relay_mode=native&alpn=h3&allow_insecure=1#${isp}
 EOF
 echo ""
