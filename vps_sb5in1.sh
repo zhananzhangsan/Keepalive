@@ -20,7 +20,7 @@ work_dir="/etc/sing-box"
 config_dir="${work_dir}/config.json"
 client_dir="${work_dir}/url.txt"
 export vless_port=${PORT:-$(shuf -i 1000-65000 -n 1)}
-export CFIP=${CFIP:-'cloudflare.182682.xyz'
+export CFIP=${CFIP:-'cloudflare.182682.xyz'}
 export CFPORT=${CFPORT:-'8443'} 
 
 # 检查是否为root下运行
