@@ -575,11 +575,11 @@ if [ ${check_singbox} -eq 1 ]; then
         systemctl daemon-reload
         systemctl start "${server_name}"
     fi
-   if [ $? -eq 0 ]; then
-       green "${server_name} 服务已成功启动\n"
-   else
-       red "${server_name} 服务启动失败\n"
-   fi
+    if [ $? -eq 0 ]; then
+        green "${server_name} 服务已成功启动\n"
+    else
+        red "${server_name} 服务启动失败\n"
+    fi
 elif [ ${check_singbox} -eq 0 ]; then
     yellow "sing-box 正在运行\n"
     sleep 1
