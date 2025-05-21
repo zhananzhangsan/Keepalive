@@ -20,7 +20,7 @@ work_dir="/etc/sing-box"
 config_dir="${work_dir}/config.json"
 client_dir="${work_dir}/url.txt"
 export vless_port=${PORT:-$(shuf -i 1000-65000 -n 1)}
-export CFIP=${CFIP:-'cloudflare.182682.xyz'} 
+export CFIP=${CFIP:-'cloudflare.182682.xyz'
 export CFPORT=${CFPORT:-'8443'} 
 
 # 检查是否为root下运行
@@ -185,7 +185,7 @@ cat > "${config_dir}" << EOF
     "disabled": false,
     "level": "info",
     "output": "$work_dir/sb.log",
-    "timestamp": true 
+    "timestamp": true
   },
   "dns": {
     "servers": [
@@ -537,7 +537,7 @@ get_info() {
 
   if [ -f "${work_dir}/argo.log" ]; then
       for i in {1..5}; do
-          purple "第 $i 次尝试获取ArgoDoamin中..."
+          purple "第 $i 次尝试获取ArgoDomain中..."
           argodomain=$(sed -n 's|.*https://\([^/]*trycloudflare\.com\).*|\1|p' "${work_dir}/argo.log")
           [ -n "$argodomain" ] && break
           sleep 2
