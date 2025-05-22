@@ -235,7 +235,7 @@ cat > "${config_dir}" << EOF
     ],
     "transport": {
         "type": "ws",
-        "path": "/vmess",
+        "path": "/vmess-argo",
         "early_data_header_name": "Sec-WebSocket-Protocol"
         }
     },
@@ -547,7 +547,7 @@ get_info() {
       argodomain=$(sed -n 's|.*https://\([^/]*trycloudflare\.com\).*|\1|p' "${work_dir}/argo.log")
   fi
 
-  green "\nArgoDomain：${purple}$argodomain${re}\n"
+  green "\nArgoDomain: ${purple}$argodomain${re}\n"
 
   VMESS="{ \"v\": \"2\", \"ps\": \"${isp}\", \"add\": \"${CFIP}\", \"port\": \"${CFPORT}\", \"id\": \"${uuid}\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"${argodomain}\", \"path\": \"/vmess-argo?ed=2048\", \"tls\": \"tls\", \"sni\": \"${argodomain}\", \"alpn\": \"\", \"fp\": \"randomized\", \"allowlnsecure\": \"flase\"}"
 
@@ -804,7 +804,7 @@ if [ ${check_singbox} -eq 0 ]; then
             echo ""
             green "1. 修改vless-reality端口"
             skyblue "------------"
-	    green "2. 修改socks5端口"
+	        green "2. 修改socks5端口"
             skyblue "------------"
             green "3. 修改hysteria2端口"
             skyblue "------------"
@@ -888,8 +888,8 @@ if [ ${check_singbox} -eq 0 ]; then
                     new_sni="www.wedgehr.com"
                 elif [[ "$new_sni" == "4" ]]; then
                     new_sni="www.cerebrium.ai"
-	        elif [[ "$new_sni" == "5" ]]; then
-                    new_sni="www.cerebrium.ai"
+	            elif [[ "$new_sni" == "5" ]]; then
+                    new_sni="www.nazhumi.com"
                 else
                     new_sni="$new_sni"
                 fi
@@ -1176,8 +1176,8 @@ menu() {
    clear
    echo ""
    purple "=== 老王sing-box一键安装脚本 ===\n"
-   purple "--Argo-- 状态: ${check_argo_status}"   
-   purple "--singbox-- 状态: ${check_singbox_status}\n"
+   purple "---Argo--- 状态: ${check_argo_status}"   
+   purple "---singbox--- 状态: ${check_singbox_status}\n"
    green "1. 安装sing-box"
    red "2. 卸载sing-box"
    echo "==============="
