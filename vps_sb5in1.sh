@@ -1234,7 +1234,7 @@ while true; do
         6) change_config ;;
         7) 
            clear
-           curl -fsSL https://raw.githubusercontent.com/eooce/ssh_tool/main/ssh_tool.sh -o ssh_tool.sh && chmod +x ssh_tool.sh && ./ssh_tool.sh 
+           curl -fsSL https://raw.githubusercontent.com/eooce/ssh_tool/main/ssh_tool.sh -o ssh_tool.sh && chmod +x ssh_tool.sh && bash ssh_tool.sh 
            ;;           
         0) exit 0 ;;
         *) red "无效的选项，请输入 0 到 8" ;;
