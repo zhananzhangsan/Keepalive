@@ -13,6 +13,11 @@ vless+reality|vmess+argo|hy2|tuic|socks5
 PORT=34766 bash <(curl -Ls https://raw.githubusercontent.com/yutian81/Keepalive/main/vps_sb5in1.sh)
 ```
 
+## VPS版 xhttp_reality 单协议
+```
+PORT=34770 bash <(curl -Ls https://raw.githubusercontent.com/eooce/scripts/master/xhttp_reality.sh)
+```
+
 ## 测试socks5是否通畅
 运行以下命令，若正确返回服务器ip则节点通畅
 ```
