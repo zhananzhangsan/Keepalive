@@ -468,7 +468,7 @@ async function sendTelegramMessage(message, env, results = null) {
 // 最后一个函数：HTML 内容生成
 function getHtmlContent() {
   const siteIcon = 'https://pan.811520.xyz/icon/serv00.png';
-  const bgimgURL = 'https://bing.img.run/1920x1080.php';
+  const bgimgURL = 'https://pan.811520.xyz/icon/back.webp';
   return `
   <!DOCTYPE html>
   <html lang="zh-CN">
