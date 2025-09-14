@@ -82,7 +82,7 @@ def main():
                 
             try:
                 print(f"正在处理第 {index}/{total_accounts} 个账户: {email}")
-                time.sleep(8)  # 登录8秒间隔
+                time.sleep(12)  # 登录8秒间隔
                 success, message = login_koyeb(email, password)
                 if success:
                     status_line = f"状态: ✅ {message}"
