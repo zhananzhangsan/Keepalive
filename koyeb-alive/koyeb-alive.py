@@ -2,6 +2,7 @@ import os
 import requests
 import json
 import time
+import random
 
 def validate_env_variables():
     """验证必要的环境变量"""
@@ -82,7 +83,8 @@ def main():
                 
             try:
                 print(f"正在处理第 {index}/{total_accounts} 个账户: {email}")
-                time.sleep(12)  # 登录8秒间隔
+                delay= random.uniform(12, 25)
+                time.sleep(delay)  # 登录随机间隔
                 success, message = login_koyeb(email, password)
                 if success:
                     status_line = f"状态: ✅ {message}"
