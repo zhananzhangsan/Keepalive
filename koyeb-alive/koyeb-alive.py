@@ -83,7 +83,7 @@ def main():
                 
             try:
                 print(f"正在处理第 {index}/{total_accounts} 个账户: {email}")
-                delay= random.uniform(12, 25)
+                delay= random.uniform(12, 36)
                 time.sleep(delay)  # 登录随机间隔
                 success, message = login_koyeb(email, password)
                 if success:
