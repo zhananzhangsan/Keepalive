@@ -2,7 +2,7 @@ name: Koyeb登录保活
 
 on:
   schedule:
-    - cron: '30 3 * * 6'  # 每周六3点半执行一次
+    - cron: '30 3 */12 * *'  # 每月1号开始每12天3点半执行一次
   workflow_dispatch:
 
 jobs:
