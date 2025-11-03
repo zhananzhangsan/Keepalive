@@ -14,8 +14,8 @@ def log(msg):
 
 # Telegram 推送函数
 def send_tg_log():
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    token = os.getenv("TG_BOT_TOKEN")
+    chat_id = os.getenv("TG_CHAT_ID")
     if not token or not chat_id:
         print("⚠️ Telegram 未配置，跳过推送")
         return
